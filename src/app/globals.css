@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 44 33% 95%;        /* cream #F7F5EF */
+    --foreground: 215 28% 17%;       /* ink #1F2937 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+
+    --primary: 184 98% 22%;          /* teal #01696F */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 44 33% 95%;
+    --secondary-foreground: 215 28% 17%;
+
+    --muted: 40 20% 92%;
+    --muted-foreground: 215 14% 40%;
+
+    --accent: 44 55% 51%;            /* gold #C8A23A */
+    --accent-foreground: 215 28% 17%;
+
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 18% 86%;
+    --input: 40 18% 86%;
+    --ring: 184 98% 22%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  /* RTL-aware logical layout already handled by Tailwind logical utilities
+     and dir attribute on <html>. */
+  [dir='rtl'] {
+    text-align: right;
+  }
+}
+
+@layer components {
+  .card-surface {
+    @apply rounded-lg border border-border bg-card text-card-foreground;
+  }
+  .teal-header {
+    @apply bg-brand-teal text-white;
+  }
+  .section-title {
+    @apply text-lg font-semibold text-brand-teal;
+  }
+}
