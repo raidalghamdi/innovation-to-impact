@@ -1,8 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 
-// Brand logo (Phase H). Uses the official Competition Innovation Program marks
-// from public/brand/. `white` selects the reversed mark for dark backgrounds.
-// When `locale === 'ar'` the Arabic wordmark is shown alongside the emblem.
+// Brand logos.
+// - Logo: Competition Innovation Program mark (existing). Supports white variant for dark backgrounds.
+// - GacLogo: Parent authority (General Authority for Competition) — colored and white variants.
+// - CoBrand: Program mark + vertical divider + GAC parent logo. Used in header/footer/hero
+//   to signal parent–child brand relationship per user direction (co-brand approach).
+
 export function Logo({
   className = 'h-8',
   white = false,
@@ -32,6 +35,44 @@ export function Logo({
           className={className}
         />
       )}
+    </span>
+  );
+}
+
+export function GacLogo({
+  className = 'h-8',
+  white = false,
+}: {
+  className?: string;
+  white?: boolean;
+}) {
+  const src = white
+    ? '/brand/gac-authority-white.png'
+    : '/brand/gac-authority-colored.png';
+  return (
+    <img
+      src={src}
+      alt="General Authority for Competition — الهيئة العامة للمنافسة"
+      className={className}
+    />
+  );
+}
+
+export function CoBrand({
+  className = 'h-9',
+  white = false,
+  locale,
+}: {
+  className?: string;
+  white?: boolean;
+  locale?: string;
+}) {
+  const dividerColor = white ? 'bg-white/30' : 'bg-slate-300';
+  return (
+    <span className="inline-flex items-center gap-3">
+      <Logo className={className} white={white} locale={locale} showWordmark={false} />
+      <span className={`h-6 w-px ${dividerColor}`} aria-hidden="true" />
+      <GacLogo className={className} white={white} />
     </span>
   );
 }

@@ -1,5 +1,6 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { PublicShell } from '@/components/public-shell';
+import { loadCms, getText, isSectionEnabled } from '@/lib/cms';
 import { SupportForm } from '@/components/support-form';
 import { Card, CardContent } from '@/components/ui/card';
 import { Mail, Phone, Clock } from 'lucide-react';
@@ -12,12 +13,17 @@ export default async function SupportPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('support');
+  const cms = await loadCms('support');
   const tf = await getTranslations('footer');
 
   return (
     <PublicShell locale={locale} breadcrumbs={[{ label: t('title') }]}>
-      <h1 className="text-3xl font-bold text-brand-teal">{t('title')}</h1>
-      <p className="mt-2 max-w-3xl text-muted-foreground">{t('subtitle')}</p>
+      {isSectionEnabled(cms, 'intro') && (
+        <>
+          <h1 className="text-3xl font-bold text-brand-teal">{getText(cms, 'intro', 'title', locale, t('title'))}</h1>
+          <p className="mt-2 max-w-3xl text-muted-foreground">{getText(cms, 'intro', 'body', locale, t('subtitle'))}</p>
+        </>
+      )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

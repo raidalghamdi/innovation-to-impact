@@ -2,6 +2,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { PublicShell } from '@/components/public-shell';
 import { Card } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
+import { loadCms, getText, isSectionEnabled } from '@/lib/cms';
 
 export default async function PartnersPage({
   params,
@@ -12,11 +13,17 @@ export default async function PartnersPage({
   setRequestLocale(locale);
   const t = await getTranslations('partners');
   const partners = t.raw('partners') as { name: string }[];
+  const cms = await loadCms('partners');
 
   return (
     <PublicShell locale={locale} breadcrumbs={[{ label: t('title') }]}>
-      <h1 className="text-3xl font-bold text-brand-teal">{t('title')}</h1>
-      <p className="mt-2 max-w-3xl text-muted-foreground">{t('subtitle')}</p>
+      {isSectionEnabled(cms, 'intro') && (
+        <>
+          <h1 className="text-3xl font-bold text-brand-teal">{getText(cms, 'intro', 'title', locale, t('title'))}</h1>
+          <p className="mt-2 max-w-3xl text-muted-foreground">{getText(cms, 'intro', 'subtitle', locale, t('subtitle'))}</p>
+        </>
+      )}
+      {isSectionEnabled(cms, 'grid') && (
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {partners.map((p, i) => (
           <Card
@@ -30,6 +37,7 @@ export default async function PartnersPage({
           </Card>
         ))}
       </div>
+      )}
     </PublicShell>
   );
 }

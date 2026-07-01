@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from '@/i18n/routing';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { SidebarNav } from '@/components/sidebar-nav';
 import { LanguageToggle } from '@/components/language-toggle';
-import { Logo } from '@/components/logo';
+import { CoBrand } from '@/components/logo';
 import { NotificationBell } from '@/components/notification-bell';
 import { PointsBadge } from '@/components/points-badge';
 import { GlobalSearch } from '@/components/global-search';
@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations();
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<Role>('submitter');
   const [userId, setUserId] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <Logo className="h-8" />
+            <CoBrand className="h-8" locale={locale} />
           </Link>
         </div>
         <div className="flex items-center gap-2">

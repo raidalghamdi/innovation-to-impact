@@ -1,6 +1,6 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
-import { Logo } from '@/components/logo';
+import { Logo, CoBrand } from '@/components/logo';
 import { LanguageToggle } from '@/components/language-toggle';
 import { SiteFooter } from '@/components/site-footer';
 import { Countdown } from '@/components/countdown';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { StatsBlock } from '@/components/stats-block';
 import { BackToTop } from '@/components/back-to-top';
 import { getStats } from '@/lib/demo-data';
+import { loadCms, getText, isSectionEnabled } from '@/lib/cms';
 import {
   Lightbulb,
   ArrowRight,
@@ -36,6 +37,7 @@ export default async function LandingPage({
   setRequestLocale(locale);
   const t = await getTranslations();
   const stats = getStats();
+  const cms = await loadCms('landing');
   const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
   const faqItems = (t.raw('faq.items') as { q: string; a: string }[]).slice(0, 3);
   const partners = (t.raw('partners.partners') as { name: string }[]).slice(0, 6);
@@ -52,7 +54,7 @@ export default async function LandingPage({
       {/* Top bar */}
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
         <Link href="/" className="flex items-center gap-2.5">
-          <Logo className="h-8" locale={locale} />
+          <CoBrand className="h-8" locale={locale} />
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
@@ -77,37 +79,40 @@ export default async function LandingPage({
         <div className="pointer-events-none absolute -bottom-20 -start-20 h-80 w-80 rounded-full bg-brand-cyan-light/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-8 sm:py-20">
-          <Logo className="h-12" white locale={locale} />
+          <CoBrand className="h-12" white locale={locale} />
           <p className="mt-8 text-xs font-semibold uppercase tracking-wider text-brand-cyan-light">
-            {t('landing.heroEyebrow')}
+            {getText(cms, 'hero', 'eyebrow', locale, t('landing.heroEyebrow'))}
           </p>
           <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-            {t('landing.heroTitle')}
+            {getText(cms, 'hero', 'title', locale, t('landing.heroTitle'))}
           </h1>
           <p className="mt-4 max-w-2xl text-base text-white/85 sm:text-lg">
-            {t('landing.heroSubtitle')}
+            {getText(cms, 'hero', 'subtitle', locale, t('landing.heroSubtitle'))}
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg" variant="gold">
               <Link href="/ideas/new">
                 <Lightbulb className="h-5 w-5" />
-                {t('landing.heroPrimaryCta')}
+                {getText(cms, 'hero', 'primary_cta', locale, t('landing.heroPrimaryCta'))}
                 <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/40 bg-white/5 text-white hover:bg-white/15">
-              <Link href="/about">{t('landing.learnMore')}</Link>
+              <Link href="/about">{getText(cms, 'hero', 'learn_more', locale, t('landing.learnMore'))}</Link>
             </Button>
           </div>
 
-          <div className="mt-10 max-w-xl">
-            <Countdown target={SUBMISSION_WINDOW_END} />
-          </div>
+          {isSectionEnabled(cms, 'countdown') && (
+            <div className="mt-10 max-w-xl">
+              <Countdown target={SUBMISSION_WINDOW_END} />
+            </div>
+          )}
         </div>
       </section>
 
       {/* ===== Stats strip ===== */}
+      {isSectionEnabled(cms, 'stats') && (
       <section id="stats" className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">{t('landing.statsTitle')}</h2>
@@ -115,15 +120,17 @@ export default async function LandingPage({
         </div>
         <StatsBlock stats={stats} locale={locale} />
       </section>
+      )}
 
       {/* ===== How it works — 4 steps ===== */}
+      {isSectionEnabled(cms, 'how_it_works') && (
       <section className="border-y border-border bg-brand-teal-light/40">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
-              {t('landing.fourStepsTitle')}
+              {getText(cms, 'how_it_works', 'title', locale, t('landing.fourStepsTitle'))}
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">{t('landing.howItWorksSubtitle')}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{getText(cms, 'how_it_works', 'subtitle', locale, t('landing.howItWorksSubtitle'))}</p>
           </div>
           <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((s, i) => (
@@ -153,6 +160,7 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
+      )}
 
       {/* ===== Preview cards: audience + criteria ===== */}
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
@@ -181,6 +189,7 @@ export default async function LandingPage({
       </section>
 
       {/* ===== Partners strip ===== */}
+      {isSectionEnabled(cms, 'partners') && (
       <section className="border-y border-border bg-card">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8">
           <h2 className="text-center text-xl font-bold text-brand-teal">{t('landing.partnersTitle')}</h2>
@@ -201,8 +210,10 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
+      )}
 
       {/* ===== FAQ preview ===== */}
+      {isSectionEnabled(cms, 'faq_preview') && (
       <section className="mx-auto max-w-4xl px-4 py-14 sm:px-8">
         <h2 className="text-center text-2xl font-bold text-brand-teal sm:text-3xl">{t('landing.faqTitle')}</h2>
         <div className="mt-8 divide-y divide-border rounded-xl border border-border bg-card">
@@ -221,25 +232,28 @@ export default async function LandingPage({
           </Button>
         </div>
       </section>
+      )}
 
       {/* ===== Final CTA ===== */}
+      {isSectionEnabled(cms, 'cta_footer') && (
       <section className="border-t border-border bg-gradient-to-br from-brand-teal-light/60 to-brand-cyan-light/40">
         <div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-8">
-          <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">{t('landing.finalCtaTitle')}</h2>
+          <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">{getText(cms, 'cta_footer', 'title', locale, t('landing.finalCtaTitle'))}</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
-            {t('landing.finalCtaSubtitle')}
+            {getText(cms, 'cta_footer', 'subtitle', locale, t('landing.finalCtaSubtitle'))}
           </p>
           <div className="mt-6 flex justify-center">
             <Button asChild size="lg">
               <Link href="/ideas/new">
                 <Lightbulb className="h-4 w-4" />
-                {t('landing.heroPrimaryCta')}
+                {getText(cms, 'cta_footer', 'button', locale, t('landing.heroPrimaryCta'))}
                 <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>
             </Button>
           </div>
         </div>
       </section>
+      )}
 
       <SiteFooter locale={locale} />
       <BackToTop label={t('common.backToTop')} />
