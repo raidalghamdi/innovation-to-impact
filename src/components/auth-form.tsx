@@ -60,8 +60,8 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
-          <span className="mx-auto mb-2 text-brand-teal">
-            <Logo className="h-10 w-10" />
+          <span className="mx-auto mb-2 inline-flex items-center justify-center rounded-xl bg-brand-teal p-2">
+            <Logo className="h-10 w-10" white />
           </span>
           <CardTitle className="text-brand-teal">
             {isSignup ? t('signupTitle') : t('loginTitle')}

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { KPICard } from '@/components/kpi-card';
 import { Lightbulb, GitBranch, FlaskConical, TrendingUp } from 'lucide-react';
-import { formatSAR, cn } from '@/lib/utils';
+import { formatSAR, formatNumber, cn } from '@/lib/utils';
 
 type Stats = {
   total: number;
@@ -63,9 +63,9 @@ export function StatsBlock({ stats, locale }: { stats: Stats; locale: string }) 
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label={t('statIdeas')} value={scaled.total} icon={Lightbulb} />
-        <KPICard label={t('statPipeline')} value={scaled.inPipeline} icon={GitBranch} />
-        <KPICard label={t('statPilots')} value={scaled.inPilot} icon={FlaskConical} />
+        <KPICard label={t('statIdeas')} value={formatNumber(scaled.total)} icon={Lightbulb} />
+        <KPICard label={t('statPipeline')} value={formatNumber(scaled.inPipeline)} icon={GitBranch} />
+        <KPICard label={t('statPilots')} value={formatNumber(scaled.inPilot)} icon={FlaskConical} />
         <KPICard
           label={t('statBenefits')}
           value={formatSAR(scaled.realizedBenefits, locale)}

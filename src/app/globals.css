@@ -53,6 +53,14 @@
   [dir='rtl'] {
     text-align: right;
   }
+
+  /* Force Latin (Western Arabic) digits everywhere — user preference.
+     Overrides any font that would otherwise render Arabic-Indic digits
+     when a numeric string is embedded in RTL text. */
+  :root, [dir='rtl'], [dir='ltr'] {
+    font-feature-settings: 'lnum' 1, 'tnum' 0;
+    font-variant-numeric: lining-nums;
+  }
 }
 
 @layer components {

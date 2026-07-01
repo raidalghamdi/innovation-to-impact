@@ -168,7 +168,8 @@ export default async function AdminAnalyticsPage({
     getTopEvaluators(),
   ]);
 
-  const sar = new Intl.NumberFormat(isAr ? 'ar-SA' : 'en-US').format(
+  // Always Latin digits regardless of UI locale (per user preference)
+  const sar = new Intl.NumberFormat('en-US').format(
     kpis.realized_financial_impact ?? 0
   );
 

@@ -5,10 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatSAR(value: number, locale: string) {
-  return new Intl.NumberFormat(locale === 'ar' ? 'ar-SA' : 'en-US', {
+// Always render numbers with Latin (Western Arabic) digits — 1,230,000 not ١،٢٣٠،٠٠٠.
+// User preference: numbers stay in English digits across the site regardless of UI locale.
+export function formatSAR(value: number, _locale?: string) {
+  return new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+// Generic number formatter with Latin digits and grouping. Use everywhere
+// numbers appear so they stay consistent between AR/EN.
+export function formatNumber(value: number, opts?: Intl.NumberFormatOptions) {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0, ...opts }).format(value);
 }
 
 export function formatDate(value: string | null | undefined, locale: string) {
