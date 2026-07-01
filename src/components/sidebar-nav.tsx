@@ -18,6 +18,7 @@ import {
   BookOpen,
   ScrollText,
   BarChart3,
+  Trophy,
   Settings,
   Cog,
   GitBranch,
@@ -55,6 +56,7 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
       { href: '/pilots', key: 'pilots', icon: FlaskConical, stage: '6' },
       { href: '/implementation', key: 'implementation', icon: Rocket, stage: '7' },
       { href: '/benefits', key: 'benefits', icon: TrendingUp, stage: '8' },
+      { href: '/leaderboard', key: 'leaderboard', icon: Trophy },
     ],
   },
   {
@@ -67,6 +69,7 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
       { href: '/knowledge', key: 'knowledge', icon: BookOpen },
       { href: '/compliance', key: 'compliance', icon: ScrollText },
       { href: '/analytics', key: 'analytics', icon: BarChart3, roles: ['admin'] },
+      { href: '/admin/analytics', key: 'adminAnalytics', icon: BarChart3, roles: ['admin'] },
       { href: '/admin', key: 'admin', icon: Cog, roles: ['admin'] },
       { href: '/admin/audit', key: 'audit', icon: History, roles: ['admin'] },
       { href: '/settings', key: 'settings', icon: Settings },

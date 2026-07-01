@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/status-badge';
 import { StageTimeline } from '@/components/stage-timeline';
 import { StatsBlock } from '@/components/stats-block';
+import { GamificationPanel } from '@/components/gamification-panel';
 import { BackToTop } from '@/components/back-to-top';
 import { Link } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/server';
@@ -123,6 +124,9 @@ export default async function DashboardPage({
           )}
         </section>
       )}
+
+      {/* ===== Gamification — points, level, badges ===== */}
+      {userId && <GamificationPanel userId={userId} locale={locale} />}
 
       {/* ===== Platform activity with timeframe toggle ===== */}
       <section className="mt-10">

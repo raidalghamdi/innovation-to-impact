@@ -7,8 +7,10 @@ import { StatusBadge } from '@/components/status-badge';
 import { StageTimeline } from '@/components/stage-timeline';
 import { Link } from '@/i18n/routing';
 import { fetchIdeas } from '@/lib/data';
+import { findSimilarIdeas } from '@/lib/similarity';
 import { ideas as demoIdeas, userName, themeName, activityName, benefits } from '@/lib/demo-data';
 import { formatDate } from '@/lib/utils';
+import { Sparkles } from 'lucide-react';
 
 export default async function IdeaDetailPage({
   params,
@@ -19,6 +21,7 @@ export default async function IdeaDetailPage({
   setRequestLocale(locale);
   const t = await getTranslations('ideas');
   const tc = await getTranslations('common');
+  const tsim = await getTranslations('similarity');
 
   const allIdeas = await fetchIdeas();
   const idea = allIdeas.find((i) => i.id === id) ?? demoIdeas.find((i) => i.id === id);
@@ -28,6 +31,11 @@ export default async function IdeaDetailPage({
     (o) => o.id !== idea.id && (o.category === idea.category || o.strategic_theme_id === idea.strategic_theme_id)
   ).slice(0, 4);
   const ideaBenefits = benefits.filter((b) => b.idea_id === idea.id);
+
+  // AI similarity — related ideas by trigram match on the idea's text.
+  const similarQuery =
+    idea.problem_statement || (locale === 'ar' ? idea.title_ar : idea.title_en) || '';
+  const similarIdeas = await findSimilarIdeas(similarQuery, idea.id, 0.2, 5);
 
   return (
     <AppShell>
@@ -120,6 +128,38 @@ export default async function IdeaDetailPage({
                       >
                         <span className="line-clamp-1">{locale === 'ar' ? r.title_ar : r.title_en}</span>
                         <span className="text-xs text-brand-gold">{r.code}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-brand-teal">
+                <Sparkles className="h-4 w-4 text-brand-cyan" />
+                {tsim('relatedTitle')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {similarIdeas.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{tsim('relatedEmpty')}</p>
+              ) : (
+                <ul className="space-y-2">
+                  {similarIdeas.map((r) => (
+                    <li key={r.id}>
+                      <Link
+                        href={`/ideas/${r.id}`}
+                        className="flex items-center justify-between gap-3 rounded-md border border-border p-2 text-sm hover:bg-muted/50"
+                      >
+                        <span className="line-clamp-1" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+                          {(locale === 'ar' ? r.title_ar : r.title_en) || r.title_en || r.title_ar || r.code}
+                        </span>
+                        <span className="shrink-0 rounded-full bg-brand-teal-light px-2 py-0.5 text-[11px] font-medium text-brand-teal">
+                          {Math.round(r.similarity * 100)}%
+                        </span>
                       </Link>
                     </li>
                   ))}

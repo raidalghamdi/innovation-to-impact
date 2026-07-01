@@ -66,6 +66,17 @@ Marketing/content routes (no auth): `/` (rebuilt landing with countdown + stats 
 
 App routes added: `/search` (idea search + filters), `/notifications`, `/admin/audit`, `/admin/cms`. The legacy `/challenges/*` route was removed and now **301-redirects** to `/ideas` (`next.config.js`). Idea submission is a **multi-step** form with localStorage autosave and character counters (`src/components/idea-form.tsx`). SEO: `public/robots.txt` + generated `src/app/sitemap.ts`.
 
+### Gamification, AI similarity & analytics (Session 2)
+
+Built on the `innovation`-schema views, functions, and RPCs shipped in migration `00006` (the app only reads them — no SQL was added or changed):
+
+- **Leaderboard** (`/leaderboard`) — reads the `v_leaderboard` view: podium for the top 3, table for the rest, current-user highlight, bilingual/RTL. Linked from the sidebar (all roles) and the dashboard.
+- **Gamification** — a points/level/badges panel on `/dashboard` (earned vs locked badge grid) plus a points pill in the top bar, sourced from `user_profiles`, `badges`, and `user_badges`.
+- **AI similarity** — a debounced live duplicate-check on the idea form title (RPC `find_similar_ideas`, pg_trgm) with a non-blocking suggestion panel and a gentle nudge on strong matches, plus a "Related ideas" card on each idea detail page.
+- **Admin analytics** (`/admin/analytics`, admin only) — KPI tiles (`v_platform_kpis`), a funnel chart (`v_funnel`), a monthly cohort chart (`v_monthly_cohort`), and theme-activity / top-evaluator tables (`v_theme_activity`, `v_top_evaluators`). Charts are inline SVG/CSS — no chart libraries.
+
+See `SESSION2_REPORT.md` for the full file-by-file breakdown.
+
 ### Features
 
 - **Full bilingual UI** — Arabic and English with a live toggle; full RTL/LTR mirroring driven by `next-intl`.

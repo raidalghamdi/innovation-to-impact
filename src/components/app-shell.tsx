@@ -7,6 +7,7 @@ import { SidebarNav } from '@/components/sidebar-nav';
 import { LanguageToggle } from '@/components/language-toggle';
 import { Logo } from '@/components/logo';
 import { NotificationBell } from '@/components/notification-bell';
+import { PointsBadge } from '@/components/points-badge';
 import { GlobalSearch } from '@/components/global-search';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
@@ -69,6 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {t('nav.submitIdea')}
             </Link>
           </Button>
+          <PointsBadge userId={userId} />
           <NotificationBell userId={userId} />
           <LanguageToggle />
         </div>

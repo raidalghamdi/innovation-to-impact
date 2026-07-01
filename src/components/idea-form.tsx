@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Paperclip,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import type { StrategicTheme, Activity } from '@/lib/demo-data';
 
@@ -52,6 +53,15 @@ function smartTitle(text: string, locale: string): string {
   return kept.slice(0, 6).join(' ');
 }
 
+type SimilarIdea = {
+  id: string;
+  code: string;
+  title_ar: string | null;
+  title_en: string | null;
+  status: string | null;
+  similarity: number;
+};
+
 // Character limits per field.
 const LIMITS = { title: 120, summary: 300, description: 2000 };
 
@@ -77,6 +87,7 @@ export function IdeaForm({
   const t = useTranslations('ideas');
   const tf = useTranslations('ideaForm');
   const tc = useTranslations('common');
+  const ts = useTranslations('similarity');
   const router = useRouter();
   const isAr = locale === 'ar';
   const Chevron = isAr ? ChevronLeft : ChevronRight;
@@ -92,6 +103,8 @@ export function IdeaForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedNote, setSavedNote] = useState<string | null>(null);
+  const [similar, setSimilar] = useState<SimilarIdea[]>([]);
+  const [checkingSimilar, setCheckingSimilar] = useState(false);
   const restored = useRef(false);
 
   const steps = [tf('steps.basics'), tf('steps.details'), tf('steps.attachments'), tf('steps.review')];
@@ -133,6 +146,38 @@ export function IdeaForm({
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, summary, description, theme, activity]);
+
+  // Debounced AI-similarity check as the user types the title.
+  useEffect(() => {
+    const query = title.trim();
+    if (query.length < 4) {
+      setSimilar([]);
+      setCheckingSimilar(false);
+      return;
+    }
+    const supabase = createClient();
+    if (!supabase) return;
+    setCheckingSimilar(true);
+    const id = setTimeout(async () => {
+      try {
+        const { data } = await supabase.rpc('find_similar_ideas', {
+          query_text: query,
+          exclude_id: null,
+          similarity_threshold: 0.2,
+          max_results: 5,
+        });
+        setSimilar((data as SimilarIdea[]) ?? []);
+      } catch {
+        setSimilar([]);
+      } finally {
+        setCheckingSimilar(false);
+      }
+    }, 400);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title]);
+
+  const strongMatches = similar.filter((s) => s.similarity > 0.5).length;
 
   function suggestTitle() {
     const suggestion = smartTitle(summary || description, locale);
@@ -306,6 +351,46 @@ export function IdeaForm({
                 />
                 <div className="flex justify-end">{counter(summary, LIMITS.summary)}</div>
               </div>
+
+              {/* AI similarity suggestions */}
+              {(checkingSimilar || similar.length > 0) && (
+                <div className="rounded-2xl border border-brand-cyan/30 bg-brand-cyan-light/20 p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-brand-teal">
+                    <Sparkles className="h-4 w-4 text-brand-cyan" />
+                    {checkingSimilar ? ts('checking') : ts('title')}
+                  </div>
+
+                  {strongMatches >= 3 && (
+                    <div className="mt-2 flex items-start gap-2 rounded-lg bg-brand-gold-light/60 p-2.5 text-xs text-brand-teal">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-gold" />
+                      <span>
+                        <strong>{ts('nudgeTitle')}</strong> — {ts('nudge')}
+                      </span>
+                    </div>
+                  )}
+
+                  {similar.length > 0 && (
+                    <ul className="mt-3 space-y-1.5">
+                      {similar.map((s) => (
+                        <li key={s.id}>
+                          <Link
+                            href={`/ideas/${s.id}` as any}
+                            target="_blank"
+                            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm transition hover:border-brand-teal/40"
+                          >
+                            <span className="line-clamp-1 flex-1" dir={isAr ? 'rtl' : 'ltr'}>
+                              {(isAr ? s.title_ar : s.title_en) || s.title_en || s.title_ar || s.code}
+                            </span>
+                            <span className="shrink-0 rounded-full bg-brand-teal-light px-2 py-0.5 text-[11px] font-medium text-brand-teal">
+                              {ts('match', { pct: Math.round(s.similarity * 100) })}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
