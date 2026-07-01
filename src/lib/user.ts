@@ -27,13 +27,13 @@ export async function getCurrentUser(): Promise<CurrentUser> {
   if (!role) {
     try {
       const { data } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .select('role, full_name')
         .eq('id', user.id)
         .maybeSingle();
       if (data && isRole(data.role)) role = data.role as Role;
     } catch {
-      // profiles table not available yet — fall back to email heuristic.
+      // user_profiles table not available yet — fall back to email heuristic.
     }
   }
 

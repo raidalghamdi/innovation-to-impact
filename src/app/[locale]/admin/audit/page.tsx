@@ -17,7 +17,7 @@ async function fetchAudit(): Promise<AuditRow[]> {
     const supabase = await createClient();
     if (!supabase) return [];
     const { data } = await supabase
-      .from('audit_log')
+      .from('audit_logs')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100);
