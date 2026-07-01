@@ -1,6 +1,5 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
-import { CoBrand } from '@/components/logo';
 import { Linkedin, Twitter, Youtube } from 'lucide-react';
 
 const QUICK_LINKS = [
@@ -20,7 +19,7 @@ const SUPPORT_LINKS = [
   { href: '/terms', key: 'terms' },
 ] as const;
 
-export async function SiteFooter({ locale }: { locale: string }) {
+export async function SiteFooter({ locale: _locale }: { locale: string }) {
   const t = await getTranslations('footer');
   const tapp = await getTranslations('app');
 
@@ -28,8 +27,8 @@ export async function SiteFooter({ locale }: { locale: string }) {
     <footer className="border-t border-border bg-brand-teal text-white">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-12 sm:px-8 md:grid-cols-4">
         <div className="md:col-span-1">
-          <CoBrand className="h-14" white locale={locale} />
-          <p className="mt-4 text-sm text-white/80">{t('tagline')}</p>
+          <h3 className="text-sm font-semibold">{tapp('name')}</h3>
+          <p className="mt-3 text-sm text-white/80">{t('tagline')}</p>
           <div className="mt-4 flex gap-3">
             <a href="https://www.linkedin.com" aria-label="LinkedIn" className="text-white/80 hover:text-white">
               <Linkedin className="h-5 w-5" />

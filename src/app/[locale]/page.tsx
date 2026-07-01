@@ -1,6 +1,6 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
-import { Logo, CoBrand } from '@/components/logo';
+import { CoBrand } from '@/components/logo';
 import { LanguageToggle } from '@/components/language-toggle';
 import { SiteFooter } from '@/components/site-footer';
 import { Countdown } from '@/components/countdown';
@@ -79,8 +79,7 @@ export default async function LandingPage({
         <div className="pointer-events-none absolute -bottom-20 -start-20 h-80 w-80 rounded-full bg-brand-cyan-light/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-8 sm:py-20">
-          <CoBrand className="h-20" white locale={locale} />
-          <p className="mt-8 text-xs font-semibold uppercase tracking-wider text-brand-cyan-light">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand-cyan-light">
             {getText(cms, 'hero', 'eyebrow', locale, t('landing.heroEyebrow'))}
           </p>
           <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
