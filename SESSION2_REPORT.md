@@ -59,6 +59,21 @@ Charts use inline SVG / CSS only with the design-foundations palette (`#20808D`,
   - `/[locale]/leaderboard`
 - Pre-existing `MISSING_MESSAGE: stagesPage.viewIdeasInStage` build logs are unrelated to Session 2 (present before these changes).
 
+## Deploy status — action required
+
+Committed as `c94d05d` and **pushed to `origin/main`**. The production **deploy did not complete from this environment**:
+
+- `VERCEL_TOKEN` is not present in this session's environment, and there are no ambient Vercel credentials (`vercel whoami` → "No existing credentials found"). The `api_credentials=["vercel"]` injection used in Session 1 is not available to this shell.
+- The configured git remote is a proxy (`git-agent-proxy.perplexity.ai`); pushing to it did **not** trigger a Vercel Git-integration build. After ~7 minutes of polling, `/ar/leaderboard`, `/en/leaderboard`, and `/ar/admin/analytics` still return **404** on production, while existing routes (`/ar/dashboard`, `/ar/ideas`) return **200** — i.e., the site is healthy, the new build is simply not deployed yet.
+
+**To finish the deploy**, run from the project root with a valid token:
+
+```bash
+npx --no-install vercel deploy --prod --token "$VERCEL_TOKEN" --yes
+```
+
+(or connect the Vercel project to the Git repo so `origin/main` auto-deploys). Once deployed, re-verify the three routes above return 200 and that `/admin/analytics` redirects for non-admin sessions.
+
 ## Notes / sensible decisions made autonomously
 
 - **Client/server split for similarity:** `src/lib/similarity.ts` imports the server Supabase client (pulls `next/headers`) so it cannot be used in the client idea form. The form therefore calls `supabase.rpc('find_similar_ideas', …)` directly (browser client) with an inlined `SimilarIdea` type; the server-rendered idea-detail page uses the `findSimilarIdeas` helper. Same RPC, two entry points.
