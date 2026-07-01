@@ -59,12 +59,10 @@ export function GacLogo({
 }
 
 // CoBrand pairs the Program mark + a vertical divider + the GAC parent mark.
-// Per brand guidance, the logo must ALWAYS sit on a dark background. When
-// `white` is true we assume the caller has already put us on a dark surface
-// (e.g. hero, footer). Otherwise we render our own dark badge so the logo
-// still appears on dark even inside a light header.
+// - white=true  → fully-white variants of both marks (for dark surfaces: hero, footer)
+// - white=false → natural colored variants (for light headers, cards)
 export function CoBrand({
-  className = 'h-9',
+  className = 'h-12',
   white = false,
   locale,
 }: {
@@ -72,25 +70,12 @@ export function CoBrand({
   white?: boolean;
   locale?: string;
 }) {
-  // Always use the white/reversed marks — the brand rule is white-on-dark.
-  const inner = (
-    <span className="inline-flex items-center gap-3">
-      <Logo className={className} white locale={locale} showWordmark={false} />
-      <span className="h-6 w-px bg-white/30" aria-hidden="true" />
-      <GacLogo className={className} white />
-    </span>
-  );
-
-  if (white) {
-    // Caller-provided dark surface (hero/footer) — no extra badge needed.
-    return inner;
-  }
-
-  // Light-surface caller (header, etc.) — wrap in a dark rounded badge so the
-  // logo still meets the brand rule of white-on-dark.
+  const dividerColor = white ? 'bg-white/40' : 'bg-slate-300';
   return (
-    <span className="inline-flex items-center rounded-xl bg-brand-teal px-3 py-1.5">
-      {inner}
+    <span className="inline-flex items-center gap-3">
+      <Logo className={className} white={white} locale={locale} showWordmark={false} />
+      <span className={`h-8 w-px ${dividerColor}`} aria-hidden="true" />
+      <GacLogo className={className} white={white} />
     </span>
   );
 }

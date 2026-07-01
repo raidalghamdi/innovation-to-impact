@@ -29,9 +29,9 @@ export async function PublicShell({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
+      <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
         <Link href="/" className="flex items-center gap-2.5">
-          <CoBrand className="h-8" locale={locale} />
+          <CoBrand className="h-12" locale={locale} />
         </Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label={t('footer.quickLinks')}>
           {NAV.map((n) => (

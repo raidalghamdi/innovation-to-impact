@@ -28,7 +28,7 @@ export async function SiteFooter({ locale }: { locale: string }) {
     <footer className="border-t border-border bg-brand-teal text-white">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-12 sm:px-8 md:grid-cols-4">
         <div className="md:col-span-1">
-          <CoBrand className="h-10" white locale={locale} />
+          <CoBrand className="h-14" white locale={locale} />
           <p className="mt-4 text-sm text-white/80">{t('tagline')}</p>
           <div className="mt-4 flex gap-3">
             <a href="https://www.linkedin.com" aria-label="LinkedIn" className="text-white/80 hover:text-white">

@@ -52,9 +52,9 @@ export default async function LandingPage({
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
+      <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
         <Link href="/" className="flex items-center gap-2.5">
-          <CoBrand className="h-8" locale={locale} />
+          <CoBrand className="h-12" locale={locale} />
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
@@ -79,7 +79,7 @@ export default async function LandingPage({
         <div className="pointer-events-none absolute -bottom-20 -start-20 h-80 w-80 rounded-full bg-brand-cyan-light/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-8 sm:py-20">
-          <CoBrand className="h-12" white locale={locale} />
+          <CoBrand className="h-20" white locale={locale} />
           <p className="mt-8 text-xs font-semibold uppercase tracking-wider text-brand-cyan-light">
             {getText(cms, 'hero', 'eyebrow', locale, t('landing.heroEyebrow'))}
           </p>
