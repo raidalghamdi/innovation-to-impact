@@ -16,13 +16,16 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          teal: '#01696F',
-          'teal-dark': '#014C50',
-          'teal-light': '#E6F0F0',
+          // Innovation Program identity (Moon Raker + Swans Down + Humming Bird)
+          teal: '#1C4854',
+          'teal-dark': '#102E37',
+          'teal-light': '#D8EFE5',
+          cyan: '#4ABFCD',
+          'cyan-light': '#CFEDF8',
           gold: '#C8A23A',
           'gold-light': '#F5EDD6',
           cream: '#F7F5EF',
-          ink: '#1F2937',
+          ink: '#232529',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -62,6 +65,8 @@ const config: Config = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        '2xl': '1.25rem',
+        '3xl': '1.75rem',
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'var(--font-arabic)', 'system-ui', 'sans-serif'],

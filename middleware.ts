@@ -2,6 +2,7 @@ import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { routing } from './src/i18n/routing';
+import { canAccess, roleFromEmail, ROLE_HOME, isRole, type Role } from './src/lib/roles';
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -10,19 +11,20 @@ const PROTECTED_PREFIXES = [
   '/dashboard',
   '/strategy',
   '/ideas',
+  '/my-ideas',
   '/activities',
   '/evaluation',
   '/committee',
   '/pilots',
   '/implementation',
   '/benefits',
-  '/funding',
   '/ip',
   '/knowledge',
   '/compliance',
   '/analytics',
   '/admin',
   '/settings',
+  '/notifications',
 ];
 
 export async function middleware(request: NextRequest) {
@@ -68,6 +70,19 @@ export async function middleware(request: NextRequest) {
     url.pathname = `/${locale}/login`;
     url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url);
+  }
+
+  // RBAC — enforce role-based access on protected routes.
+  if (isProtected && user) {
+    const role: Role = isRole(user.user_metadata?.role)
+      ? (user.user_metadata!.role as Role)
+      : roleFromEmail(user.email);
+    if (!canAccess(role, pathnameWithoutLocale)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${locale}${ROLE_HOME[role]}`;
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;

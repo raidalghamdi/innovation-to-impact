@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Sparkles } from 'lucide-react';
 import type { Idea, StrategicTheme, Activity } from '@/lib/demo-data';
+import { PIPELINE_STATUSES } from '@/lib/demo-data';
 
 const STATUSES = [
   'draft', 'submitted', 'screening', 'evaluation', 'committee',
@@ -28,11 +30,13 @@ export function IdeasExplorer({
 }) {
   const t = useTranslations('ideas');
   const tc = useTranslations('common');
-  const [q, setQ] = useState('');
-  const [theme, setTheme] = useState('');
-  const [status, setStatus] = useState('');
-  const [activity, setActivity] = useState('');
-  const [stage, setStage] = useState('');
+  const sp = useSearchParams();
+  const pipelineOnly = sp.get('pipeline') === '1';
+  const [q, setQ] = useState(sp.get('q') ?? '');
+  const [theme, setTheme] = useState(sp.get('theme') ?? '');
+  const [status, setStatus] = useState(sp.get('status') ?? '');
+  const [activity, setActivity] = useState(sp.get('activity') ?? '');
+  const [stage, setStage] = useState(sp.get('stage') ?? '');
 
   const filtered = useMemo(() => {
     return ideas.filter((i) => {
@@ -44,9 +48,10 @@ export function IdeasExplorer({
       if (status && i.status !== status) return false;
       if (activity && i.activity_id !== activity) return false;
       if (stage !== '' && String(i.current_stage) !== stage) return false;
+      if (pipelineOnly && !PIPELINE_STATUSES.includes(i.status)) return false;
       return true;
     });
-  }, [ideas, q, theme, status, activity, stage]);
+  }, [ideas, q, theme, status, activity, stage, pipelineOnly]);
 
   // naive similarity hint based on shared category/theme
   function similar(i: Idea) {

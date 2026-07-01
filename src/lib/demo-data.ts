@@ -80,6 +80,9 @@ export type KnowledgeArticle = {
   type: string;
   tags: string[];
   published_at: string;
+  source_url?: string;
+  source_label_ar?: string;
+  source_label_en?: string;
 };
 
 export const users: UserProfile[] = [
@@ -90,6 +93,7 @@ export const users: UserProfile[] = [
   { id: 'u5', full_name: 'عبدالله الدوسري', email: 'abdullah.aldosari@gac.gov.sa', role: 'evaluator', department: 'Digital Transformation', user_category: 'employee' },
   { id: 'u6', full_name: 'هند الزهراني', email: 'hind.alzahrani@gac.gov.sa', role: 'evaluator', department: 'Mergers & Acquisitions', user_category: 'employee' },
   { id: 'u7', full_name: 'فهد المطيري', email: 'fahad.almutairi@startup.sa', role: 'member', department: '—', user_category: 'startup' },
+  { id: 'u-innovator', full_name: 'مشارك تجريبي', email: 'innovator@gac-demo.sa', role: 'innovator', department: '—', user_category: 'employee' },
   { id: 'u8', full_name: 'Lina Park', email: 'lina.park@academic.edu', role: 'member', department: 'KAUST', user_category: 'academic' },
 ];
 
@@ -130,8 +134,19 @@ export const benefits: Benefit[] = [
 ];
 
 export const knowledge: KnowledgeArticle[] = [
+  // Internal platform knowledge
   { id: 'k1', title_ar: 'دروس من منصة رصد الأسعار', title_en: 'Lessons from the price monitoring pilot', type: 'lesson_learned', tags: ['pilot', 'data', 'monitoring'], published_at: '2025-06-05' },
   { id: 'k2', title_ar: 'دليل تشغيل بوابة البلاغات', title_en: 'Complaints portal playbook', type: 'playbook', tags: ['playbook', 'sme', 'portal'], published_at: '2025-05-10' },
+
+  // Official GAC guides (source: https://gac.gov.sa)
+  { id: 'k3', title_ar: 'الدليل الإرشادي لفحص التركز الاقتصادي', title_en: 'Guidelines on the review of economic concentrations', type: 'official_guide', tags: ['gac', 'mergers', 'concentration'], published_at: '2025-04-01', source_label_ar: 'إصدار 5 — أبريل 2025', source_label_en: 'Edition 5 — April 2025', source_url: 'https://gacbep.gac.gov.sa/cms/912a9673-01a9-4737-a480-f8f65783205f.pdf' },
+  { id: 'k4', title_ar: 'الدليل الإرشادي للتعامل مع الاتفاقيات الرأسية والأفقية', title_en: 'Guidelines on horizontal and vertical agreements', type: 'official_guide', tags: ['gac', 'agreements', 'antitrust'], published_at: '2025-07-01', source_label_ar: 'يوليو 2025', source_label_en: 'July 2025', source_url: 'https://gacbep.gac.gov.sa/cms/9e6286ba-8c8c-4713-ba2d-3f48cdaa368c.pdf' },
+  { id: 'k5', title_ar: 'دليل تعزيز المنافسة في قطاع منصّات توصيل الطعام', title_en: 'Guideline for promoting competition in food-delivery platforms', type: 'official_guide', tags: ['gac', 'digital-platforms', 'delivery'], published_at: '2026-02-01', source_label_ar: 'فبراير 2026', source_label_en: 'February 2026', source_url: 'https://istitlaa.ncc.gov.sa/ar/Trade/gac/guidelinecompetitioninfooddeliveryplatform/Pages/default.aspx' },
+  { id: 'k6', title_ar: 'دليل الامتثال لنظام المنافسة ولائحته التنفيذية', title_en: 'Compliance guide for the Competition Law and its bylaws', type: 'official_guide', tags: ['gac', 'compliance', 'law'], published_at: '2021-12-01', source_label_ar: 'ديسمبر 2021', source_label_en: 'December 2021', source_url: 'https://beta.gac.gov.sa/APIGateway/api/Attachment/ShowAttachment/c60fbcce-1fc4-411f-84ec-e6aee182b6e4' },
+  { id: 'k7', title_ar: 'الإرشادات العامة لمكافحة التواطؤ بين مقدّمي العروض في المنافسات العامة', title_en: 'Guidelines on combating bid-rigging in public tenders', type: 'official_guide', tags: ['gac', 'enforcement', 'bid-rigging'], published_at: '2022-01-01', source_label_ar: '2021–2022', source_label_en: '2021–2022', source_url: 'https://beta.gac.gov.sa/APIGateway/api/Attachment/ShowAttachment/ed31a355-4716-44dd-a98b-301637263aa3' },
+  { id: 'k8', title_ar: 'المعجم العربي للمنافسة', title_en: 'Arabic competition glossary', type: 'official_guide', tags: ['gac', 'reference', 'glossary'], published_at: '2022-01-01', source_label_ar: '2022', source_label_en: '2022', source_url: 'https://acnbe.gac.gov.sa/Assets/pdfUploads/638658814392983212_%D8%A7%D9%84%D9%85%D8%B9%D8%AC%D9%85%20%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%20%D9%84%D9%84%D9%85%D9%86%D8%A7%D9%81%D8%B3%D8%A9%20-%20%D8%A7%D9%84%D9%87%D9%8A%D8%A6%D8%A9%20%D8%A7%D9%84%D8%B9%D8%A7%D9%85%D8%A9%20%D9%84%D9%84%D9%85%D9%86%D8%A7%D9%81%D8%B3%D8%A9%20%D8%A8%D8%A7%D9%84%D9%85%D9%85%D9%84%D9%83%D8%A9%20%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9.pdf' },
+  { id: 'k9', title_ar: 'سياسة الخصوصية — الإصدار الأول', title_en: 'Privacy policy — version 1', type: 'official_guide', tags: ['gac', 'privacy', 'policy'], published_at: '2024-10-15', source_label_ar: 'أكتوبر 2024', source_label_en: 'October 2024', source_url: 'https://gacbep.gac.gov.sa/cms/V1_%D8%A7%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A7%D9%84%D8%AE%D8%B5%D9%88%D8%B5%D9%8A%D8%A9_15-10-2024_.pdf' },
+  { id: 'k10', title_ar: 'التقرير السنوي لشبكة المنافسة العربية', title_en: 'Arab Competition Network — annual report', type: 'official_guide', tags: ['gac', 'arab-network', 'annual-report'], published_at: '2024-01-01', source_label_ar: '2023–2024', source_label_en: '2023–2024', source_url: 'https://acnbe.gac.gov.sa/Assets/pdfUploads/638658818107911912_%D8%A7%D9%84%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20%D8%A7%D9%84%D8%B3%D9%86%D9%88%D9%8A%20%D9%84%D8%B4%D8%A8%D9%83%D8%A9%20%D8%A7%D9%84%D9%85%D9%86%D8%A7%D9%81%D8%B3%D8%A9%20%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9%202023-2024.pdf' },
 ];
 
 export const compliance: ComplianceControl[] = [

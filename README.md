@@ -38,6 +38,34 @@ The interface is fully bilingual with a live Arabic ⇄ English toggle and compl
 
 Supporting modules: **Dashboard** (`/dashboard`), **Compliance Register** (`/compliance`), **Analytics** (`/analytics`), **Admin** (`/admin`), and **Settings** (`/settings`).
 
+### Roles & Demo Accounts
+
+The platform uses a **four-role** access model, enforced in `middleware.ts` (RBAC) and reflected in the role-aware sidebar. Roles are resolved from `profiles.role`, falling back to the auth email local-part (`src/lib/roles.ts`).
+
+| Role | Home | Can access |
+|------|------|-----------|
+| **submitter** | `/my-ideas` | idea submission, own ideas, public content, notifications, search |
+| **evaluator** | `/evaluation` | evaluation queue + scorecards, ideas, notifications, search |
+| **judge** | `/committee` | committee decisions, evaluations (read), ideas, notifications |
+| **admin** | `/admin` | everything, incl. `/admin/audit` (audit log) and `/admin/cms` (content) |
+
+Demo accounts (create in Supabase Auth, then seed `profiles` — see migration `00004`):
+
+| Email | Password | Role |
+|-------|----------|------|
+| `submitter@gac-demo.sa` | `Demo2026!` | submitter |
+| `evaluator@gac-demo.sa` | `Demo2026!` | evaluator |
+| `judge@gac-demo.sa` | `Demo2026!` | judge |
+| `admin@gac-demo.sa` | `Demo2026!` | admin |
+
+> **Note:** These auth users were **not** created in this session (no service-role/admin credentials were available). Create them via the Supabase dashboard → Authentication → Users, then run the seed block at the bottom of `00004_platform_overhaul.sql` with the real UUIDs.
+
+### Public content & new routes
+
+Marketing/content routes (no auth): `/` (rebuilt landing with countdown + stats + how-it-works), `/about`, `/target-audience`, `/evaluation-criteria`, `/expected-solutions`, `/partners`, `/faq`, `/support`, `/roadmap`, `/events` (+ `/events/main`, `/events/hackathon`, `/events/workshops`), `/privacy`, `/terms`.
+
+App routes added: `/search` (idea search + filters), `/notifications`, `/admin/audit`, `/admin/cms`. The legacy `/challenges/*` route was removed and now **301-redirects** to `/ideas` (`next.config.js`). Idea submission is a **multi-step** form with localStorage autosave and character counters (`src/components/idea-form.tsx`). SEO: `public/robots.txt` + generated `src/app/sitemap.ts`.
+
 ### Features
 
 - **Full bilingual UI** — Arabic and English with a live toggle; full RTL/LTR mirroring driven by `next-intl`.
@@ -101,7 +129,9 @@ Create `.env.local` from `.env.local.example`:
 2. Apply the migrations, in order, from the SQL editor or the Supabase CLI:
    - `supabase/migrations/00001_initial_schema.sql` — 18 tables, enums, RLS policies, triggers, the `is_admin()` helper, and the `handle_new_user()` trigger.
    - `supabase/migrations/00002_seed_data.sql` — sample data: 8 users, 3 themes, 2 activities, 15 ideas, evaluations, decisions, pilots, benefits, funding, IP records, knowledge entries, 15 compliance controls, and notifications.
-3. Both migrations are **idempotent** (`ON CONFLICT DO NOTHING`, `IF NOT EXISTS`), so they can be re-applied safely.
+   - `supabase/migrations/00003_gac_official_guides.sql` — official GAC guide content.
+   - `supabase/migrations/00004_platform_overhaul.sql` — Session 1 overhaul: `profiles` (role + points/level), ideas lifecycle columns (`lifecycle_status`, `parent_idea_id`, revision fields, timestamps), and new tables `evaluations`, `notifications`, `audit_log`, `idea_feedback`, `cms_content` — all with RLS policies, indexes, and a CMS-slug seed. Includes a commented `profiles` seed block for the four demo accounts.
+3. All migrations are **idempotent** (`ON CONFLICT DO NOTHING`, `IF NOT EXISTS`, drop-then-create policies), so they can be re-applied safely.
 4. Copy your project URL and keys into `.env.local`.
 
 > **Seed note:** The seed migration temporarily relaxes the `user_profiles` foreign key so demo profiles can exist without `auth.users` rows. In production, real users are created through Supabase Auth and the `handle_new_user()` trigger populates their profile automatically.

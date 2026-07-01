@@ -41,12 +41,55 @@ export default async function AnalyticsPage({
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <KPICard label={t('participation')} value={total} icon={Users} />
-        <KPICard label={t('conversion')} value={`${conversion}%`} icon={GitMerge} />
-        <KPICard label={t('cycleTime')} value={42} icon={Clock} />
-        <KPICard label={t('pilotSuccess')} value={`${pilotSuccess}%`} icon={FlaskConical} />
-        <KPICard label={t('scaleRate')} value={`${scaleRate}%`} icon={Rocket} />
-        <KPICard label={t('benefitsRealized')} value={`${formatSAR(realized, locale)} SAR`} icon={TrendingUp} accent="gold" />
+        <KPICard
+          label={t('participation')}
+          value={total}
+          icon={Users}
+          href="/ideas"
+          hrefLabel={t('viewIdeas')}
+          locale={locale}
+        />
+        <KPICard
+          label={t('conversion')}
+          value={`${conversion}%`}
+          icon={GitMerge}
+          href="/ideas?status=approved"
+          hrefLabel={t('viewApproved')}
+          locale={locale}
+        />
+        <KPICard
+          label={t('cycleTime')}
+          value={42}
+          icon={Clock}
+          href="/ideas?pipeline=1"
+          hrefLabel={t('viewIdeas')}
+          locale={locale}
+        />
+        <KPICard
+          label={t('pilotSuccess')}
+          value={`${pilotSuccess}%`}
+          icon={FlaskConical}
+          href="/pilots"
+          hrefLabel={t('viewPilots')}
+          locale={locale}
+        />
+        <KPICard
+          label={t('scaleRate')}
+          value={`${scaleRate}%`}
+          icon={Rocket}
+          href="/ideas?stage=7"
+          hrefLabel={t('viewImplementation')}
+          locale={locale}
+        />
+        <KPICard
+          label={t('benefitsRealized')}
+          value={`${formatSAR(realized, locale)} SAR`}
+          icon={TrendingUp}
+          accent="gold"
+          href="/benefits"
+          hrefLabel={t('viewBenefits')}
+          locale={locale}
+        />
       </div>
 
       <Card className="mt-6">

@@ -1,5 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Link } from '@/i18n/routing';
+import { ArrowUpLeft, ArrowUpRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export function KPICard({
@@ -8,15 +10,22 @@ export function KPICard({
   hint,
   icon: Icon,
   accent = 'teal',
+  href,
+  hrefLabel,
+  locale,
 }: {
   label: string;
   value: string | number;
   hint?: string;
   icon?: LucideIcon;
   accent?: 'teal' | 'gold';
+  href?: string;
+  hrefLabel?: string;
+  locale?: string;
 }) {
-  return (
-    <Card className="p-5">
+  const Arrow = locale === 'ar' ? ArrowUpLeft : ArrowUpRight;
+  const inner = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{label}</p>
@@ -36,6 +45,23 @@ export function KPICard({
           </div>
         )}
       </div>
-    </Card>
+      {href && hrefLabel && (
+        <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-teal">
+          {hrefLabel}
+          <Arrow className="h-3 w-3" />
+        </p>
+      )}
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="group block">
+        <Card className="p-5 transition-shadow hover:shadow-md hover:border-brand-teal/40">
+          {inner}
+        </Card>
+      </Link>
+    );
+  }
+  return <Card className="p-5">{inner}</Card>;
 }

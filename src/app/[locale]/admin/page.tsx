@@ -8,7 +8,7 @@ const AUDIT = [
   { id: 'al1', entity: 'idea', action: 'status_changed', actor: 'رائد الغامدي', when: '2025-03-12 10:14' },
   { id: 'al2', entity: 'committee_decision', action: 'approve', actor: 'رائد الغامدي', when: '2025-03-11 16:02' },
   { id: 'al3', entity: 'evaluation', action: 'submitted', actor: 'سارة العتيبي', when: '2025-03-10 09:31' },
-  { id: 'al4', entity: 'funding_request', action: 'approved', actor: 'رائد الغامدي', when: '2025-03-09 14:48' },
+  { id: 'al4', entity: 'knowledge_article', action: 'published', actor: 'رائد الغامدي', when: '2025-03-09 14:48' },
 ];
 
 export default async function AdminPage({

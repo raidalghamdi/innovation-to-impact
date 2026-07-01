@@ -20,9 +20,6 @@ const STATUS_LABELS: Record<string, { ar: string; en: string; tone: string }> = 
   compliant: { ar: 'ملتزم', en: 'Compliant', tone: 'green' },
   in_progress: { ar: 'قيد التنفيذ', en: 'In progress', tone: 'amber' },
   non_compliant: { ar: 'غير ملتزم', en: 'Non-compliant', tone: 'red' },
-  // funding
-  requested: { ar: 'مطلوب', en: 'Requested', tone: 'blue' },
-  disbursed: { ar: 'مصروف', en: 'Disbursed', tone: 'green' },
   // generic
   active: { ar: 'نشطة', en: 'Active', tone: 'green' },
   running: { ar: 'جارية', en: 'Running', tone: 'teal' },

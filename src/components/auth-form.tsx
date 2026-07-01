@@ -116,6 +116,20 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             <Button type="submit" className="w-full" disabled={loading}>
               {isSignup ? t('signUp') : t('signIn')}
             </Button>
+
+            {!isSignup && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-brand-teal text-brand-teal hover:bg-brand-teal-light"
+                onClick={() => {
+                  setEmail('innovator@gac-demo.sa');
+                  setPassword('Demo2026!');
+                }}
+              >
+                {t('useDemoAccount')}
+              </Button>
+            )}
           </form>
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
@@ -127,7 +141,11 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
               {isSignup ? t('signIn') : t('signUp')}
             </Link>
           </p>
-          <p className="mt-3 rounded-md bg-muted px-3 py-2 text-center text-xs text-muted-foreground">
+          <div className="mt-3 rounded-2xl bg-brand-teal-light/60 px-3 py-2 text-center text-xs text-brand-teal">
+            <p className="font-medium">{t('demoCredentials')}</p>
+            <p dir="ltr" className="mt-0.5 font-mono">innovator@gac-demo.sa / Demo2026!</p>
+          </div>
+          <p className="mt-2 text-center text-[11px] text-muted-foreground">
             {t('demoNote')}
           </p>
         </CardContent>

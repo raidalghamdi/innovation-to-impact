@@ -1,29 +1,37 @@
-export function Logo({ className }: { className?: string }) {
+/* eslint-disable @next/next/no-img-element */
+
+// Brand logo (Phase H). Uses the official Competition Innovation Program marks
+// from public/brand/. `white` selects the reversed mark for dark backgrounds.
+// When `locale === 'ar'` the Arabic wordmark is shown alongside the emblem.
+export function Logo({
+  className = 'h-8',
+  white = false,
+  locale,
+  showWordmark = true,
+}: {
+  className?: string;
+  white?: boolean;
+  locale?: string;
+  showWordmark?: boolean;
+}) {
+  const mark = white
+    ? '/brand/Competition-Innovation-Program-logo-white.svg'
+    : '/brand/Competition-Innovation-Program-logo.svg';
+
   return (
-    <svg
-      viewBox="0 0 40 40"
-      className={className}
-      fill="none"
-      aria-label="Innovation to Impact"
-      role="img"
-    >
-      {/* Eight-segment ring representing the 8 stages converging to a core */}
-      <circle cx="20" cy="20" r="6" fill="currentColor" />
-      {Array.from({ length: 8 }).map((_, i) => {
-        const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-        const x = 20 + Math.cos(angle) * 15;
-        const y = 20 + Math.sin(angle) * 15;
-        return (
-          <circle
-            key={i}
-            cx={x}
-            cy={y}
-            r={i === 7 ? 2.6 : 1.8}
-            fill="currentColor"
-            opacity={0.35 + (i / 8) * 0.65}
-          />
-        );
-      })}
-    </svg>
+    <span className="inline-flex items-center gap-2.5">
+      <img
+        src={mark}
+        alt="Innovation to Impact — General Authority for Competition"
+        className={className}
+      />
+      {showWordmark && locale === 'ar' && (
+        <img
+          src="/brand/brnmj-btkr-lmnfs.svg"
+          alt="برنامج ابتكار المنافسة"
+          className={className}
+        />
+      )}
+    </span>
   );
 }

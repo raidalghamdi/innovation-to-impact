@@ -11,6 +11,20 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  async redirects() {
+    return [
+      {
+        source: '/:locale(ar|en)/challenges/:path*',
+        destination: '/:locale/ideas',
+        permanent: true,
+      },
+      {
+        source: '/challenges/:path*',
+        destination: '/ideas',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = withNextIntl(nextConfig);

@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 
 const STAGE_KEYS = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as const;
+const DESC_KEYS = ['d0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8'] as const;
 
 export function StageTimeline({ current }: { current: number }) {
   const t = useTranslations('stages');
@@ -14,11 +15,12 @@ export function StageTimeline({ current }: { current: number }) {
         return (
           <li
             key={key}
+            title={t(DESC_KEYS[idx])}
             className={cn(
-              'flex items-center gap-2 rounded-md border px-3 py-2 text-xs',
+              'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors',
               active && 'border-brand-teal bg-brand-teal-light font-medium text-brand-teal',
               done && 'border-emerald-200 bg-emerald-50 text-emerald-700',
-              !done && !active && 'border-border bg-card text-muted-foreground'
+              !done && !active && 'border-border bg-card text-muted-foreground hover:border-brand-teal/40'
             )}
           >
             <span

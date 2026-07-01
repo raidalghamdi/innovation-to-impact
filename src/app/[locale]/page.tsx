@@ -2,25 +2,30 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { Logo } from '@/components/logo';
 import { LanguageToggle } from '@/components/language-toggle';
+import { SiteFooter } from '@/components/site-footer';
+import { Countdown } from '@/components/countdown';
+import { StickyCta } from '@/components/sticky-cta';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { KPICard } from '@/components/kpi-card';
-import { StatusBadge } from '@/components/status-badge';
+import { StatsBlock } from '@/components/stats-block';
+import { BackToTop } from '@/components/back-to-top';
 import { getStats } from '@/lib/demo-data';
-import { fetchActivities } from '@/lib/data';
-import { formatSAR } from '@/lib/utils';
 import {
   Lightbulb,
-  GitBranch,
-  FlaskConical,
-  TrendingUp,
   ArrowRight,
-  Target,
+  Send,
   ClipboardCheck,
+  CheckCircle2,
   Rocket,
+  Users,
+  ScrollText,
+  Building2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
-const STAGE_ICONS = [Target, Lightbulb, ClipboardCheck, GitBranch, Rocket, TrendingUp, FlaskConical, Rocket, TrendingUp];
+// Submission window end used by the hero countdown (mirrors roadmap /
+// cms_content `countdown_window`).
+const SUBMISSION_WINDOW_END = '2026-09-30T23:59:59';
 
 export default async function LandingPage({
   params,
@@ -31,23 +36,34 @@ export default async function LandingPage({
   setRequestLocale(locale);
   const t = await getTranslations();
   const stats = getStats();
-  const activities = await fetchActivities();
-  const stageKeys = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'];
+  const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
+  const faqItems = (t.raw('faq.items') as { q: string; a: string }[]).slice(0, 3);
+  const partners = (t.raw('partners.partners') as { name: string }[]).slice(0, 6);
+
+  const steps = [
+    { Icon: Send, key: 'step1' },
+    { Icon: ClipboardCheck, key: 'step2' },
+    { Icon: CheckCircle2, key: 'step3' },
+    { Icon: Rocket, key: 'step4' },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
-      <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 sm:px-8">
-        <div className="flex items-center gap-2.5">
-          <span className="text-brand-teal">
-            <Logo className="h-8 w-8" />
-          </span>
-          <span className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold text-brand-teal">{t('app.name')}</span>
-            <span className="text-[11px] text-muted-foreground">{t('app.owner')}</span>
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
+        <Link href="/" className="flex items-center gap-2.5">
+          <Logo className="h-8" locale={locale} />
+        </Link>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <Link href="/about">{t('footer.about')}</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <Link href="/roadmap">{t('footer.roadmap')}</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <Link href="/faq">{t('footer.faq')}</Link>
+          </Button>
           <Button asChild variant="ghost" size="sm">
             <Link href="/login">{t('nav.login')}</Link>
           </Button>
@@ -55,95 +71,179 @@ export default async function LandingPage({
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="border-b border-border bg-brand-teal text-white">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-8">
-          <p className="mb-3 text-sm font-medium text-brand-gold">{t('app.owner')}</p>
-          <h1 className="max-w-3xl text-3xl font-bold leading-tight sm:text-4xl">
+      {/* ===== HERO ===== */}
+      <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-teal-dark text-white">
+        <div className="pointer-events-none absolute -end-20 -top-20 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -start-20 h-80 w-80 rounded-full bg-brand-cyan-light/10 blur-3xl" />
+
+        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-8 sm:py-20">
+          <Logo className="h-12" white locale={locale} />
+          <p className="mt-8 text-xs font-semibold uppercase tracking-wider text-brand-cyan-light">
+            {t('landing.heroEyebrow')}
+          </p>
+          <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
             {t('landing.heroTitle')}
           </h1>
-          <p className="mt-4 max-w-2xl text-base text-white/85">
+          <p className="mt-4 max-w-2xl text-base text-white/85 sm:text-lg">
             {t('landing.heroSubtitle')}
           </p>
+
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild variant="gold" size="lg">
+            <Button asChild size="lg" variant="gold">
               <Link href="/ideas/new">
-                {t('landing.ctaSubmit')}
+                <Lightbulb className="h-5 w-5" />
+                {t('landing.heroPrimaryCta')}
                 <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-              <Link href="/ideas">{t('landing.ctaExplore')}</Link>
+            <Button asChild size="lg" variant="outline" className="border-white/40 bg-white/5 text-white hover:bg-white/15">
+              <Link href="/about">{t('landing.learnMore')}</Link>
+            </Button>
+          </div>
+
+          <div className="mt-10 max-w-xl">
+            <Countdown target={SUBMISSION_WINDOW_END} />
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Stats strip ===== */}
+      <section id="stats" className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">{t('landing.statsTitle')}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t('landing.statsSubtitle')}</p>
+        </div>
+        <StatsBlock stats={stats} locale={locale} />
+      </section>
+
+      {/* ===== How it works — 4 steps ===== */}
+      <section className="border-y border-border bg-brand-teal-light/40">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+              {t('landing.fourStepsTitle')}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t('landing.howItWorksSubtitle')}</p>
+          </div>
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((s, i) => (
+              <div key={s.key} className="rounded-3xl border border-border bg-card p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-teal text-white">
+                    <s.Icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs font-bold text-brand-cyan">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-brand-teal">
+                  {t(`landing.${s.key}Title`)}
+                </h3>
+                <p className="mt-1.5 text-sm text-muted-foreground">{t(`landing.${s.key}Desc`)}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Button asChild variant="outline" className="border-brand-teal text-brand-teal hover:bg-brand-teal-light">
+              <Link href="/stages">
+                {t('landing.viewAllStages')}
+                <Chevron className="h-4 w-4" />
+              </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-8">
-        <h2 className="section-title mb-5">{t('landing.statsTitle')}</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KPICard label={t('landing.statIdeas')} value={stats.total} icon={Lightbulb} />
-          <KPICard label={t('landing.statPipeline')} value={stats.inPipeline} icon={GitBranch} />
-          <KPICard label={t('landing.statPilots')} value={stats.inPilot} icon={FlaskConical} />
-          <KPICard
-            label={t('landing.statBenefits')}
-            value={formatSAR(stats.realizedBenefits, locale)}
-            icon={TrendingUp}
-            accent="gold"
-          />
+      {/* ===== Preview cards: audience + criteria ===== */}
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Link href="/target-audience" className="group rounded-3xl border border-border bg-card p-6 transition hover:border-brand-teal/40 hover:shadow-md">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal">
+              <Users className="h-6 w-6" />
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-brand-teal">{t('landing.audiencePreviewTitle')}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{t('landing.audiencePreviewDesc')}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-teal group-hover:gap-2">
+              {t('footer.targetAudience')} <Chevron className="h-4 w-4" />
+            </span>
+          </Link>
+          <Link href="/evaluation-criteria" className="group rounded-3xl border border-border bg-card p-6 transition hover:border-brand-teal/40 hover:shadow-md">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal">
+              <ScrollText className="h-6 w-6" />
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-brand-teal">{t('landing.criteriaPreviewTitle')}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{t('landing.criteriaPreviewDesc')}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-teal group-hover:gap-2">
+              {t('footer.evaluationCriteria')} <Chevron className="h-4 w-4" />
+            </span>
+          </Link>
         </div>
       </section>
 
-      {/* Stages */}
+      {/* ===== Partners strip ===== */}
       <section className="border-y border-border bg-card">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8">
-          <h2 className="section-title">{t('landing.stagesTitle')}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t('landing.stagesSubtitle')}</p>
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {stageKeys.map((key, i) => {
-              const Icon = STAGE_ICONS[i];
-              return (
-                <div key={key} className="flex items-start gap-3 rounded-lg border border-border bg-background p-4">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand-teal-light text-brand-teal">
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-brand-gold">{String(i)}</p>
-                    <p className="text-sm font-medium text-foreground">{t(`stages.${key}`)}</p>
-                  </div>
-                </div>
-              );
-            })}
+          <h2 className="text-center text-xl font-bold text-brand-teal">{t('landing.partnersTitle')}</h2>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+            {partners.map((p, i) => (
+              <div key={i} className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
+                <Building2 className="h-4 w-4 text-brand-teal" />
+                {p.name}
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 text-center">
+            <Button asChild variant="ghost" size="sm" className="text-brand-teal">
+              <Link href="/partners">
+                {t('footer.partners')} <Chevron className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Active programs */}
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-8">
-        <h2 className="section-title mb-5">{t('landing.recentActivities')}</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {activities.map((a) => (
-            <Card key={a.id}>
-              <CardContent className="flex items-center justify-between p-5">
-                <div>
-                  <p className="font-medium text-foreground">
-                    {locale === 'ar' ? a.name_ar : a.name_en}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">{a.target_audience}</p>
-                </div>
-                <StatusBadge status={a.status} locale={locale} />
-              </CardContent>
-            </Card>
+      {/* ===== FAQ preview ===== */}
+      <section className="mx-auto max-w-4xl px-4 py-14 sm:px-8">
+        <h2 className="text-center text-2xl font-bold text-brand-teal sm:text-3xl">{t('landing.faqTitle')}</h2>
+        <div className="mt-8 divide-y divide-border rounded-xl border border-border bg-card">
+          {faqItems.map((it, i) => (
+            <div key={i} className="px-4 py-4">
+              <p className="text-sm font-medium text-foreground">{it.q}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{it.a}</p>
+            </div>
           ))}
+        </div>
+        <div className="mt-6 text-center">
+          <Button asChild variant="outline" className="border-brand-teal text-brand-teal hover:bg-brand-teal-light">
+            <Link href="/faq">
+              {t('landing.faqViewAll')} <Chevron className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </section>
 
-      <footer className="border-t border-border bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-muted-foreground sm:px-8">
-          © {new Date().getFullYear()} {t('app.owner')} · {t('app.name')}
+      {/* ===== Final CTA ===== */}
+      <section className="border-t border-border bg-gradient-to-br from-brand-teal-light/60 to-brand-cyan-light/40">
+        <div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-8">
+          <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">{t('landing.finalCtaTitle')}</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
+            {t('landing.finalCtaSubtitle')}
+          </p>
+          <div className="mt-6 flex justify-center">
+            <Button asChild size="lg">
+              <Link href="/ideas/new">
+                <Lightbulb className="h-4 w-4" />
+                {t('landing.heroPrimaryCta')}
+                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+              </Link>
+            </Button>
+          </div>
         </div>
-      </footer>
+      </section>
+
+      <SiteFooter locale={locale} />
+      <BackToTop label={t('common.backToTop')} />
+      <StickyCta />
     </div>
   );
 }
