@@ -1,4 +1,37 @@
 -- ============================================================================
+-- 00004_platform_overhaul.sql.superseded  —  HISTORICAL / DO NOT RUN
+--
+-- Written in Session 1 against `public.*`. Superseded in Session 2 when the
+-- platform was rebuilt in the `innovation` schema. Every object this migration
+-- would create already exists in innovation.* — usually with a richer or
+-- incompatible shape:
+--
+--   • innovation.user_profiles   (not `profiles`)
+--        role default 'member'::text          (migration expected check
+--        'submitter|evaluator|judge|admin')
+--   • innovation.evaluations
+--        uses criteria_scores jsonb + comments + conflict_of_interest
+--        (migration expected 5 int rating columns + comment/comment_ar)
+--   • innovation.audit_logs      (plural, not `audit_log`)
+--   • innovation.notifications, idea_feedback, cms_content   — all present
+--   • innovation.ideas  already has:
+--        rejection_reason, rejection_reason_ar, revision_count,
+--        parent_idea_id, submitted_at, reviewed_at, approved_at
+--        (lifecycle_status was not carried over; status enum + current_stage
+--         cover the state machine instead)
+--
+-- Running this file — verbatim against public.*, or naively rewritten to
+-- innovation.* — would either be a no-op or corrupt the working schema
+-- (duplicate empty tables in public, or incompatible column additions and
+-- clashing check constraints in innovation).
+--
+-- Kept for historical reference only. Do not apply.
+-- File renamed with `.superseded` suffix so Supabase's migration runner
+-- ignores it.
+-- ============================================================================
+
+-- Original Session 1 header follows:
+-- ============================================================================
 -- 00004_platform_overhaul.sql
 -- Innovation to Impact — platform overhaul (Session 1)
 --
