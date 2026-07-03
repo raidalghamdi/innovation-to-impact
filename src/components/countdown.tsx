@@ -4,17 +4,27 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 // Counts down to an ISO target date. Rendered inside a dark hero band.
-export function Countdown({ target }: { target: string }) {
+//
+// If `target` prop is omitted, falls back to NEXT_PUBLIC_SUBMISSION_DEADLINE.
+// If neither is present or the value cannot be parsed as a valid date,
+// the component renders nothing.
+export function Countdown({ target }: { target?: string }) {
   const t = useTranslations('landing');
   const [now, setNow] = useState<number | null>(null);
 
+  const raw = target ?? process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE;
+  const end = raw ? new Date(raw).getTime() : NaN;
+  const valid = Number.isFinite(end);
+
   useEffect(() => {
+    if (!valid) return;
     setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [valid]);
 
-  const end = new Date(target).getTime();
+  if (!valid) return null;
+
   const diff = now === null ? 0 : Math.max(0, end - now);
   const ended = now !== null && diff <= 0;
 

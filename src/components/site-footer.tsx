@@ -29,14 +29,15 @@ export async function SiteFooter({ locale: _locale }: { locale: string }) {
         <div className="md:col-span-1">
           <h3 className="text-sm font-semibold">{tapp('name')}</h3>
           <p className="mt-3 text-sm text-white/80">{t('tagline')}</p>
+          {/* TODO: Replace with real GAC social media profile URLs */}
           <div className="mt-4 flex gap-3">
-            <a href="https://www.linkedin.com" aria-label="LinkedIn" className="text-white/80 hover:text-white">
+            <a href="" aria-label="LinkedIn" className="text-white/80 hover:text-white">
               <Linkedin className="h-5 w-5" />
             </a>
-            <a href="https://twitter.com" aria-label="X (Twitter)" className="text-white/80 hover:text-white">
+            <a href="" aria-label="X (Twitter)" className="text-white/80 hover:text-white">
               <Twitter className="h-5 w-5" />
             </a>
-            <a href="https://youtube.com" aria-label="YouTube" className="text-white/80 hover:text-white">
+            <a href="" aria-label="YouTube" className="text-white/80 hover:text-white">
               <Youtube className="h-5 w-5" />
             </a>
           </div>

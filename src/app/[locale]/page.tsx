@@ -24,9 +24,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-// Submission window end used by the hero countdown (mirrors roadmap /
-// cms_content `countdown_window`).
-const SUBMISSION_WINDOW_END = '2026-09-30T23:59:59';
+// The hero countdown reads NEXT_PUBLIC_SUBMISSION_DEADLINE. If the env var
+// is missing or unparseable the Countdown component renders nothing.
 
 export default async function LandingPage({
   params,
@@ -104,7 +103,7 @@ export default async function LandingPage({
 
           {isSectionEnabled(cms, 'countdown') && (
             <div className="mt-10 max-w-xl">
-              <Countdown target={SUBMISSION_WINDOW_END} />
+              <Countdown />
             </div>
           )}
         </div>

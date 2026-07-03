@@ -85,6 +85,7 @@ export function SidebarNav({
   role?: Role;
 }) {
   const t = useTranslations('nav');
+  const tStage = useTranslations('common')('stage');
   const pathname = usePathname();
 
   return (
@@ -110,6 +111,7 @@ export function SidebarNav({
                       href={item.href}
                       onClick={onNavigate}
                       aria-current={active ? 'page' : undefined}
+                      title={item.stage ? `${t(item.key)} — ${tStage} ${item.stage}` : t(item.key)}
                       className={cn(
                         'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal',
                         active
@@ -117,15 +119,16 @@ export function SidebarNav({
                           : 'text-foreground hover:bg-brand-teal-light'
                       )}
                     >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="flex-1">{t(item.key)}</span>
+                      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span className="flex-1 truncate">{t(item.key)}</span>
                       {item.stage && (
                         <span
+                          aria-label={`${tStage} ${item.stage}`}
                           className={cn(
-                            'rounded px-1.5 py-0.5 text-[10px] font-medium',
+                            'ms-2 inline-flex shrink-0 items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none tabular-nums',
                             active
-                              ? 'bg-white/20 text-white'
-                              : 'bg-muted text-muted-foreground'
+                              ? 'bg-white/25 text-white ring-1 ring-white/40'
+                              : 'bg-brand-teal/10 text-brand-teal ring-1 ring-brand-teal/20'
                           )}
                         >
                           {item.stage}

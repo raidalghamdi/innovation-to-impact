@@ -165,7 +165,8 @@
     "whatHappens": "What happens here?",
     "whatYouNeed": "What you need to do?",
     "stageOwner": "Owner",
-    "yourStage": "Your role in this stage"
+    "yourStage": "Your role in this stage",
+    "viewIdeasInStage": "View Ideas in This Stage"
   },
   "dashboard": {
     "title": "Dashboard",
