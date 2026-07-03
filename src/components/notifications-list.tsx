@@ -5,7 +5,8 @@ import { useTranslations, useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BellOff, Check } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
+import { Bell, Check } from 'lucide-react';
 
 type Notif = {
   id: string;
@@ -19,6 +20,7 @@ type Notif = {
 
 export function NotificationsList() {
   const t = useTranslations('notifications');
+  const te = useTranslations('emptyStates');
   const locale = useLocale();
   const [items, setItems] = useState<Notif[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -88,12 +90,11 @@ export function NotificationsList() {
       </div>
 
       {loaded && shown.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
-            <BellOff className="h-8 w-8" />
-            <p className="text-sm">{t('none')}</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Bell}
+          title={te('notificationsTitle')}
+          description={te('notificationsBody')}
+        />
       )}
 
       <ul className="space-y-2">

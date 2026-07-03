@@ -7,7 +7,8 @@ import { Link } from '@/i18n/routing';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/status-badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Sparkles } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
+import { Search, Sparkles, Inbox } from 'lucide-react';
 import type { Idea, StrategicTheme, Activity } from '@/lib/demo-data';
 import { PIPELINE_STATUSES } from '@/lib/demo-data';
 
@@ -30,6 +31,7 @@ export function IdeasExplorer({
 }) {
   const t = useTranslations('ideas');
   const tc = useTranslations('common');
+  const te = useTranslations('emptyStates');
   const sp = useSearchParams();
   const pipelineOnly = sp.get('pipeline') === '1';
   const [q, setQ] = useState(sp.get('q') ?? '');
@@ -97,11 +99,19 @@ export function IdeasExplorer({
       </div>
 
       {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            {t('emptyRepo')}
-          </CardContent>
-        </Card>
+        stage !== '' || pipelineOnly ? (
+          <EmptyState
+            icon={Inbox}
+            title={te('stageTitle')}
+            description={te('stageBody')}
+          />
+        ) : (
+          <Card>
+            <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              {t('emptyRepo')}
+            </CardContent>
+          </Card>
+        )
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((idea) => {

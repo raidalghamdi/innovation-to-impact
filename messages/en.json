@@ -1005,5 +1005,17 @@
     "trackCta": "Track your idea",
     "submitAnotherCta": "Submit another idea",
     "referenceLabel": "Reference"
+  },
+  "emptyStates": {
+    "myIdeasTitle": "No ideas yet",
+    "myIdeasBody": "Share your first idea and start making an impact.",
+    "myIdeasCta": "Submit an idea",
+    "stageTitle": "No ideas in this stage",
+    "stageBody": "Ideas will appear here as they progress.",
+    "leaderboardTitle": "Leaderboard is empty",
+    "leaderboardBody": "Submit ideas to appear on the leaderboard.",
+    "leaderboardCta": "Submit an idea",
+    "notificationsTitle": "No notifications yet",
+    "notificationsBody": "You'll be notified when your idea status changes."
   }
 }

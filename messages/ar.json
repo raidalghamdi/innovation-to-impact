@@ -1005,5 +1005,17 @@
     "trackCta": "تتبّع فكرتك",
     "submitAnotherCta": "قدّم فكرة أخرى",
     "referenceLabel": "المرجع"
+  },
+  "emptyStates": {
+    "myIdeasTitle": "لا توجد أفكار بعد",
+    "myIdeasBody": "شارك فكرتك الأولى وابدأ في إحداث الأثر.",
+    "myIdeasCta": "قدّم فكرة",
+    "stageTitle": "لا توجد أفكار في هذه المرحلة",
+    "stageBody": "ستظهر الأفكار هنا مع تقدّمها.",
+    "leaderboardTitle": "لوحة المتصدرين فارغة",
+    "leaderboardBody": "قدّم أفكاراً للظهور على لوحة المتصدرين.",
+    "leaderboardCta": "قدّم فكرة",
+    "notificationsTitle": "لا توجد إشعارات بعد",
+    "notificationsBody": "سنُعلمك عند تغيّر حالة فكرتك."
   }
 }

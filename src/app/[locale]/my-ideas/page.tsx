@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { fetchIdeas } from '@/lib/data';
 import { StatusBadge } from '@/components/status-badge';
 import { StageTimeline } from '@/components/stage-timeline';
+import { EmptyState } from '@/components/empty-state';
 import { Lightbulb, Plus, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ export default async function MyIdeasPage({
   setRequestLocale(locale);
   const t = await getTranslations('ideas');
   const tc = await getTranslations('common');
+  const te = await getTranslations('emptyStates');
   const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
 
   // Identify current user
@@ -52,20 +54,12 @@ export default async function MyIdeasPage({
       />
 
       {myIdeas.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-teal-light">
-              <Lightbulb className="h-8 w-8 text-brand-teal" />
-            </div>
-            <p className="text-sm text-muted-foreground">{t('emptyMyIdeas')}</p>
-            <Link href="/ideas/new">
-              <Button>
-                <Plus className="h-4 w-4" />
-                {t('new')}
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Lightbulb}
+          title={te('myIdeasTitle')}
+          description={te('myIdeasBody')}
+          cta={{ label: te('myIdeasCta'), href: '/ideas/new' }}
+        />
       ) : (
         <ul className="space-y-4">
           {myIdeas.map((idea) => (

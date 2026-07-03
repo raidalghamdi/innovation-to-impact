@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getLeaderboard, type LeaderboardRow } from '@/lib/analytics';
 import { isRole } from '@/lib/roles';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/empty-state';
 import { Trophy, Medal, Award, Star } from 'lucide-react';
 
 function displayName(row: LeaderboardRow, isAr: boolean): string {
@@ -21,6 +22,7 @@ export default async function LeaderboardPage({
   setRequestLocale(locale);
   const t = await getTranslations('leaderboard');
   const tr = await getTranslations('roles');
+  const te = await getTranslations('emptyStates');
   const isAr = locale === 'ar';
 
   const rows = await getLeaderboard();
@@ -45,11 +47,12 @@ export default async function LeaderboardPage({
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
 
       {rows.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            {t('empty')}
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Trophy}
+          title={te('leaderboardTitle')}
+          description={te('leaderboardBody')}
+          cta={{ label: te('leaderboardCta'), href: '/ideas/new' }}
+        />
       ) : (
         <>
           {/* Your rank */}
