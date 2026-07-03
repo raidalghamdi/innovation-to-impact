@@ -128,7 +128,12 @@ export default async function LandingPage({
             <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
               {getText(cms, 'how_it_works', 'title', locale, t('landing.fourStepsTitle'))}
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">{getText(cms, 'how_it_works', 'subtitle', locale, t('landing.howItWorksSubtitle'))}</p>
+            {(() => {
+              const subtitle = getText(cms, 'how_it_works', 'subtitle', locale, t('landing.howItWorksSubtitle'));
+              return subtitle ? (
+                <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
+              ) : null;
+            })()}
           </div>
           <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((s, i) => (

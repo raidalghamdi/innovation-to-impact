@@ -93,7 +93,7 @@
     "ctaIHaveChallenge": "لدي تحدي",
     "ctaIHaveChallengeDesc": "أطرح تحدياً للهيئة لإيجاد حلول له",
     "howItWorksTitle": "كيف تعمل المنصة",
-    "howItWorksSubtitle": "ثلاث خطوات بسيطة من الفكرة إلى الأثر",
+    "howItWorksSubtitle": "",
     "step1Title": "تقدّم فكرتك أو تحديك",
     "step1Desc": "نموذج موجّه مع توليد ذكي للعنوان وحفظ تلقائي.",
     "step2Title": "تُقيَّم وتنتقل بين المراحل",
@@ -132,7 +132,7 @@
     "criteriaPreviewTitle": "كيف تُقيَّم الأفكار",
     "criteriaPreviewDesc": "خمسة معايير موزونة من المواءمة الاستراتيجية إلى الأثر.",
     "heroPrimaryCta": "قدّم فكرتك",
-    "fourStepsTitle": "من الفكرة إلى الأثر في أربع خطوات"
+    "fourStepsTitle": "كيف تعمل المنصة"
   },
   "stages": {
     "s0": "الإطار الاستراتيجي",
