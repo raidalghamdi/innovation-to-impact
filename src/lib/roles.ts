@@ -27,9 +27,14 @@ export function isRole(value: unknown): value is Role {
   return typeof value === 'string' && (ROLES as readonly string[]).includes(value);
 }
 
-// Derive a demo role from the account email local-part. Used when no explicit
-// role is stored (e.g. live DB not yet migrated). Pure — safe in edge runtime.
+// Demo-only: derive a role from the email local-part (admin@..., judge@...,
+// etc.). Never runs in production — gated by DEMO_MODE=true. When disabled,
+// every unmapped email is treated as a plain 'submitter' so the UI stays
+// functional but never grants elevated access via email guessing.
+const isDemoMode = process.env.DEMO_MODE === 'true';
+
 export function roleFromEmail(email?: string | null): Role {
+  if (!isDemoMode) return 'submitter';
   if (!email) return 'submitter';
   const local = email.split('@')[0].toLowerCase();
   if (local.startsWith('admin')) return 'admin';
