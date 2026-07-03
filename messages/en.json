@@ -594,6 +594,51 @@
   "about": {
     "title": "About the Program",
     "subtitle": "Innovation to Impact — the innovation journey of the General Authority for Competition.",
+    "hero": {
+      "headline": "Turning Ideas into Impact",
+      "subheadline": "GAC's platform for structured innovation across the organization."
+    },
+    "vision": {
+      "label": "Our Vision",
+      "body": "To build a culture of innovation across the General Authority for Competition — where every employee can shape a fairer, more competitive Saudi market aligned with Vision 2030."
+    },
+    "mission": {
+      "label": "Our Mission",
+      "body": "To capture ideas from across the organization and guide them through a transparent, measurable pipeline — from strategic framing to real, tracked impact."
+    },
+    "pipeline": {
+      "title": "The 9-Stage Pipeline",
+      "body": "Every idea moves through a structured journey — from intake and strategic framing, through evaluation and committee review, into pilot, implementation, and measured benefits. Each stage has clear owners, criteria, and expected outputs so nothing gets lost between an idea and its impact.",
+      "cta": "Explore all 9 stages"
+    },
+    "participants": {
+      "title": "Who Can Participate",
+      "subtitle": "The platform is open to every part of the Authority.",
+      "items": [
+        {
+          "title": "GAC employees at all levels",
+          "body": "From frontline staff to leadership — anyone with an idea that can improve how the Authority delivers on its mandate."
+        },
+        {
+          "title": "All departments and functions",
+          "body": "Legal, economic, market monitoring, technology, communications, HR, and every other function across the Authority."
+        },
+        {
+          "title": "Individual contributors and teams",
+          "body": "Submit on your own or bring an idea forward as a team — the pipeline supports both individual and collaborative submissions."
+        }
+      ]
+    },
+    "partnersSection": {
+      "title": "Our Partners",
+      "subtitle": "We collaborate with entities across government, academia, and the private sector."
+    },
+    "contact": {
+      "title": "Have a question?",
+      "body": "Reach out to the Innovation Office — we're happy to help you shape an idea, understand the pipeline, or explore collaboration.",
+      "email": "innovation@gac.gov.sa",
+      "cta": "Contact the Innovation Office"
+    },
     "sections": [
       {
         "title": "About the Authority",
