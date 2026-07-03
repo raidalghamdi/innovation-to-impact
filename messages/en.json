@@ -165,8 +165,7 @@
     "whatHappens": "What happens here?",
     "whatYouNeed": "What you need to do?",
     "stageOwner": "Owner",
-    "yourStage": "Your role in this stage",
-    "viewIdeasInStage": "View Ideas in This Stage"
+    "yourStage": "Your role in this stage"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -521,7 +520,8 @@
       "s6": "Implementation team",
       "s7": "Business units",
       "s8": "Impact measurement team"
-    }
+    },
+    "viewIdeasInStage": "View Ideas in This Stage"
   },
   "challenges": {
     "title": "Challenges",

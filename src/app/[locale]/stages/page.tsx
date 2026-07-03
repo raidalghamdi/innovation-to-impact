@@ -109,7 +109,7 @@ export default async function StagesPage({
                       href={`/ideas?stage=${i}` as any}
                       className="inline-flex items-center gap-1 text-sm font-medium text-brand-teal hover:underline"
                     >
-                      <span>{t('viewIdeasInStage' as any) || tStages(`s${i}` as any)}</span>
+                      <span>{t('viewIdeasInStage')}</span>
                       <Chevron className="h-3.5 w-3.5" />
                     </Link>
                   </div>
