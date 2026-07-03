@@ -987,5 +987,23 @@
     "nudge": "Consider refining your idea or joining an existing one to strengthen its impact.",
     "relatedTitle": "Related ideas",
     "relatedEmpty": "No related ideas found."
+  },
+  "ideaSubmitted": {
+    "headline": "Your idea has been submitted!",
+    "subhead": "Thank you for contributing to GAC's Innovation to Impact journey.",
+    "yourIdeaLabel": "Your idea",
+    "whatHappensNext": "What happens next",
+    "step1Title": "Initial screening",
+    "step1Meta": "Within 5 business days",
+    "step1Body": "Our team confirms your idea meets submission requirements and routes it to the right evaluation track.",
+    "step2Title": "Evaluation committee review",
+    "step2Meta": "Within 15 days",
+    "step2Body": "The committee scores your idea against strategic alignment, feasibility, and impact criteria.",
+    "step3Title": "Decision notification",
+    "step3Meta": "By email",
+    "step3Body": "You will receive an email with the committee's decision and any next steps.",
+    "trackCta": "Track your idea",
+    "submitAnotherCta": "Submit another idea",
+    "referenceLabel": "Reference"
   }
 }

@@ -242,10 +242,16 @@ export function IdeaForm({
       current_stage: 1,
       submitter_id: userData.user.id,
     };
+    let newIdeaId: string | null = null;
     try {
-      await supabase.from('ideas').insert(payload);
+      const { data: inserted } = await supabase
+        .from('ideas')
+        .insert(payload)
+        .select('id')
+        .single();
+      newIdeaId = (inserted as { id?: string } | null)?.id ?? null;
     } catch {
-      /* best-effort */
+      /* best-effort; fall through to redirect */
     }
     try {
       localStorage.removeItem(DRAFT_KEY);
@@ -253,7 +259,11 @@ export function IdeaForm({
       /* ignore */
     }
     setSubmitting(false);
-    router.push('/my-ideas');
+    if (newIdeaId) {
+      router.push(`/ideas/${newIdeaId}/submitted` as any);
+    } else {
+      router.push('/my-ideas');
+    }
   }
 
   function counter(value: string, limit: number) {
