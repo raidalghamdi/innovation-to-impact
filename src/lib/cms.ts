@@ -45,11 +45,18 @@ export async function loadCms(page: string): Promise<CmsMap> {
       .from('cms_blocks')
       .select('page,section,key,kind,enabled,value_en,value_ar,sort_order')
       .eq('page', page);
-    if (error || !data) return map;
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error(`[loadCms:${page}] supabase error:`, error);
+      return map;
+    }
+    if (!data) return map;
     for (const row of data as CmsBlock[]) {
       map.set(keyOf(row.section, row.key), row);
     }
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`[loadCms:${page}] threw:`, err);
     // fall through — return empty map so callers use fallbacks
   }
   return map;
