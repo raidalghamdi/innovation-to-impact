@@ -1,8 +1,8 @@
 import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { routing } from './src/i18n/routing';
-import { canAccess, roleFromEmail, ROLE_HOME, isRole, type Role } from './src/lib/roles';
+import { routing } from './i18n/routing';
+import { canAccess, roleFromEmail, ROLE_HOME, isRole, type Role } from './lib/roles';
 
 const intlMiddleware = createMiddleware(routing);
 
