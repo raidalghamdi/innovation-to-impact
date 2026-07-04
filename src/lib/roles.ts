@@ -10,12 +10,19 @@ export const ROLE_HOME: Record<Role, string> = {
 };
 
 // Route prefixes each role is NOT allowed to access (locale prefix stripped).
+// Note: /admin/analytics is intentionally allowed for both admin and judge
+// — see analytics page role check. /admin (non-analytics) remains admin-only.
 export const ROLE_DENY: Record<Role, string[]> = {
   submitter: ['/evaluation', '/committee', '/admin', '/analytics'],
   evaluator: ['/committee', '/admin', '/analytics'],
   judge: ['/admin', '/analytics'],
   admin: [],
 };
+
+// Roles allowed to view the analytics dashboard (finer-grained than ROLE_DENY,
+// which is used by middleware for whole-prefix denial). Judges can see analytics
+// but are still denied the rest of /admin.
+export const ANALYTICS_ROLES: readonly Role[] = ['admin', 'judge'];
 
 export function canAccess(role: Role, pathnameWithoutLocale: string): boolean {
   return !ROLE_DENY[role].some(

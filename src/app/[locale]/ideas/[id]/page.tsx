@@ -11,6 +11,8 @@ import { findSimilarIdeas } from '@/lib/similarity';
 import { ideas as demoIdeas, userName, themeName, activityName, benefits } from '@/lib/demo-data';
 import { formatDate } from '@/lib/utils';
 import { Sparkles } from 'lucide-react';
+import { getFeedbackForIdea } from '@/lib/feedback';
+import { FeedbackSection } from '@/components/feedback-section';
 
 export default async function IdeaDetailPage({
   params,
@@ -36,6 +38,9 @@ export default async function IdeaDetailPage({
   const similarQuery =
     idea.problem_statement || (locale === 'ar' ? idea.title_ar : idea.title_en) || '';
   const similarIdeas = await findSimilarIdeas(similarQuery, idea.id, 0.2, 5);
+
+  // Reviewer feedback (anonymous — role only, not name)
+  const feedback = await getFeedbackForIdea(idea.id);
 
   return (
     <AppShell>
@@ -72,6 +77,8 @@ export default async function IdeaDetailPage({
               </div>
             </CardContent>
           </Card>
+
+          <FeedbackSection feedback={feedback} locale={locale} />
 
           <Card>
             <CardHeader>

@@ -9,6 +9,8 @@ import { fetchIdeas } from '@/lib/data';
 import { StatusBadge } from '@/components/status-badge';
 import { PipelineIndicator } from '@/components/pipeline-indicator';
 import { PioneerBadge, isPioneerIdea } from '@/components/pioneer-badge';
+import { FeedbackCountBadge } from '@/components/feedback-section';
+import { getFeedbackCountsForSubmitter } from '@/lib/feedback';
 import { EmptyState } from '@/components/empty-state';
 import { Lightbulb, Plus, ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -23,6 +25,7 @@ export default async function MyIdeasPage({
   const t = await getTranslations('ideas');
   const tc = await getTranslations('common');
   const te = await getTranslations('emptyStates');
+  const tf = await getTranslations('feedback');
   const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
 
   // Identify current user
@@ -38,6 +41,9 @@ export default async function MyIdeasPage({
   const myIdeas = userId
     ? allIdeas.filter((i) => i.submitter_id === userId)
     : [];
+
+  // Feedback counts — empty map when unauthenticated. Never one-query-per-idea.
+  const feedbackCounts = userId ? await getFeedbackCountsForSubmitter(userId) : {};
 
   return (
     <AppShell>
@@ -90,6 +96,10 @@ export default async function MyIdeasPage({
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {isPioneerIdea(idea.current_stage) && <PioneerBadge />}
+                      <FeedbackCountBadge
+                        count={feedbackCounts[idea.id] ?? 0}
+                        label={tf('countBadge')}
+                      />
                       <StatusBadge status={idea.status} locale={locale} />
                     </div>
                   </div>

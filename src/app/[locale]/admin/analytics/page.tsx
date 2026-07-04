@@ -1,4 +1,5 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,9 +9,23 @@ import {
   getMonthlyCohort,
   getThemeActivity,
   getTopEvaluators,
+  getIdeasByStage,
+  getSubmissionsPerDay,
+  getTopObjectives,
+  getAvgTimePerStage,
+  getSubmittedToPilotConversion,
   type CohortRow,
   type FunnelRow,
 } from '@/lib/analytics';
+import { getCurrentUser } from '@/lib/user';
+import { ANALYTICS_ROLES, ROLE_HOME } from '@/lib/roles';
+import {
+  IdeasByStageChart,
+  SubmissionsLineChart,
+  TopObjectivesChart,
+  AvgTimePerStageTable,
+  ConversionStatCard,
+} from '@/components/executive-analytics';
 import {
   Send,
   CheckCircle2,
@@ -156,17 +171,46 @@ export default async function AdminAnalyticsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  // Fine-grained role check — middleware only guards the whole /admin prefix.
+  // Judges are explicitly allowed here (see ANALYTICS_ROLES in src/lib/roles.ts).
+  const currentUser = await getCurrentUser();
+  if (currentUser && !ANALYTICS_ROLES.includes(currentUser.role)) {
+    redirect(`/${locale}${ROLE_HOME[currentUser.role]}`);
+  }
+
   const t = await getTranslations('analytics');
   const tc = await getTranslations('common');
+  const tStages = await getTranslations('stages');
   const isAr = locale === 'ar';
 
-  const [kpis, funnel, cohort, themes, evaluators] = await Promise.all([
+  const [
+    kpis,
+    funnel,
+    cohort,
+    themes,
+    evaluators,
+    byStage,
+    perDay,
+    topObjectives,
+    avgPerStage,
+    conversion,
+  ] = await Promise.all([
     getPlatformKpis(),
     getFunnel(),
     getMonthlyCohort(),
     getThemeActivity(),
     getTopEvaluators(),
+    getIdeasByStage(),
+    getSubmissionsPerDay(90),
+    getTopObjectives(5),
+    getAvgTimePerStage(),
+    getSubmittedToPilotConversion(),
   ]);
+
+  const stageLabels = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'].map(
+    (k) => tStages(k as 's0'),
+  );
 
   // Always Latin digits regardless of UI locale (per user preference)
   const sar = new Intl.NumberFormat('en-US').format(
@@ -176,6 +220,102 @@ export default async function AdminAnalyticsPage({
   return (
     <AppShell>
       <PageHeader title={t('adminTitle')} subtitle={t('adminSubtitle')} />
+
+      {/* ===== Executive Dashboard (5 charts) ===== */}
+      <section className="space-y-4" aria-labelledby="exec-dashboard-heading">
+        <div>
+          <h2
+            id="exec-dashboard-heading"
+            className="text-lg font-bold text-brand-teal sm:text-xl"
+          >
+            {t('execTitle')}
+          </h2>
+          <p className="text-xs text-muted-foreground">{t('execSubtitle')}</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-brand-teal">{t('byStageTitle')}</CardTitle>
+              <p className="text-xs text-muted-foreground">{t('byStageSubtitle')}</p>
+            </CardHeader>
+            <CardContent>
+              <IdeasByStageChart
+                rows={byStage}
+                stageLabels={stageLabels}
+                empty={t('empty')}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-brand-teal">{t('perDayTitle')}</CardTitle>
+              <p className="text-xs text-muted-foreground">{t('perDaySubtitle')}</p>
+            </CardHeader>
+            <CardContent>
+              <SubmissionsLineChart rows={perDay} empty={t('empty')} locale={locale} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-brand-teal">{t('topObjectivesTitle')}</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                {t('topObjectivesSubtitle')}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <TopObjectivesChart
+                rows={topObjectives}
+                empty={t('empty')}
+                locale={locale}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-brand-teal">{t('conversionTitle')}</CardTitle>
+              <p className="text-xs text-muted-foreground">{t('conversionSubtitle')}</p>
+            </CardHeader>
+            <CardContent>
+              <ConversionStatCard
+                submitted={conversion.submitted}
+                pilot={conversion.pilot}
+                rate={conversion.rate}
+                labels={{
+                  submitted: t('conversionSubmitted'),
+                  pilot: t('conversionPilot'),
+                  rate: t('conversionRate'),
+                }}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle className="text-brand-teal">{t('avgTimeTitle')}</CardTitle>
+            <p className="text-xs text-muted-foreground">{t('avgTimeSubtitle')}</p>
+          </CardHeader>
+          <CardContent className="p-0">
+            <AvgTimePerStageTable
+              rows={avgPerStage}
+              stageLabels={stageLabels}
+              headers={{ stage: t('avgTimeStage'), avg: t('avgTimeDays') }}
+              empty={t('empty')}
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* ===== Platform-wide KPIs (existing) ===== */}
+      <div className="mt-8">
+        <h2 className="mb-3 text-lg font-bold text-brand-teal sm:text-xl">
+          {t('platformKpisTitle')}
+        </h2>
+      </div>
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

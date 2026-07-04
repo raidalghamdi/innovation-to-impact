@@ -77,7 +77,12 @@ export async function middleware(request: NextRequest) {
     const role: Role = isRole(user.user_metadata?.role)
       ? (user.user_metadata!.role as Role)
       : roleFromEmail(user.email);
-    if (!canAccess(role, pathnameWithoutLocale)) {
+    // Exception: /admin/analytics is allowed for judges (not the rest of /admin).
+    const isAnalyticsRoute =
+      pathnameWithoutLocale === '/admin/analytics' ||
+      pathnameWithoutLocale.startsWith('/admin/analytics/');
+    const analyticsAllowed = isAnalyticsRoute && (role === 'admin' || role === 'judge');
+    if (!analyticsAllowed && !canAccess(role, pathnameWithoutLocale)) {
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}${ROLE_HOME[role]}`;
       url.search = '';

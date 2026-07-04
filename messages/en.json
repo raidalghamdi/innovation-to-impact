@@ -446,7 +446,25 @@
     "submitted": "Submitted",
     "rejected": "Rejected",
     "implemented": "Implemented",
-    "empty": "No data available yet."
+    "empty": "No data available yet.",
+    "execTitle": "Executive dashboard",
+    "execSubtitle": "Portfolio health at a glance — stages, throughput, and conversion.",
+    "platformKpisTitle": "Platform-wide KPIs",
+    "byStageTitle": "Ideas by stage",
+    "byStageSubtitle": "Distribution across the 9 pipeline stages (0 → 8).",
+    "perDayTitle": "Submissions over time",
+    "perDaySubtitle": "New ideas submitted per day over the last 90 days.",
+    "topObjectivesTitle": "Top 5 strategic objectives",
+    "topObjectivesSubtitle": "Ranked by idea count.",
+    "avgTimeTitle": "Average time in each stage",
+    "avgTimeSubtitle": "Approximate days ideas spend per stage.",
+    "avgTimeStage": "Stage",
+    "avgTimeDays": "Avg. days",
+    "conversionTitle": "Submitted → Pilot conversion",
+    "conversionSubtitle": "Share of submitted ideas that reach a pilot or beyond.",
+    "conversionSubmitted": "Submitted",
+    "conversionPilot": "In pilot or beyond",
+    "conversionRate": "conversion rate"
   },
   "admin": {
     "title": "Administration",
@@ -1076,5 +1094,16 @@
     "submittedBy": "Submitted by",
     "stageLabel": "Stage",
     "empty": "No ideas in the spotlight yet — be the first."
+  },
+  "feedback": {
+    "title": "Reviewer feedback",
+    "subtitle": "Comments from evaluators and judges on your idea.",
+    "empty": "No feedback yet. Reviewer comments will appear here once your idea has been reviewed.",
+    "roleEvaluator": "Evaluator",
+    "roleJudge": "Judge",
+    "ratingLabel": "Rating",
+    "recommendationLabel": "Recommendation",
+    "countBadge": "feedback",
+    "anonymityNote": "Reviewer identities are kept anonymous — only their role is shown."
   }
 }
