@@ -1,8 +1,13 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 
 export type AuditStates = {
   before?: Record<string, unknown> | null;
   after?: Record<string, unknown> | null;
+  // Optional privileged client for session-less callers (cron / fan-out jobs),
+  // mirroring the `client` option on notifications.ts's createNotification.
+  // Falls back to the RLS-scoped session client when omitted.
+  client?: SupabaseClient<any, any, any>;
 };
 
 // Universal audit-log wrapper. Best-effort: never throws so it cannot break the
@@ -17,7 +22,7 @@ export async function logAudit(
   states?: AuditStates
 ): Promise<void> {
   try {
-    const supabase = await createClient();
+    const supabase = states?.client ?? (await createClient());
     if (!supabase) return;
     await supabase.from('audit_logs').insert({
       actor_id: actorId,

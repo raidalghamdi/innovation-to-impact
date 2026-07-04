@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
+import { Link, useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
+import { useNotificationsStream, type RealtimeNotification } from '@/lib/realtime/use-notifications-stream';
+import { useToastStack, ToastStack } from '@/components/ui/toast';
 import { Bell } from 'lucide-react';
 
 type Notif = {
@@ -20,9 +22,11 @@ type Notif = {
 export function NotificationBell({ userId }: { userId: string | null }) {
   const t = useTranslations('notifications');
   const locale = useLocale();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notif[]>([]);
   const ref = useRef<HTMLDivElement>(null);
+  const { toasts, push, dismiss } = useToastStack();
 
   useEffect(() => {
     if (!userId) return;
@@ -46,6 +50,18 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
+
+  // Live unread-count + dropdown updates: merge newly inserted rows into the
+  // local list (deduping in case the initial fetch already raced it in) and
+  // surface a toast with the bilingual title from notifications.types.*.
+  useNotificationsStream(userId, {
+    onInsert: (row: RealtimeNotification) => {
+      setItems((prev) => (prev.some((i) => i.id === row.id) ? prev : [row as unknown as Notif, ...prev]));
+      const title = (locale === 'ar' ? row.title_ar : row.title_en) ?? t('title');
+      const body = locale === 'ar' ? row.body_ar : row.body_en;
+      push({ title, description: body, href: row.link });
+    },
+  });
 
   const unread = items.filter((i) => !i.read_at).length;
 
@@ -111,6 +127,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
           </ul>
         </div>
       )}
+      <ToastStack toasts={toasts} onDismiss={dismiss} onNavigate={(href) => router.push(href as any)} />
     </div>
   );
 }

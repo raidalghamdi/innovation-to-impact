@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
+import { useNotificationsStream, type RealtimeNotification } from '@/lib/realtime/use-notifications-stream';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
@@ -25,6 +26,7 @@ export function NotificationsList() {
   const [items, setItems] = useState<Notif[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [loaded, setLoaded] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -38,6 +40,7 @@ export function NotificationsList() {
         setLoaded(true);
         return;
       }
+      setUserId(user.id);
       const { data: rows } = await supabase
         .from('notifications')
         .select('*')
@@ -47,6 +50,16 @@ export function NotificationsList() {
       setLoaded(true);
     });
   }, []);
+
+  // Take over from the initial fetch: merge newly inserted rows live so the
+  // full notifications page stays current without a refresh.
+  useNotificationsStream(userId, {
+    onInsert: (row: RealtimeNotification) => {
+      setItems((prev) =>
+        prev.some((i) => i.id === row.id) ? prev : [row as unknown as Notif, ...prev]
+      );
+    },
+  });
 
   async function markAll() {
     const supabase = createClient();

@@ -72,3 +72,66 @@ export async function sendTransactional(input: SendTransactionalInput): Promise<
     console.error('[email] send failed:', err);
   }
 }
+
+// One section (EN or AR) of a stacked bilingual email — reuses the same
+// header/accent-border treatment as renderHtml but is meant to be concatenated
+// with its counterpart in the other language rather than shipped alone.
+function renderSection(opts: { title: string; bodyHtml: string; rtl: boolean }): string {
+  const dir = opts.rtl ? 'rtl' : 'ltr';
+  const align = opts.rtl ? 'right' : 'left';
+  const startSide = opts.rtl ? 'right' : 'left';
+  return `<div style="padding:20px;border-${startSide}:4px solid #01696F;color:#28251D;text-align:${align};direction:${dir};font-family:${opts.rtl ? "'Cairo','Segoe UI',Tahoma,Arial,sans-serif" : "'Segoe UI',Tahoma,Arial,Helvetica,sans-serif"};">
+      <h2 style="margin:0 0 12px;font-size:16px;">${opts.title}</h2>
+      <div style="margin:0;font-size:14px;line-height:1.7;color:#3b4a52;">${opts.bodyHtml}</div>
+    </div>`;
+}
+
+export type SendBilingualEmailInput = {
+  to: string | string[];
+  subject: string;
+  titleEn: string;
+  bodyHtmlEn: string;
+  titleAr: string;
+  bodyHtmlAr: string;
+};
+
+/**
+ * Send a single email containing both an English section (LTR) and an Arabic
+ * section (RTL), stacked EN-then-AR, sharing the i2i header. Used for
+ * recipient groups (e.g. all admins) that may include either-language
+ * readers, so nobody misses content behind a locale toggle that doesn't
+ * exist in email clients. Reuses the same RTL-hardening as renderHtml/
+ * renderSection: each section carries its own `direction` + text-align so the
+ * accent border and alignment mirror correctly per section regardless of the
+ * outer envelope's dir.
+ */
+export async function sendBilingualEmail(input: SendBilingualEmailInput): Promise<void> {
+  try {
+    const resend = client();
+    if (!resend) return;
+    const to = Array.isArray(input.to) ? input.to : [input.to];
+    if (to.length === 0) return;
+    const html = `<!doctype html>
+<html dir="ltr" lang="en">
+  <body style="margin:0;background:#f4f6f8;padding:24px;font-family:'Segoe UI',Tahoma,Arial,Helvetica,sans-serif;">
+    <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e9ee;">
+      <div style="background:#01696F;color:#ffffff;padding:16px 20px;font-size:18px;font-weight:bold;">
+        i2i · الابتكار إلى الأثر
+      </div>
+      ${renderSection({ title: input.titleEn, bodyHtml: input.bodyHtmlEn, rtl: false })}
+      <div style="border-top:1px solid #e5e9ee;"></div>
+      ${renderSection({ title: input.titleAr, bodyHtml: input.bodyHtmlAr, rtl: true })}
+    </div>
+  </body>
+</html>`;
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: input.subject,
+      html,
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[email] bilingual send failed:', err);
+  }
+}

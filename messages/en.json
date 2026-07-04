@@ -819,6 +819,10 @@
       }
     }
   },
+  "hitl": {
+    "banner": "AI-assisted results may need human review. Verify before acting.",
+    "dismiss": "Got it"
+  },
   "about": {
     "title": "About the Program",
     "subtitle": "Innovation to Impact — how the General Authority for Competition turns ideas into real results.",

@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { fanOut } from '@/lib/notifications';
 import { openEscalationIfAbsent, type EscalationEntity } from '@/lib/escalations';
 import type { SlaTracker, SlaPolicy } from '@/lib/sla';
+import { maybeRunWeeklyBriefing } from '@/lib/weekly-briefing';
 
 // Hourly Vercel Cron (see vercel.json). Marks overdue SLA trackers as breached
 // and fans out reminders:
@@ -127,11 +128,17 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Hobby-plan safety: Vercel allows only one daily cron job, so the weekly
+  // admin briefing (Cross-cutting F3) piggybacks on this daily invocation and
+  // only actually runs its logic on Mondays (UTC) — see maybeRunWeeklyBriefing.
+  const briefing = await maybeRunWeeklyBriefing();
+
   return NextResponse.json({
     status: 'ok',
     scanned: rows.length,
     breached: breachedCount,
     warned: warnCount,
     timestamp: nowIso,
+    weeklyBriefing: briefing.ran ? { sent: true, recipients: briefing.recipients } : { sent: false },
   });
 }

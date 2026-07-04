@@ -7,6 +7,7 @@ import { SidebarNav } from '@/components/sidebar-nav';
 import { LanguageToggle } from '@/components/language-toggle';
 import { CoBrand } from '@/components/logo';
 import { NotificationBell } from '@/components/notification-bell';
+import { HitlBanner } from '@/components/hitl-banner';
 import { PointsBadge } from '@/components/points-badge';
 import { GlobalSearch } from '@/components/global-search';
 import { SignOutButton } from '@/components/sign-out-button';
@@ -80,6 +81,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {userId && <SignOutButton />}
         </div>
       </header>
+
+      <HitlBanner />
 
       <div className="flex flex-1">
         {/* Desktop sidebar */}
