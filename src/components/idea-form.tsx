@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
+import { uploadEvidence } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +20,8 @@ import {
   AlertTriangle,
   Copy,
   ChevronDown,
+  X,
+  FileText,
 } from 'lucide-react';
 import type { StrategicTheme, Activity } from '@/lib/demo-data';
 import { pickFromRow } from '@/lib/i18n-content';
@@ -79,6 +82,17 @@ const LIMITS = { title: 120, summary: 300, description: 2000 };
 
 const DRAFT_KEY = 'gac-idea-draft-v1';
 
+// Attachment constraints — mirror the server-side guard in lib/storage.ts.
+const ATTACH_MAX_FILES = 5;
+const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10MB per file
+const ATTACH_ALLOWED_MIME = new Set<string>([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+]);
+const ATTACH_ALLOWED_EXT = /\.(pdf|jpe?g|png|docx)$/i;
+
 type Draft = {
   title: string;
   summary: string;
@@ -119,6 +133,10 @@ export function IdeaForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedNote, setSavedNote] = useState<string | null>(null);
+  // Attachments selected on step 3. Held in memory until the idea row is
+  // created — uploads happen post-insert so we know the linked_entity_id.
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [attachError, setAttachError] = useState<string | null>(null);
   const [similar, setSimilar] = useState<SimilarIdea[]>([]);
   const [checkingSimilar, setCheckingSimilar] = useState(false);
   const [duplicates, setDuplicates] = useState<DupCandidate[]>([]);
@@ -327,6 +345,28 @@ export function IdeaForm({
         return;
       }
       newIdeaId = (inserted as { id?: string } | null)?.id ?? null;
+    }
+    // Upload any queued attachments now that we have an idea id. Uploads are
+    // best-effort: a failed attachment doesn't roll back the idea — the author
+    // can retry from the idea detail page. Errors are surfaced but non-blocking.
+    if (newIdeaId && selectedFiles.length > 0) {
+      const failed: string[] = [];
+      for (const file of selectedFiles) {
+        try {
+          const res = await uploadEvidence(file, 'idea_submission', {
+            ideaId: newIdeaId,
+            entityType: 'idea',
+            entityId: newIdeaId,
+          });
+          if (!res.ok) failed.push(file.name);
+        } catch {
+          failed.push(file.name);
+        }
+      }
+      if (failed.length > 0) {
+        // eslint-disable-next-line no-console
+        console.warn('[idea-form] attachment upload(s) failed:', failed);
+      }
     }
     // If duplicates were surfaced and the author submitted anyway, record it.
     if (duplicates.length > 0) {
@@ -626,10 +666,90 @@ export function IdeaForm({
             <div className="space-y-3">
               <Label>{t('attachments')}</Label>
               <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 p-8 text-center transition hover:border-brand-teal/40">
-                <Paperclip className="h-6 w-6 text-brand-teal" />
+                <Paperclip className="h-6 w-6 text-brand-teal" aria-hidden="true" />
                 <span className="text-sm text-muted-foreground">{tf('attachmentsHint')}</span>
-                <Input type="file" multiple className="hidden" />
+                <span className="text-xs text-muted-foreground">
+                  {tf('attachmentsLimit', {
+                    count: ATTACH_MAX_FILES,
+                    mb: ATTACH_MAX_BYTES / (1024 * 1024),
+                  })}
+                </span>
+                <Input
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  className="hidden"
+                  onChange={(e) => {
+                    setAttachError(null);
+                    const incoming = Array.from(e.target.files ?? []);
+                    if (incoming.length === 0) return;
+                    // Client-side validation. The server also enforces size +
+                    // uploader auth via lib/storage.ts; this is a UX guard.
+                    const rejected: string[] = [];
+                    const accepted: File[] = [];
+                    for (const f of incoming) {
+                      const mimeOk = ATTACH_ALLOWED_MIME.has(f.type);
+                      const extOk = ATTACH_ALLOWED_EXT.test(f.name);
+                      if (!mimeOk && !extOk) {
+                        rejected.push(`${f.name} — ${tf('attachmentsRejectType')}`);
+                        continue;
+                      }
+                      if (f.size > ATTACH_MAX_BYTES) {
+                        rejected.push(`${f.name} — ${tf('attachmentsRejectSize')}`);
+                        continue;
+                      }
+                      accepted.push(f);
+                    }
+                    setSelectedFiles((prev) => {
+                      const room = ATTACH_MAX_FILES - prev.length;
+                      const clipped = accepted.slice(0, Math.max(0, room));
+                      if (accepted.length > clipped.length) {
+                        rejected.push(tf('attachmentsRejectCount'));
+                      }
+                      return [...prev, ...clipped];
+                    });
+                    if (rejected.length > 0) setAttachError(rejected.join(' · '));
+                    // Reset the input so re-selecting the same file re-fires onChange.
+                    e.target.value = '';
+                  }}
+                />
               </label>
+              {attachError && (
+                <div
+                  role="alert"
+                  className="rounded-md bg-amber-50 p-2.5 text-xs text-amber-800"
+                >
+                  {attachError}
+                </div>
+              )}
+              {selectedFiles.length > 0 && (
+                <ul className="space-y-2">
+                  {selectedFiles.map((f, idx) => (
+                    <li
+                      key={`${f.name}-${idx}`}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-border bg-white p-2.5 text-sm"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <FileText className="h-4 w-4 shrink-0 text-brand-teal" aria-hidden="true" />
+                        <span className="truncate">{f.name}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {(f.size / 1024).toFixed(0)} KB
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={tf('attachmentsRemove')}
+                        onClick={() =>
+                          setSelectedFiles((prev) => prev.filter((_, i) => i !== idx))
+                        }
+                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 

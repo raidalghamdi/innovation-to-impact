@@ -17,6 +17,7 @@ const STATUS_LABELS: Record<string, { ar: string; en: string; tone: string }> = 
   benefits_tracking: { ar: 'تتبع المنافع', en: 'Benefits tracking', tone: 'green' },
   closed: { ar: 'مغلقة', en: 'Closed', tone: 'slate' },
   archived: { ar: 'مؤرشفة', en: 'Archived', tone: 'slate' },
+  withdrawn: { ar: 'مسحوبة', en: 'Withdrawn', tone: 'slate' },
   // compliance
   compliant: { ar: 'ملتزم', en: 'Compliant', tone: 'green' },
   in_progress: { ar: 'قيد التنفيذ', en: 'In progress', tone: 'amber' },

@@ -12,6 +12,7 @@ import { PioneerBadge, isPioneerIdea } from '@/components/pioneer-badge';
 import { FeedbackCountBadge } from '@/components/feedback-section';
 import { getFeedbackCountsForSubmitter } from '@/lib/feedback';
 import { EmptyState } from '@/components/empty-state';
+import { WithdrawIdeaButton } from '@/components/withdraw-idea-button';
 import { Lightbulb, Plus, ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -106,7 +107,10 @@ export default async function MyIdeasPage({
 
                   <PipelineIndicator current={idea.current_stage} />
 
-                  <div className="flex justify-end">
+                  <div className="flex flex-wrap items-center justify-end gap-3">
+                    {idea.current_stage <= 2 && idea.status !== 'withdrawn' && (
+                      <WithdrawIdeaButton ideaId={idea.id} />
+                    )}
                     <Link
                       href={`/ideas/${idea.id}`}
                       className="inline-flex items-center gap-1 text-sm font-medium text-brand-teal hover:underline"

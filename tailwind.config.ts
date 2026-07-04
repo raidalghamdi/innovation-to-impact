@@ -22,7 +22,10 @@ const config: Config = {
           'teal-light': '#D8EFE5',
           cyan: '#4ABFCD',
           'cyan-light': '#CFEDF8',
-          gold: '#C8A23A',
+          // Darkened from #C8A23A to hit WCAG AA (4.5:1 on white); prior tone
+          // measured 2.42:1 which failed body-text contrast. Same hue family,
+          // brand identity preserved.
+          gold: '#8A6D0F',
           'gold-light': '#F5EDD6',
           cream: '#F7F5EF',
           ink: '#232529',
