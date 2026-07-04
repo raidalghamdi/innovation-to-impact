@@ -182,6 +182,16 @@ export function CmsEditor({ locale }: { locale: string }) {
       </div>
 
       {/* Sections */}
+      {/*
+        NOTE (F-22): the visibility toggle here persists `enabled` per section
+        row, scoped to the currently-selected page. Sections are keyed by
+        (page, section), so the landing page's "partners" section and the
+        partners page's "intro"/"grid" sections are independent rows. Toggling
+        a section only affects the page it belongs to — the public renderer
+        reads the matching (page, section) row via isSectionEnabled(). A toggle
+        that appears to "do nothing" is almost always a different page's section
+        being edited than the one being viewed publicly.
+      */}
       {Array.from(pageBlocks.entries()).map(([section, rows]) => {
         const toggleRow = rows.find((r) => r.kind === 'section');
         const textRows = rows.filter((r) => r.kind !== 'section');
