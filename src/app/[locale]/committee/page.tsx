@@ -1,11 +1,13 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { StatusBadge } from '@/components/status-badge';
-import { Button } from '@/components/ui/button';
-import { fetchIdeas } from '@/lib/data';
-import { CheckCircle2, XCircle, RotateCcw, Search } from 'lucide-react';
+import {
+  CommitteeDecisionPanel,
+  type CommitteeIdea,
+} from '@/components/committee-decision-panel';
+import { fetchIdeas, fetchEvaluationSummaries } from '@/lib/data';
 
 export default async function CommitteePage({
   params,
@@ -17,6 +19,28 @@ export default async function CommitteePage({
   const t = await getTranslations('committee');
   const ideas = await fetchIdeas();
   const queue = ideas.filter((i) => i.status === 'committee');
+  const summaries = await fetchEvaluationSummaries(queue.map((i) => i.id));
+
+  const enriched: CommitteeIdea[] = queue.map((i) => {
+    const s = summaries[i.id];
+    return {
+      id: i.id,
+      code: i.code,
+      title_ar: i.title_ar,
+      title_en: i.title_en,
+      problem_statement: i.problem_statement,
+      proposed_solution: i.proposed_solution,
+      expected_benefits: i.expected_benefits,
+      summary: s
+        ? {
+            count: s.count,
+            avgTotal: s.avgTotal,
+            perCriterion: s.perCriterion,
+            conflicts: s.conflicts,
+          }
+        : null,
+    };
+  });
 
   // demo quorum: 5 of 7 members present
   const present = 5;
@@ -37,41 +61,7 @@ export default async function CommitteePage({
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        {queue.length === 0 ? (
-          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">—</CardContent></Card>
-        ) : (
-          queue.map((i) => (
-            <Card key={i.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-brand-teal">
-                    {locale === 'ar' ? i.title_ar : i.title_en}
-                  </CardTitle>
-                  <span className="text-xs font-medium text-brand-gold">{i.code}</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{i.problem_statement}</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" disabled={!quorumMet}>
-                    <CheckCircle2 className="h-4 w-4" />{t('approve')}
-                  </Button>
-                  <Button size="sm" variant="destructive" disabled={!quorumMet}>
-                    <XCircle className="h-4 w-4" />{t('reject')}
-                  </Button>
-                  <Button size="sm" variant="outline" disabled={!quorumMet}>
-                    <RotateCcw className="h-4 w-4" />{t('return')}
-                  </Button>
-                  <Button size="sm" variant="secondary" disabled={!quorumMet}>
-                    <Search className="h-4 w-4" />{t('study')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+      <CommitteeDecisionPanel ideas={enriched} locale={locale} quorumMet={quorumMet} />
     </AppShell>
   );
 }
