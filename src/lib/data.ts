@@ -392,3 +392,273 @@ export async function fetchUsers() {
   }
   return demo.users;
 }
+
+// ---------------------------------------------------------------------------
+// Evaluator assignments (WS3)
+//
+// NOTE: the WS3 brief describes the live innovation.assignments table with the
+// evaluator model (evaluator_id, assigned_by, assigned_at, due_at, notes,
+// status ∈ pending|completed|declined). Migration 00001 still ships the older
+// owner_id/due_date/status='open' shape; reconciling that schema is out of
+// scope for WS3 (see TODO in the final report). Queries here target the
+// evaluator model and stitch related idea/evaluator rows in JS rather than
+// relying on PostgREST embedding, which needs FK hints that may not exist yet.
+// ---------------------------------------------------------------------------
+
+export const ASSIGNMENT_STATUSES = ['pending', 'completed', 'declined'] as const;
+export type AssignmentStatus = (typeof ASSIGNMENT_STATUSES)[number];
+
+export type Assignment = {
+  id: string;
+  idea_id: string;
+  evaluator_id: string;
+  assigned_by: string | null;
+  assigned_at: string | null;
+  due_at: string | null;
+  status: string;
+  notes: string | null;
+};
+
+// Assignment enriched with the joined idea + evaluator display fields the UI
+// needs (bilingual idea title, idea code, evaluator email/name).
+export type AssignmentRow = Assignment & {
+  idea_code: string | null;
+  idea_title_ar: string | null;
+  idea_title_en: string | null;
+  evaluator_email: string | null;
+  evaluator_name: string | null;
+};
+
+export type AssignmentFilters = {
+  evaluatorId?: string;
+  status?: string;
+  ideaSearch?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type AssignmentPage = {
+  rows: AssignmentRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+const DEMO_ASSIGNMENTS: Assignment[] = [
+  { id: 'as1', idea_id: 'i4', evaluator_id: 'u2', assigned_by: 'u1', assigned_at: '2026-06-20T09:00:00', due_at: '2026-06-23T09:00:00', status: 'pending', notes: null },
+  { id: 'as2', idea_id: 'i6', evaluator_id: 'u2', assigned_by: 'u1', assigned_at: '2026-07-01T09:00:00', due_at: '2026-07-06T09:00:00', status: 'pending', notes: 'Priority review' },
+  { id: 'as3', idea_id: 'i7', evaluator_id: 'u3', assigned_by: 'u1', assigned_at: '2026-06-15T09:00:00', due_at: '2026-06-18T09:00:00', status: 'pending', notes: null },
+  { id: 'as4', idea_id: 'i6', evaluator_id: 'u4', assigned_by: 'u1', assigned_at: '2026-07-02T09:00:00', due_at: '2026-07-09T09:00:00', status: 'pending', notes: null },
+  { id: 'as5', idea_id: 'i4', evaluator_id: 'u5', assigned_by: 'u1', assigned_at: '2026-06-30T09:00:00', due_at: '2026-06-28T09:00:00', status: 'completed', notes: null },
+  { id: 'as6', idea_id: 'i7', evaluator_id: 'u5', assigned_by: 'u1', assigned_at: '2026-06-10T09:00:00', due_at: '2026-06-12T09:00:00', status: 'declined', notes: 'Conflict of interest' },
+];
+
+// Enrich a set of assignments with idea/evaluator display fields from the demo
+// dataset. Shared by the Supabase-unconfigured fallbacks below.
+function enrichFromDemo(rows: Assignment[]): AssignmentRow[] {
+  return rows.map((a) => {
+    const idea = demo.ideas.find((i) => i.id === a.idea_id);
+    const ev = demo.users.find((u) => u.id === a.evaluator_id);
+    return {
+      ...a,
+      idea_code: idea?.code ?? null,
+      idea_title_ar: idea?.title_ar ?? null,
+      idea_title_en: idea?.title_en ?? null,
+      evaluator_email: ev?.email ?? null,
+      evaluator_name: ev?.full_name ?? null,
+    };
+  });
+}
+
+async function enrichAssignments(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  rows: Assignment[]
+): Promise<AssignmentRow[]> {
+  const ideaIds = Array.from(new Set(rows.map((r) => r.idea_id).filter(Boolean)));
+  const evalIds = Array.from(new Set(rows.map((r) => r.evaluator_id).filter(Boolean)));
+
+  const ideaById = new Map<string, { code: string | null; title_ar: string | null; title_en: string | null }>();
+  if (ideaIds.length) {
+    const { data } = await supabase.from('ideas').select('id, code, title_ar, title_en').in('id', ideaIds);
+    for (const i of (data ?? []) as Array<{ id: string; code: string | null; title_ar: string | null; title_en: string | null }>) {
+      ideaById.set(i.id, { code: i.code, title_ar: i.title_ar, title_en: i.title_en });
+    }
+  }
+
+  const evById = new Map<string, { email: string | null; full_name: string | null }>();
+  if (evalIds.length) {
+    const { data } = await supabase.from('user_profiles').select('id, email, full_name').in('id', evalIds);
+    for (const u of (data ?? []) as Array<{ id: string; email: string | null; full_name: string | null }>) {
+      evById.set(u.id, { email: u.email, full_name: u.full_name });
+    }
+  }
+
+  return rows.map((a) => {
+    const idea = ideaById.get(a.idea_id);
+    const ev = evById.get(a.evaluator_id);
+    return {
+      ...a,
+      idea_code: idea?.code ?? null,
+      idea_title_ar: idea?.title_ar ?? null,
+      idea_title_en: idea?.title_en ?? null,
+      evaluator_email: ev?.email ?? null,
+      evaluator_name: ev?.full_name ?? null,
+    };
+  });
+}
+
+const ASSIGNMENT_SELECT = 'id, idea_id, evaluator_id, assigned_by, assigned_at, due_at, status, notes';
+
+// Filtered, server-paginated assignment list for the admin viewer.
+export async function fetchAssignmentsPage(filters: AssignmentFilters = {}): Promise<AssignmentPage> {
+  const page = Math.max(1, filters.page ?? 1);
+  const pageSize = filters.pageSize ?? 25;
+  const fromIdx = (page - 1) * pageSize;
+  const toIdx = fromIdx + pageSize - 1;
+
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    if (supabase) {
+      let q = supabase.from('assignments').select(ASSIGNMENT_SELECT, { count: 'exact' });
+      if (filters.evaluatorId) q = q.eq('evaluator_id', filters.evaluatorId);
+      if (filters.status) q = q.eq('status', filters.status);
+      const { data, error, count } = await q
+        .order('assigned_at', { ascending: false })
+        .range(fromIdx, toIdx);
+      logSupabaseError('fetchAssignmentsPage', error);
+      let rows = await enrichAssignments(supabase, (data as Assignment[]) ?? []);
+      // Idea search is applied post-enrichment so it can match the bilingual
+      // title/code the admin actually sees.
+      if (filters.ideaSearch) {
+        const needle = filters.ideaSearch.toLowerCase();
+        rows = rows.filter(
+          (r) =>
+            r.idea_code?.toLowerCase().includes(needle) ||
+            r.idea_title_ar?.toLowerCase().includes(needle) ||
+            r.idea_title_en?.toLowerCase().includes(needle)
+        );
+      }
+      return { rows, total: filters.ideaSearch ? rows.length : count ?? rows.length, page, pageSize };
+    }
+  }
+
+  // Demo fallback.
+  let demoRows = enrichFromDemo(DEMO_ASSIGNMENTS);
+  if (filters.evaluatorId) demoRows = demoRows.filter((r) => r.evaluator_id === filters.evaluatorId);
+  if (filters.status) demoRows = demoRows.filter((r) => r.status === filters.status);
+  if (filters.ideaSearch) {
+    const needle = filters.ideaSearch.toLowerCase();
+    demoRows = demoRows.filter(
+      (r) =>
+        r.idea_code?.toLowerCase().includes(needle) ||
+        r.idea_title_ar?.toLowerCase().includes(needle) ||
+        r.idea_title_en?.toLowerCase().includes(needle)
+    );
+  }
+  return { rows: demoRows.slice(fromIdx, toIdx + 1), total: demoRows.length, page, pageSize };
+}
+
+export type WorkloadCell = { pending: number; dueSoon: number; overdue: number; completedRecent: number };
+export type WorkloadRow = {
+  evaluatorId: string;
+  evaluatorLabel: string;
+  cells: WorkloadCell;
+};
+
+const DUE_SOON_MS = 48 * 60 * 60 * 1000;
+const RECENT_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Classify one assignment into a workload bucket relative to `now`.
+function bucketOf(a: Assignment, now: number): keyof WorkloadCell | null {
+  if (a.status === 'completed') {
+    if (a.assigned_at && now - new Date(a.assigned_at).getTime() <= RECENT_MS) return 'completedRecent';
+    return null;
+  }
+  if (a.status !== 'pending') return null; // declined etc. not shown
+  if (!a.due_at) return 'pending';
+  const due = new Date(a.due_at).getTime();
+  if (due < now) return 'overdue';
+  if (due - now <= DUE_SOON_MS) return 'dueSoon';
+  return 'pending';
+}
+
+// Aggregate assignments per evaluator into the heatmap buckets.
+export async function fetchWorkloadHeatmap(): Promise<WorkloadRow[]> {
+  const now = Date.now();
+  const empty = (): WorkloadCell => ({ pending: 0, dueSoon: 0, overdue: 0, completedRecent: 0 });
+
+  let rows: Assignment[] = DEMO_ASSIGNMENTS;
+  const labelById = new Map<string, string>();
+  for (const u of demo.users) labelById.set(u.id, u.email || u.full_name || u.id);
+
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    if (supabase) {
+      const { data, error } = await supabase.from('assignments').select(ASSIGNMENT_SELECT);
+      logSupabaseError('fetchWorkloadHeatmap', error);
+      rows = (data as Assignment[]) ?? [];
+      const ids = Array.from(new Set(rows.map((r) => r.evaluator_id)));
+      labelById.clear();
+      if (ids.length) {
+        const { data: users } = await supabase.from('user_profiles').select('id, email, full_name').in('id', ids);
+        for (const u of (users ?? []) as Array<{ id: string; email: string | null; full_name: string | null }>) {
+          labelById.set(u.id, u.email || u.full_name || u.id);
+        }
+      }
+    }
+  }
+
+  const acc = new Map<string, WorkloadCell>();
+  for (const a of rows) {
+    const b = bucketOf(a, now);
+    if (!b) continue;
+    const cell = acc.get(a.evaluator_id) ?? empty();
+    cell[b] += 1;
+    acc.set(a.evaluator_id, cell);
+  }
+
+  return Array.from(acc.entries())
+    .map(([evaluatorId, cells]) => ({
+      evaluatorId,
+      evaluatorLabel: labelById.get(evaluatorId) ?? `${evaluatorId.slice(0, 8)}…`,
+      cells,
+    }))
+    .sort((a, b) => a.evaluatorLabel.localeCompare(b.evaluatorLabel));
+}
+
+// Idea + evaluator option lists for the "New Assignment" dialog pickers.
+export type IdeaOption = { id: string; code: string; title_ar: string; title_en: string };
+export async function fetchIdeaOptions(): Promise<IdeaOption[]> {
+  const ideas = await fetchIdeas();
+  return ideas.map((i) => ({ id: i.id, code: i.code, title_ar: i.title_ar, title_en: i.title_en }));
+}
+
+export type EvaluatorOption = { id: string; email: string | null; full_name: string | null };
+export async function fetchEvaluatorOptions(): Promise<EvaluatorOption[]> {
+  const users = await fetchUsers();
+  return users
+    .filter((u) => u.role === 'evaluator')
+    .map((u) => ({ id: u.id, email: u.email, full_name: u.full_name }));
+}
+
+// Evaluator's pending queue, ordered by soonest due first. Empty when
+// Supabase is unconfigured and no matching demo rows exist for the user.
+export async function fetchMyQueue(evaluatorId: string): Promise<AssignmentRow[]> {
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('assignments')
+        .select(ASSIGNMENT_SELECT)
+        .eq('evaluator_id', evaluatorId)
+        .eq('status', 'pending')
+        .order('due_at', { ascending: true });
+      logSupabaseError('fetchMyQueue', error);
+      return enrichAssignments(supabase, (data as Assignment[]) ?? []);
+    }
+  }
+  const rows = DEMO_ASSIGNMENTS.filter((a) => a.evaluator_id === evaluatorId && a.status === 'pending').sort(
+    (a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? '')
+  );
+  return enrichFromDemo(rows);
+}

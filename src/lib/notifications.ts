@@ -1,0 +1,156 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { getTranslations } from 'next-intl/server';
+import { createClient } from '@/lib/supabase/server';
+import { sendTransactional } from '@/lib/email';
+import type { Role } from '@/lib/roles';
+
+// Notification kinds. Bilingual copy for each lives in messages/*.json under
+// `notifications.types.<type>.{title,body}` and is resolved via next-intl.
+export type NotificationType =
+  | 'evaluation_assigned'
+  | 'evaluation_completed'
+  | 'committee_decision'
+  | 'idea_feedback_requested'
+  | 'idea_approved'
+  | 'idea_rejected'
+  | 'deadline_approaching'
+  | 'sla_breached'
+  | 'escalation';
+
+// Arbitrary values interpolated into the bilingual copy AND persisted verbatim
+// in the notifications.payload jsonb column (e.g. { subject, ideaId, hours }).
+export type NotificationPayload = Record<string, string | number | boolean | null>;
+
+export type NotifyOptions = {
+  // Also deliver by email (default false — in-app only).
+  email?: boolean;
+  // Optional privileged client for session-less callers (cron / fan-out jobs).
+  client?: SupabaseClient<any, any, any>;
+  // Deep link stored on the row for the in-app list.
+  link?: string;
+};
+
+// Loose generics so both the RLS-scoped session client and the service-role
+// admin client (schema 'innovation') are assignable.
+type Client = SupabaseClient<any, any, any>;
+
+async function resolveClient(client?: Client): Promise<Client | null> {
+  if (client) return client;
+  return (await createClient()) as Client | null;
+}
+
+// Look up recipient email + preferred locale for email delivery.
+async function recipientContact(
+  supabase: Client,
+  userId: string
+): Promise<{ email: string | null; locale: string }> {
+  const { data } = await supabase
+    .from('user_profiles')
+    .select('email, language_preference')
+    .eq('id', userId)
+    .maybeSingle();
+  const row = data as { email?: string | null; language_preference?: string | null } | null;
+  return { email: row?.email ?? null, locale: row?.language_preference === 'ar' ? 'ar' : 'en' };
+}
+
+type Copy = { title_ar: string; title_en: string; body_ar: string; body_en: string };
+
+// Resolve the bilingual title/body for a notification type, interpolating the
+// payload as ICU variables. Falls back to the type key if a message is missing.
+async function resolveCopy(type: NotificationType, payload: NotificationPayload): Promise<Copy> {
+  const vars = payload as Record<string, string | number | boolean>;
+  const [ar, en] = await Promise.all([
+    getTranslations({ locale: 'ar', namespace: 'notifications.types' }),
+    getTranslations({ locale: 'en', namespace: 'notifications.types' }),
+  ]);
+  return {
+    title_ar: ar(`${type}.title`, vars),
+    title_en: en(`${type}.title`, vars),
+    body_ar: ar(`${type}.body`, vars),
+    body_en: en(`${type}.body`, vars),
+  };
+}
+
+/**
+ * Insert a single in-app notification and, when opts.email is true, dispatch a
+ * transactional email to the recipient in their preferred language. Best-effort:
+ * swallows all errors so it can never break the action that triggered it.
+ */
+export async function createNotification(
+  userId: string,
+  type: NotificationType,
+  payload: NotificationPayload = {},
+  opts: NotifyOptions = {}
+): Promise<void> {
+  try {
+    const supabase = await resolveClient(opts.client);
+    if (!supabase) return;
+
+    const copy = await resolveCopy(type, payload);
+
+    await supabase.from('notifications').insert({
+      user_id: userId,
+      type,
+      title_ar: copy.title_ar,
+      title_en: copy.title_en,
+      body_ar: copy.body_ar,
+      body_en: copy.body_en,
+      payload,
+      link: opts.link ?? null,
+    });
+
+    if (opts.email) {
+      const { email, locale } = await recipientContact(supabase, userId);
+      if (email) {
+        await sendTransactional({
+          to: email,
+          subject_ar: copy.title_ar,
+          subject_en: copy.title_en,
+          body_ar: copy.body_ar,
+          body_en: copy.body_en,
+          locale,
+        });
+      }
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[createNotification] failed:', err);
+  }
+}
+
+/**
+ * Fan a single notification out to many recipients. De-duplicates ids and reuses
+ * one client so a batch is a handful of queries, not one per user.
+ */
+export async function fanOut(
+  userIds: string[],
+  type: NotificationType,
+  payload: NotificationPayload = {},
+  opts: NotifyOptions = {}
+): Promise<void> {
+  const unique = Array.from(new Set(userIds.filter(Boolean)));
+  if (!unique.length) return;
+  const supabase = await resolveClient(opts.client);
+  if (!supabase) return;
+  await Promise.all(
+    unique.map((id) => createNotification(id, type, payload, { ...opts, client: supabase }))
+  );
+}
+
+/**
+ * Notify every user holding a given role, resolving recipients from
+ * user_profiles. Used for role-addressed events (e.g. notify all judges when an
+ * evaluation is submitted).
+ */
+export async function notifyByRole(
+  role: Role,
+  type: NotificationType,
+  payload: NotificationPayload = {},
+  opts: NotifyOptions = {}
+): Promise<void> {
+  const supabase = await resolveClient(opts.client);
+  if (!supabase) return;
+  const { data } = await supabase.from('user_profiles').select('id').eq('role', role);
+  const ids = ((data as { id: string }[] | null) ?? []).map((r) => r.id);
+  await fanOut(ids, type, payload, { ...opts, client: supabase });
+}

@@ -15,6 +15,7 @@ type QueueIdea = {
   title_ar: string;
   title_en: string;
   status: string;
+  due_at?: string | null;
 };
 
 export function EvaluationWorkspace({
@@ -25,7 +26,9 @@ export function EvaluationWorkspace({
   locale: string;
 }) {
   const t = useTranslations('evaluation');
+  const tq = useTranslations('evaluation.myQueue');
   const router = useRouter();
+  const now = Date.now();
   const [selectedId, setSelectedId] = useState<string | null>(
     queue.length ? queue[0].id : null
   );
@@ -61,6 +64,17 @@ export function EvaluationWorkspace({
                 <p className="mt-1 line-clamp-1 text-sm font-medium">
                   {pickFromRow(i, 'title', locale)}
                 </p>
+                {i.due_at && (
+                  <p
+                    className={cn(
+                      'mt-1 text-xs',
+                      new Date(i.due_at).getTime() < now ? 'font-medium text-red-600' : 'text-muted-foreground'
+                    )}
+                    dir="ltr"
+                  >
+                    {new Date(i.due_at).getTime() < now ? tq('overdue') : tq('dueLabel')}: {i.due_at.slice(0, 10)}
+                  </p>
+                )}
               </button>
             ))
           )}

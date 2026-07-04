@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
+import { notifyByRole } from '@/lib/notifications';
+import { openSlaTracker, closeSlaTracker } from '@/lib/sla';
 import { computeTotal, type CriteriaScores } from '@/lib/evaluation';
 
 export type EvaluationResult = { ok: boolean; error?: string };
@@ -60,6 +62,22 @@ export async function saveEvaluation(input: SaveInput): Promise<EvaluationResult
     input.ideaId,
     { after: { total_score: row.total_score } }
   );
+
+  // On submit: resolve the evaluator's assignment so we close the right
+  // evaluation SLA tracker (they're keyed by assignment id), start the committee
+  // clock, and alert the judges that a scorecard is ready. Drafts do none of this.
+  if (input.submit) {
+    const { data: assignment } = await supabase
+      .from('assignments')
+      .select('id')
+      .eq('idea_id', input.ideaId)
+      .eq('evaluator_id', user.id)
+      .maybeSingle();
+    const assignmentId = (assignment as { id?: string } | null)?.id;
+    if (assignmentId) await closeSlaTracker('evaluation', assignmentId);
+    await openSlaTracker('committee', input.ideaId, 'submitted', 'decided');
+    await notifyByRole('judge', 'evaluation_completed', { ideaId: input.ideaId });
+  }
 
   revalidatePath(`/[locale]/evaluation`, 'page');
   return { ok: true };

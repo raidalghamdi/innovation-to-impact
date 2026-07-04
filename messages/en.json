@@ -304,6 +304,10 @@
       "strategic_fit": "Strategic alignment",
       "cost": "Cost-benefit",
       "effort": "Cost-benefit"
+    },
+    "myQueue": {
+      "dueLabel": "Due",
+      "overdue": "Overdue"
     }
   },
   "committee": {
@@ -564,6 +568,53 @@
       "pageOf": "Page {page} of {pages}",
       "prev": "Previous",
       "next": "Next"
+    },
+    "assignments": {
+      "title": "Evaluator Assignments",
+      "subtitle": "Assign ideas to evaluators and monitor workload.",
+      "heatmapTitle": "Evaluator workload",
+      "heatmapEmpty": "No assignments to visualize yet.",
+      "bucket_pending": "Pending",
+      "bucket_dueSoon": "Due soon",
+      "bucket_overdue": "Overdue",
+      "bucket_completedRecent": "Completed this week",
+      "filterEvaluator": "Evaluator",
+      "allEvaluators": "All evaluators",
+      "filterStatus": "Status",
+      "allStatuses": "All statuses",
+      "filterIdea": "Idea",
+      "filterIdeaPlaceholder": "Search by title or code",
+      "apply": "Apply",
+      "reset": "Reset",
+      "selectAll": "Select all",
+      "selectedCount": "selected",
+      "bulkUnassign": "Unassign selected",
+      "newAssignment": "New Assignment",
+      "colIdea": "Idea",
+      "colEvaluator": "Evaluator",
+      "colAssignedAt": "Assigned",
+      "colDueAt": "Due",
+      "colStatus": "Status",
+      "colActions": "Actions",
+      "status_pending": "Pending",
+      "status_completed": "Completed",
+      "status_declined": "Declined",
+      "reassign": "Reassign",
+      "unassign": "Unassign",
+      "cancel": "Cancel",
+      "create": "Create",
+      "pickIdea": "Select idea",
+      "pickEvaluator": "Select evaluator",
+      "dueAtOptional": "Due date (optional)",
+      "notesOptional": "Notes (optional)",
+      "pickerRequired": "Please choose an idea and an evaluator.",
+      "createdOk": "Assignment created.",
+      "unassignedOk": "Assignment(s) unassigned.",
+      "reassignedOk": "Assignment reassigned.",
+      "actionError": "Action failed. Please try again.",
+      "pageOf": "Page {page} of {pages}",
+      "prev": "Previous",
+      "next": "Next"
     }
   },
   "strategy": {
@@ -701,7 +752,45 @@
     "markAllRead": "Mark all as read",
     "unread": "Unread",
     "all": "All",
-    "none": "Nothing new right now."
+    "none": "Nothing new right now.",
+    "types": {
+      "evaluation_assigned": {
+        "title": "New evaluation assigned",
+        "body": "An idea has been assigned to you for evaluation. Please review and submit your scorecard."
+      },
+      "evaluation_completed": {
+        "title": "Evaluation submitted",
+        "body": "An evaluator has submitted a scorecard. The idea is ready for committee review."
+      },
+      "committee_decision": {
+        "title": "Committee decision recorded",
+        "body": "The committee has recorded a decision on an idea you reviewed."
+      },
+      "idea_feedback_requested": {
+        "title": "Feedback requested",
+        "body": "The committee has requested changes to your idea. Please review the feedback and resubmit."
+      },
+      "idea_approved": {
+        "title": "Your idea was approved",
+        "body": "Congratulations — the committee approved your idea. It will move to the next stage."
+      },
+      "idea_rejected": {
+        "title": "Decision on your idea",
+        "body": "The committee has reviewed your idea and decided not to proceed. See the feedback for details."
+      },
+      "deadline_approaching": {
+        "title": "Deadline approaching",
+        "body": "An item assigned to you is approaching its SLA deadline. Please take action soon."
+      },
+      "sla_breached": {
+        "title": "SLA deadline missed",
+        "body": "An item has passed its SLA deadline without resolution. Please action it as a priority."
+      },
+      "escalation": {
+        "title": "Item escalated",
+        "body": "An item has been escalated and requires your attention."
+      }
+    }
   },
   "about": {
     "title": "About the Program",

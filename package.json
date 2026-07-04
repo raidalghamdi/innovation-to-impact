@@ -25,6 +25,7 @@
     "next-intl": "^3.20.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "resend": "^6.17.1",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7"
   },
