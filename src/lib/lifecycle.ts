@@ -71,6 +71,53 @@ export function assertTransition(
   }
 }
 
+// Thrown when a gated transition is attempted before its approval chain is
+// complete (see src/lib/approvals.ts). Bilingual, mirroring
+// LifecycleTransitionError so callers can surface the right message.
+export class ApprovalRequiredError extends Error {
+  readonly entityType: string;
+  readonly targetState: string;
+  readonly chainCode: string;
+  readonly messages: { ar: string; en: string };
+
+  constructor(entityType: string, targetState: string, chainCode: string) {
+    const messages = {
+      en: `Approval chain "${chainCode}" must be completed before "${entityType}" can move to "${targetState}".`,
+      ar: `يجب إكمال سلسلة الموافقات "${chainCode}" قبل نقل "${entityType}" إلى "${targetState}".`,
+    };
+    super(messages.en);
+    this.name = 'ApprovalRequiredError';
+    this.entityType = entityType;
+    this.targetState = targetState;
+    this.chainCode = chainCode;
+    this.messages = messages;
+  }
+}
+
+/**
+ * Guard a gated transition: if `targetState` on `entityType` requires an approval
+ * chain (per src/lib/approvals GATE) and no approved instance exists, throw
+ * ApprovalRequiredError. No-op for ungated transitions. Approvals are resolved
+ * via a dynamic import so this module stays free of a server-only dependency at
+ * load time (keeps the pure state-machine importable in tests).
+ */
+export async function assertApprovalComplete(
+  entityType: string,
+  targetState: string,
+  entityId: string,
+  locale?: 'ar' | 'en'
+): Promise<void> {
+  const { requiresApproval, isApprovalComplete } = await import('@/lib/approvals');
+  const chainCode = requiresApproval(entityType, targetState);
+  if (!chainCode) return;
+  const done = await isApprovalComplete(chainCode, entityType, entityId);
+  if (!done) {
+    const err = new ApprovalRequiredError(entityType, targetState, chainCode);
+    if (locale === 'ar') err.message = err.messages.ar;
+    throw err;
+  }
+}
+
 // Evaluator recommendation -> resulting lifecycle state.
 export type Recommendation = 'approve' | 'revise' | 'reject' | 'escalate';
 

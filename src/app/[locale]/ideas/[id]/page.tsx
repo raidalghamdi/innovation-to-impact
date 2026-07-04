@@ -47,7 +47,23 @@ export default async function IdeaDetailPage({
       <PageHeader
         title={locale === 'ar' ? idea.title_ar : idea.title_en}
         subtitle={`${idea.code} · ${tc('stage')} ${idea.current_stage}`}
-        action={<StatusBadge status={idea.status} locale={locale} />}
+        action={
+          <div className="flex items-center gap-3">
+            <a
+              href={`/api/exports/idea-brief.pdf?ideaId=${idea.id}&locale=${locale}`}
+              className="rounded-md border border-brand-teal px-3 py-1.5 text-sm font-medium text-brand-teal hover:bg-brand-teal/10"
+            >
+              {t('exportBrief')}
+            </a>
+            <a
+              href={`/api/exports/idea.docx?ideaId=${idea.id}&locale=${locale}`}
+              className="rounded-md border border-brand-teal px-3 py-1.5 text-sm font-medium text-brand-teal hover:bg-brand-teal/10"
+            >
+              {t('exportDocx')}
+            </a>
+            <StatusBadge status={idea.status} locale={locale} />
+          </div>
+        }
       />
 
       <Card className="mb-6">

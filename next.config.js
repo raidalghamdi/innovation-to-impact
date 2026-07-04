@@ -43,6 +43,11 @@ const SECURITY_HEADERS = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Ensure the embedded Arabic TTFs used by the PDF export are traced into the
+  // serverless bundle for the /api/exports/* route handlers.
+  outputFileTracingIncludes: {
+    '/api/exports/**': ['./src/lib/exports/fonts/**'],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

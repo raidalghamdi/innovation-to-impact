@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fanOut } from '@/lib/notifications';
+import { openEscalationIfAbsent, type EscalationEntity } from '@/lib/escalations';
 import type { SlaTracker, SlaPolicy } from '@/lib/sla';
 
 // Hourly Vercel Cron (see vercel.json). Marks overdue SLA trackers as breached
@@ -89,6 +90,22 @@ export async function GET(req: NextRequest) {
         { entityType: t.entity_type, entityId: t.entity_id },
         { email: true, client: supabase }
       );
+      // Auto-open a first-class escalation for the breached entity (once — the
+      // helper is a no-op when one is already open/acknowledged).
+      const escEntity: EscalationEntity =
+        t.entity_type === 'evaluation'
+          ? 'evaluation'
+          : t.entity_type === 'idea'
+            ? 'idea'
+            : t.entity_type === 'committee'
+              ? 'committee_decision'
+              : 'sla';
+      await openEscalationIfAbsent({
+        entityType: escEntity,
+        entityId: t.entity_id,
+        reason: `SLA breached for ${t.entity_type} (tracker ${t.id})`,
+        client: supabase,
+      });
       breachedCount += ids.length ? 1 : 0;
       continue;
     }

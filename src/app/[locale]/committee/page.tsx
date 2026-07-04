@@ -8,6 +8,9 @@ import {
   type CommitteeIdea,
 } from '@/components/committee-decision-panel';
 import { fetchIdeas, fetchEvaluationSummaries } from '@/lib/data';
+import { getCurrentUser } from '@/lib/user';
+import { MyEscalationsStrip } from '@/components/my-escalations-strip';
+import { CommitteePackButton } from '@/components/exports/committee-pack-button';
 
 export default async function CommitteePage({
   params,
@@ -48,9 +51,25 @@ export default async function CommitteePage({
   const required = 5;
   const quorumMet = present >= required;
 
+  const user = await getCurrentUser();
+
   return (
     <AppShell>
-      <PageHeader title={t('title')} subtitle={t('subtitle')} />
+      <PageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        action={
+          queue.length ? (
+            <CommitteePackButton
+              ideaIds={queue.map((i) => i.id)}
+              locale={locale}
+              label={t('exportPack')}
+            />
+          ) : undefined
+        }
+      />
+
+      {user && <MyEscalationsStrip userId={user.id} role={user.role} locale={locale} />}
 
       <Card className="mb-6">
         <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">

@@ -3,6 +3,8 @@ import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchUsers, fetchAuditLogs } from '@/lib/data';
+import { getCurrentUser } from '@/lib/user';
+import { MyEscalationsStrip } from '@/components/my-escalations-strip';
 
 export default async function AdminPage({
   params,
@@ -15,10 +17,13 @@ export default async function AdminPage({
   const tc = await getTranslations('categories');
   const users = await fetchUsers();
   const audit = await fetchAuditLogs(8);
+  const user = await getCurrentUser();
 
   return (
     <AppShell>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
+
+      {user && <MyEscalationsStrip userId={user.id} role={user.role} locale={locale} />}
 
       <Card>
         <CardHeader>

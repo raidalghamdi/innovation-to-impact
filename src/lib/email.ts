@@ -29,18 +29,22 @@ export type SendTransactionalInput = {
   locale?: string;
 };
 
-// Minimal bilingual, RTL-aware HTML shell. Arabic renders dir="rtl".
+// Minimal bilingual, RTL-aware HTML shell. Arabic renders dir="rtl" end-to-end:
+// the <html> and container carry `direction`, text is aligned to the start edge
+// (right for AR), and the accent border sits on the start edge so padding mirrors
+// correctly instead of always hugging the left.
 function renderHtml(opts: { title: string; body: string; rtl: boolean }): string {
   const dir = opts.rtl ? 'rtl' : 'ltr';
   const align = opts.rtl ? 'right' : 'left';
+  const startSide = opts.rtl ? 'right' : 'left';
   return `<!doctype html>
 <html dir="${dir}" lang="${opts.rtl ? 'ar' : 'en'}">
-  <body style="margin:0;background:#f4f6f8;padding:24px;font-family:Arial,Helvetica,sans-serif;">
-    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e9ee;">
-      <div style="background:#0f6e7e;color:#ffffff;padding:16px 20px;font-size:18px;font-weight:bold;text-align:${align};">
+  <body style="margin:0;background:#f4f6f8;padding:24px;direction:${dir};font-family:'Segoe UI',Tahoma,Arial,Helvetica,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e9ee;direction:${dir};text-align:${align};">
+      <div style="background:#01696F;color:#ffffff;padding:16px 20px;font-size:18px;font-weight:bold;text-align:${align};">
         i2i · الابتكار إلى الأثر
       </div>
-      <div style="padding:20px;color:#1f2a30;text-align:${align};">
+      <div style="padding:20px;border-${startSide}:4px solid #01696F;color:#28251D;text-align:${align};">
         <h1 style="margin:0 0 12px;font-size:18px;">${opts.title}</h1>
         <p style="margin:0;font-size:14px;line-height:1.6;color:#3b4a52;">${opts.body}</p>
       </div>

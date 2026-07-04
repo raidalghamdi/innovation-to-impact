@@ -6,6 +6,18 @@ import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
 import { createNotification, fanOut, type NotificationType } from '@/lib/notifications';
 import { closeSlaTracker } from '@/lib/sla';
+import {
+  assertApprovalComplete,
+  assertTransition,
+  ApprovalRequiredError,
+  LifecycleTransitionError,
+  LIFECYCLE_STATES,
+  type LifecycleState,
+} from '@/lib/lifecycle';
+
+function isLifecycleState(v: string | null): v is LifecycleState {
+  return v != null && (LIFECYCLE_STATES as readonly string[]).includes(v);
+}
 
 // Committee decision values match the innovation.committee_decision_type enum
 // exactly: {approve, reject, return, study}. Each maps to an ideas.status
@@ -135,4 +147,118 @@ export async function recordDecision(input: DecideInput): Promise<DecisionResult
 
   revalidatePath(`/[locale]/committee`, 'page');
   return { ok: true, count: input.ideaIds.length };
+}
+
+export type BulkDecisionFailure = { ideaId: string; error: string };
+export type BulkDecisionResult = {
+  ok: boolean;
+  error?: string;
+  succeeded: number;
+  failures: BulkDecisionFailure[];
+};
+
+type BulkDecideInput = {
+  ideaIds: string[];
+  decision: Decision;
+  comment: string;
+  locale?: 'ar' | 'en';
+};
+
+/**
+ * Decide many ideas at once with one shared comment. Unlike recordDecision this
+ * guards each idea individually: it checks the lifecycle transition and the
+ * approval sign-off gate (assertApprovalComplete) before writing, and collects
+ * per-idea failures instead of aborting the whole batch — so a blocked idea
+ * doesn't sink the ones that are clear to go. Enforces admin/judge role.
+ */
+export async function bulkCommitteeDecide(input: BulkDecideInput): Promise<BulkDecisionResult> {
+  if (!input.ideaIds.length) return { ok: false, error: 'no_ideas', succeeded: 0, failures: [] };
+  if ((input.decision === 'reject' || input.decision === 'return') && !input.comment.trim()) {
+    return { ok: false, error: 'comment_required', succeeded: 0, failures: [] };
+  }
+
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, error: 'not_configured', succeeded: 0, failures: [] };
+
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: 'unauthenticated', succeeded: 0, failures: [] };
+  if (user.role !== 'admin' && user.role !== 'judge') {
+    return { ok: false, error: 'forbidden', succeeded: 0, failures: [] };
+  }
+
+  const nextStatus = STATUS_BY_DECISION[input.decision];
+  const notifType = NOTIFICATION_BY_DECISION[input.decision];
+  const comments = input.comment.trim() || null;
+  const locale = input.locale ?? 'en';
+
+  // Snapshot prior status + submitter per idea for guards, audit, and notify.
+  const priorStatus = new Map<string, string | null>();
+  const submitterByIdea = new Map<string, string | null>();
+  const { data: priorRows } = await supabase
+    .from('ideas')
+    .select('id, status, submitter_id')
+    .in('id', input.ideaIds);
+  for (const row of priorRows ?? []) {
+    priorStatus.set(row.id as string, (row.status as string | null) ?? null);
+    submitterByIdea.set(row.id as string, (row.submitter_id as string | null) ?? null);
+  }
+
+  const failures: BulkDecisionFailure[] = [];
+  let succeeded = 0;
+
+  for (const ideaId of input.ideaIds) {
+    const from = priorStatus.get(ideaId) ?? null;
+    try {
+      // Lifecycle guard — only when both endpoints are lifecycle states (the
+      // ideas.status enum overlaps but isn't identical, so skip when it isn't).
+      if (nextStatus && isLifecycleState(from) && isLifecycleState(nextStatus)) {
+        assertTransition(from, nextStatus, locale);
+      }
+      // Sign-off gate — throws ApprovalRequiredError when a committee-publish
+      // chain is engaged for this idea but not yet approved.
+      if (nextStatus) {
+        await assertApprovalComplete('committee_decision', nextStatus, ideaId, locale);
+      }
+
+      const { error: insertError } = await supabase.from('committee_decisions').insert({
+        idea_id: ideaId,
+        decision: input.decision,
+        comments,
+        decided_by: user.id,
+      });
+      if (insertError) throw new Error(insertError.message);
+
+      if (nextStatus) {
+        const { error: updateError } = await supabase
+          .from('ideas')
+          .update({ status: nextStatus })
+          .eq('id', ideaId);
+        if (updateError) throw new Error(updateError.message);
+      }
+
+      await logAudit(user.id, `committee.${input.decision}`, 'idea', ideaId, {
+        before: { status: from },
+        after: { status: nextStatus ?? from, decision: input.decision, comments },
+      });
+
+      const tasks: Promise<void>[] = [closeSlaTracker('committee', ideaId)];
+      const submitter = submitterByIdea.get(ideaId);
+      const payload = { ideaId, decision: input.decision };
+      if (submitter) tasks.push(createNotification(submitter, notifType, payload, { email: true }));
+      await Promise.all(tasks);
+
+      succeeded += 1;
+    } catch (err) {
+      const message =
+        err instanceof ApprovalRequiredError || err instanceof LifecycleTransitionError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'error';
+      failures.push({ ideaId, error: message });
+    }
+  }
+
+  revalidatePath(`/[locale]/committee`, 'page');
+  return { ok: failures.length === 0, succeeded, failures };
 }

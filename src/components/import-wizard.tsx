@@ -5,12 +5,12 @@ import { useTranslations } from 'next-intl';
 import Papa from 'papaparse';
 import { UploadCloud, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { importCsv } from '@/app/[locale]/admin/import/actions';
 import {
-  importCsv,
   ENTITY_FIELDS,
   type ImportEntity,
   type ImportResult,
-} from '@/app/[locale]/admin/import/actions';
+} from '@/lib/import-schema';
 
 const ENTITIES: ImportEntity[] = ['ideas', 'evaluators', 'strategic_themes'];
 const PREVIEW_ROWS = 20;

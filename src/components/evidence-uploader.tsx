@@ -7,9 +7,8 @@ import {
   uploadEvidence,
   listEvidence,
   deleteEvidence,
-  type EvidenceContext,
-  type EvidenceWithUrl,
 } from '@/lib/storage';
+import type { EvidenceContext, EvidenceWithUrl } from '@/lib/evidence-types';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 

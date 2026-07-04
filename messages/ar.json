@@ -227,6 +227,8 @@
     "expectedBenefits": "المنافع المتوقعة",
     "similarityHint": "توجد بالفعل أفكار في موضوع مشابه",
     "relationships": "العلاقات",
+    "exportBrief": "تصدير موجز (PDF)",
+    "exportDocx": "تصدير DOCX",
     "timeline": "الخط الزمني لدورة الحياة",
     "evaluations": "التقييمات",
     "decisions": "قرارات اللجنة",
@@ -314,6 +316,7 @@
   "committee": {
     "title": "قرارات اللجنة",
     "subtitle": "مراجعة الأفكار المقيَّمة وتسجيل القرارات مع تتبع النصاب.",
+    "exportPack": "تصدير حزمة PDF",
     "quorum": "النصاب",
     "quorumMet": "اكتمل النصاب",
     "decision": "القرار",
@@ -342,7 +345,8 @@
     "saving": "جارٍ الحفظ…",
     "queueEmpty": "لا توجد أفكار بانتظار قرار اللجنة.",
     "individualScores": "بطاقات المُقيّمين",
-    "evidenceTitle": "الأدلة الداعمة"
+    "evidenceTitle": "الأدلة الداعمة",
+    "bulkPartial": "تم تسجيل {ok}، وتعذّر {failed}."
   },
   "pilots": {
     "title": "متتبع التجارب والاختبارات",
@@ -491,6 +495,7 @@
     "viewBenefits": "عرض المنافع",
     "adminTitle": "تحليلات المنصة",
     "adminSubtitle": "التقديمات والتحويل ونشاط المساهمين عبر المنصة.",
+    "exportXlsx": "تصدير XLSX",
     "kpiSubmissions": "إجمالي التقديمات",
     "kpiApproved": "المعتمدة",
     "kpiImplemented": "المنفّذة",
@@ -572,6 +577,7 @@
       "apply": "تطبيق عوامل التصفية",
       "reset": "إعادة الضبط",
       "export": "تصدير CSV",
+      "exportXlsx": "تصدير XLSX",
       "colWhen": "التاريخ",
       "colActor": "المنفّذ",
       "colAction": "الإجراء",
@@ -806,6 +812,10 @@
       "escalation": {
         "title": "تم تصعيد العنصر",
         "body": "تم تصعيد أحد العناصر ويتطلب انتباهك."
+      },
+      "approval_requested": {
+        "title": "طلب موافقة",
+        "body": "هناك عنصر ينتظر موافقتك."
       }
     }
   },
@@ -1377,6 +1387,75 @@
       "days": "قبل {n} يوم",
       "hours": "قبل {n} ساعة",
       "minutes": "قبل {n} دقيقة"
+    }
+  },
+  "escalations": {
+    "title": "التصعيدات",
+    "subtitle": "العناصر المتأخرة أو المتعثرة ومن يملكها الآن.",
+    "empty": "لا توجد تصعيدات مفتوحة.",
+    "actionError": "تعذّر إتمام هذا الإجراء. حاول مرة أخرى.",
+    "mine": "تصعيداتي",
+    "viewAll": "عرض الكل",
+    "notePlaceholder": "أضف ملاحظة (اختياري)…",
+    "colEntity": "العنصر",
+    "colLevel": "المستوى",
+    "colOwner": "المسؤول",
+    "colAge": "المدة",
+    "colStatus": "الحالة",
+    "colActions": "إجراءات",
+    "level": {
+      "1": "مدير",
+      "2": "مدير عام",
+      "3": "تنفيذي"
+    },
+    "statusLabel": {
+      "open": "مفتوح",
+      "acknowledged": "تم الاطلاع",
+      "resolved": "تم الحل",
+      "cancelled": "ملغى"
+    },
+    "act": {
+      "detail": "ملاحظة",
+      "ack": "اطّلاع",
+      "bump": "تصعيد",
+      "resolve": "حل"
+    },
+    "entity": {
+      "idea": "فكرة",
+      "evaluation": "تقييم",
+      "committee_decision": "قرار اللجنة",
+      "change_request": "طلب تغيير",
+      "sla": "اتفاقية مستوى الخدمة"
+    },
+    "age": {
+      "days": "قبل {n} يوم",
+      "hours": "قبل {n} ساعة",
+      "minutes": "قبل {n} دقيقة"
+    }
+  },
+  "approvals": {
+    "title": "موافقاتي",
+    "subtitle": "الخطوات التي تنتظر اعتمادك.",
+    "empty": "لا يوجد ما ينتظر موافقتك.",
+    "actionError": "تعذّر تسجيل القرار. حاول مرة أخرى.",
+    "bulkMode": "الوضع الجماعي",
+    "selected": "{n} محدد",
+    "sharedComment": "تعليق مشترك لكل المحدد…",
+    "approveN": "اعتماد {n}",
+    "rejectN": "رفض {n}",
+    "bulkOk": "تم تسجيل {n} قرار.",
+    "bulkPartial": "تم تسجيل {ok}، وتعذّر {failed}.",
+    "approve": "اعتماد",
+    "reject": "رفض",
+    "comment": "أضف تعليقًا (اختياري)…",
+    "step": "الخطوة {n}",
+    "progress": "{got} من {need} موافقات",
+    "entity": {
+      "idea": "فكرة",
+      "evaluation": "تقييم",
+      "committee_decision": "قرار اللجنة",
+      "change_request": "طلب تغيير",
+      "sla": "اتفاقية مستوى الخدمة"
     }
   }
 }

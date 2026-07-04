@@ -15,7 +15,8 @@ export type NotificationType =
   | 'idea_rejected'
   | 'deadline_approaching'
   | 'sla_breached'
-  | 'escalation';
+  | 'escalation'
+  | 'approval_requested';
 
 // Arbitrary values interpolated into the bilingual copy AND persisted verbatim
 // in the notifications.payload jsonb column (e.g. { subject, ideaId, hours }).

@@ -219,7 +219,18 @@ export default async function AdminAnalyticsPage({
 
   return (
     <AppShell>
-      <PageHeader title={t('adminTitle')} subtitle={t('adminSubtitle')} />
+      <PageHeader
+        title={t('adminTitle')}
+        subtitle={t('adminSubtitle')}
+        action={
+          <a
+            href={`/api/exports/ideas.xlsx?locale=${locale}`}
+            className="rounded-md bg-brand-teal px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          >
+            {t('exportXlsx')}
+          </a>
+        }
+      />
 
       {/* ===== Executive Dashboard (5 charts) ===== */}
       <section className="space-y-4" aria-labelledby="exec-dashboard-heading">

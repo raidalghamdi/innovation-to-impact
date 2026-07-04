@@ -4,33 +4,13 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
-
-// Change-request status machine (WS7 F4). Mirrors the idea lifecycle guard in
-// src/lib/lifecycle.ts: an explicit transition table + an assertTransition that
-// throws on an illegal move, so every state change is validated in one place.
-
-export const CR_STATES = ['requested', 'in_review', 'approved', 'rejected', 'applied'] as const;
-export type CrState = (typeof CR_STATES)[number];
-
-export const CR_TRANSITIONS: Record<CrState, CrState[]> = {
-  requested: ['in_review', 'rejected'],
-  in_review: ['approved', 'rejected', 'requested'],
-  approved: ['applied', 'rejected'],
-  rejected: [],
-  applied: [],
-};
-
-export function canCrTransition(from: CrState, to: CrState): boolean {
-  return CR_TRANSITIONS[from]?.includes(to) ?? false;
-}
-
-export function assertCrTransition(from: CrState, to: CrState): void {
-  if (!canCrTransition(from, to)) {
-    throw new Error(`Illegal change-request transition: "${from}" → "${to}".`);
-  }
-}
-
-export type CrResult = { ok: boolean; error?: string };
+import {
+  CR_STATES,
+  assertCrTransition,
+  type CrState,
+  type CrResult,
+  type CreateCrInput,
+} from '@/lib/change-requests';
 
 async function requireReviewer() {
   const supabase = await createClient();
@@ -89,16 +69,6 @@ export async function moveChangeRequest(id: string, to: CrState): Promise<CrResu
   revalidatePath(`/[locale]/admin/change-requests`, 'page');
   return { ok: true };
 }
-
-export type CreateCrInput = {
-  entityType: string;
-  entityId: string;
-  fieldPath: string;
-  currentValue: unknown;
-  proposedValue: unknown;
-  reasonAr?: string | null;
-  reasonEn?: string | null;
-};
 
 // Any authenticated user can propose a change; it lands in the `requested`
 // column for reviewers to triage.

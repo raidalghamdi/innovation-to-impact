@@ -5,42 +5,20 @@
 // Every helper is best-effort against a live Supabase; when env is unset the
 // client is null and the helpers return safe empty results so the UI degrades
 // gracefully instead of throwing.
+//
+// Types and constants live in `@/lib/evidence-types` so client components can
+// import them without pulling this 'use server' module.
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
-
-export const EVIDENCE_BUCKET = 'evidence';
-
-export type EvidenceContext =
-  | 'idea_submission'
-  | 'evaluation'
-  | 'committee'
-  | 'compliance'
-  | 'implementation';
-
-export type EntityRef = {
-  ideaId?: string | null;
-  entityType: string;
-  entityId: string;
-};
-
-export type EvidenceRow = {
-  id: string;
-  idea_id: string | null;
-  uploader_id: string | null;
-  storage_path: string;
-  filename: string;
-  content_type: string | null;
-  size_bytes: number | null;
-  context: EvidenceContext;
-  linked_entity_type: string | null;
-  linked_entity_id: string | null;
-  uploaded_at: string;
-};
-
-export type EvidenceWithUrl = EvidenceRow & { url: string | null };
-
-export type UploadResult = { ok: boolean; row?: EvidenceRow; error?: string };
+import {
+  EVIDENCE_BUCKET,
+  type EvidenceContext,
+  type EntityRef,
+  type EvidenceRow,
+  type EvidenceWithUrl,
+  type UploadResult,
+} from '@/lib/evidence-types';
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB — mirrors the client-side guard.
 const SIGNED_URL_TTL = 60 * 60; // 1 hour

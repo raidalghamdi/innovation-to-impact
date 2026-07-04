@@ -4,7 +4,8 @@ import { useMemo, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { X, Check, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { moveChangeRequest, type CrState } from '@/app/[locale]/admin/change-requests/actions';
+import { moveChangeRequest } from '@/app/[locale]/admin/change-requests/actions';
+import type { CrState } from '@/lib/change-requests';
 
 export type ChangeRequestRow = {
   id: string;

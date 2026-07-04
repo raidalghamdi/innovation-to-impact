@@ -227,6 +227,8 @@
     "expectedBenefits": "Expected benefits",
     "similarityHint": "Some ideas on a similar theme already exist",
     "relationships": "Relationships",
+    "exportBrief": "Export brief (PDF)",
+    "exportDocx": "Export DOCX",
     "timeline": "Lifecycle timeline",
     "evaluations": "Evaluations",
     "decisions": "Committee decisions",
@@ -314,6 +316,7 @@
   "committee": {
     "title": "Committee decisions",
     "subtitle": "Review evaluated ideas and record decisions with quorum tracking.",
+    "exportPack": "Export PDF pack",
     "evidenceTitle": "Supporting evidence",
     "quorum": "Quorum",
     "quorumMet": "Quorum met",
@@ -342,7 +345,8 @@
     "decisionError": "Could not record the decision. Please try again.",
     "saving": "Saving…",
     "queueEmpty": "No ideas are awaiting a committee decision.",
-    "individualScores": "Individual scorecards"
+    "individualScores": "Individual scorecards",
+    "bulkPartial": "{ok} recorded, {failed} could not be completed."
   },
   "pilots": {
     "title": "Pilot & experiment tracker",
@@ -491,6 +495,7 @@
     "viewBenefits": "View benefits",
     "adminTitle": "Platform analytics",
     "adminSubtitle": "Submissions, conversion, and contributor activity across the platform.",
+    "exportXlsx": "Export XLSX",
     "kpiSubmissions": "Total submissions",
     "kpiApproved": "Approved",
     "kpiImplemented": "Implemented",
@@ -572,6 +577,7 @@
       "apply": "Apply filters",
       "reset": "Reset",
       "export": "Export CSV",
+      "exportXlsx": "Export XLSX",
       "colWhen": "When",
       "colActor": "Actor",
       "colAction": "Action",
@@ -806,6 +812,10 @@
       "escalation": {
         "title": "Item escalated",
         "body": "An item has been escalated and requires your attention."
+      },
+      "approval_requested": {
+        "title": "Approval requested",
+        "body": "An item is waiting on your approval."
       }
     }
   },
@@ -1377,6 +1387,75 @@
       "days": "{n}d ago",
       "hours": "{n}h ago",
       "minutes": "{n}m ago"
+    }
+  },
+  "escalations": {
+    "title": "Escalations",
+    "subtitle": "Overdue or blocked items and who owns them now.",
+    "empty": "No open escalations.",
+    "actionError": "Could not complete that action. Please try again.",
+    "mine": "My escalations",
+    "viewAll": "View all",
+    "notePlaceholder": "Add a note (optional)…",
+    "colEntity": "Item",
+    "colLevel": "Level",
+    "colOwner": "Owner",
+    "colAge": "Age",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "level": {
+      "1": "Manager",
+      "2": "Director",
+      "3": "Executive"
+    },
+    "statusLabel": {
+      "open": "Open",
+      "acknowledged": "Acknowledged",
+      "resolved": "Resolved",
+      "cancelled": "Cancelled"
+    },
+    "act": {
+      "detail": "Note",
+      "ack": "Acknowledge",
+      "bump": "Escalate",
+      "resolve": "Resolve"
+    },
+    "entity": {
+      "idea": "Idea",
+      "evaluation": "Evaluation",
+      "committee_decision": "Committee decision",
+      "change_request": "Change request",
+      "sla": "SLA"
+    },
+    "age": {
+      "days": "{n}d ago",
+      "hours": "{n}h ago",
+      "minutes": "{n}m ago"
+    }
+  },
+  "approvals": {
+    "title": "My approvals",
+    "subtitle": "Steps waiting on your sign-off.",
+    "empty": "Nothing awaiting your approval.",
+    "actionError": "Could not record that decision. Please try again.",
+    "bulkMode": "Bulk mode",
+    "selected": "{n} selected",
+    "sharedComment": "Shared comment for all selected…",
+    "approveN": "Approve {n}",
+    "rejectN": "Reject {n}",
+    "bulkOk": "{n} decisions recorded.",
+    "bulkPartial": "{ok} recorded, {failed} could not be completed.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "comment": "Add a comment (optional)…",
+    "step": "Step {n}",
+    "progress": "{got} of {need} approvals",
+    "entity": {
+      "idea": "Idea",
+      "evaluation": "Evaluation",
+      "committee_decision": "Committee decision",
+      "change_request": "Change request",
+      "sla": "SLA"
     }
   }
 }

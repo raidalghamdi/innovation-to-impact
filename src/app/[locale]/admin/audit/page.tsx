@@ -71,12 +71,20 @@ export default async function AuditPage({
           <h1 className="text-2xl font-bold text-brand-teal">{t('title')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
-        <a
-          href={`/api/admin/audit/export${buildQuery(baseQuery, {})}`}
-          className="rounded-md bg-brand-teal px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-        >
-          {t('export')}
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/api/admin/audit/export${buildQuery(baseQuery, {})}`}
+            className="rounded-md bg-brand-teal px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          >
+            {t('export')}
+          </a>
+          <a
+            href={`/api/exports/audit.xlsx${buildQuery(baseQuery, { locale })}`}
+            className="rounded-md border border-brand-teal px-4 py-2 text-sm font-medium text-brand-teal hover:bg-brand-teal/10"
+          >
+            {t('exportXlsx')}
+          </a>
+        </div>
       </div>
 
       <Card className="mt-6">

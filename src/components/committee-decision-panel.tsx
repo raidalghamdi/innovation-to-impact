@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, XCircle, RotateCcw, Search, X } from 'lucide-react';
-import { recordDecision, type Decision } from '@/app/[locale]/committee/actions';
+import { bulkCommitteeDecide, type Decision } from '@/app/[locale]/committee/actions';
 import { EvidenceUploader } from '@/components/evidence-uploader';
 import { pickFromRow } from '@/lib/i18n-content';
 
@@ -84,12 +84,26 @@ export function CommitteeDecisionPanel({
     }
     setStatus({ kind: 'idle', message: '' });
     startTransition(async () => {
-      const res = await recordDecision({ ideaIds, decision, comments: comment.trim() });
-      if (!res.ok) {
+      // Guarded path: per-idea lifecycle + approval sign-off checks, collecting
+      // individual failures so a blocked idea doesn't sink the rest.
+      const res = await bulkCommitteeDecide({
+        ideaIds,
+        decision,
+        comment: comment.trim(),
+        locale: locale === 'ar' ? 'ar' : 'en',
+      });
+      if (res.error) {
         setStatus({ kind: 'error', message: t('decisionError') });
         return;
       }
-      setStatus({ kind: 'ok', message: t('decisionRecorded') });
+      if (res.failures.length) {
+        setStatus({
+          kind: 'error',
+          message: t('bulkPartial', { ok: res.succeeded, failed: res.failures.length }),
+        });
+      } else {
+        setStatus({ kind: 'ok', message: t('decisionRecorded') });
+      }
       setSelected(new Set());
       setComment('');
       setDetail(null);
