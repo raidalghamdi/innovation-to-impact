@@ -40,9 +40,9 @@ export function LanguageToggle() {
       onClick={switchLocale}
       disabled={isPending}
       className="gap-1.5"
-      aria-label="Switch language"
+      aria-label={locale === 'ar' ? 'تغيير اللغة إلى الإنجليزية' : 'Switch language to Arabic'}
     >
-      <Languages className="h-4 w-4" />
+      <Languages className="h-4 w-4" aria-hidden="true" />
       {next === 'ar' ? 'العربية' : 'English'}
     </Button>
   );

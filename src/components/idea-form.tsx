@@ -107,7 +107,22 @@ export function IdeaForm({
   const [checkingSimilar, setCheckingSimilar] = useState(false);
   const restored = useRef(false);
 
+  // Ref to the current step's heading. On step change we move keyboard focus
+  // here so screen readers announce the new section and sighted keyboard users
+  // start from the top of the newly revealed content. tabIndex={-1} lets the
+  // element receive programmatic focus without being in the tab order.
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+
   const steps = [tf('steps.basics'), tf('steps.details'), tf('steps.attachments'), tf('steps.review')];
+
+  // On step change, move focus to the step heading so assistive tech reads
+  // out the new section and Tab starts from a predictable place.
+  useEffect(() => {
+    // Skip on initial mount — the URL landing state shouldn't steal focus
+    // from whatever the user was doing before the form loaded.
+    if (!restored.current) return;
+    stepHeadingRef.current?.focus();
+  }, [step]);
 
   // Restore draft on mount.
   useEffect(() => {
@@ -318,6 +333,18 @@ export function IdeaForm({
           </p>
         </div>
 
+        {/* Live step heading — receives focus on step change so screen readers
+            announce each section. Rendered as a visually-subtle H2 so sighted
+            users still get the semantic anchor without visual duplication. */}
+        <h2
+          ref={stepHeadingRef}
+          tabIndex={-1}
+          className="sr-only"
+          aria-live="polite"
+        >
+          {steps[step]}
+        </h2>
+
         <form onSubmit={onSubmit} className="space-y-5">
           {/* ---- Step 1: Basics ---- */}
           {step === 0 && (
@@ -516,9 +543,18 @@ export function IdeaForm({
             </div>
           )}
 
-          {error && (
-            <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">{error}</div>
-          )}
+          {/* Validation error surface. `role="alert"` announces immediately,
+              `aria-live="polite"` mirrors the same content for AT that
+              prefers the live-region path. The empty div is always rendered
+              so screen readers register the live region on mount, not on
+              first error. */}
+          <div role="alert" aria-live="polite" className="empty:hidden">
+            {error && (
+              <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
+                {error}
+              </div>
+            )}
+          </div>
 
           {/* Navigation */}
           <div className="flex items-center justify-between gap-3 pt-2">

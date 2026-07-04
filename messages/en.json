@@ -75,7 +75,9 @@
     "skipToContent": "Skip to content",
     "close": "Close",
     "pipeline": "Pipeline",
-    "lastUpdated": "Last updated"
+    "lastUpdated": "Last updated",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu"
   },
   "landing": {
     "heroTitle": "Start your innovation journey — from an idea or a challenge",
@@ -1105,5 +1107,18 @@
     "recommendationLabel": "Recommendation",
     "countBadge": "reviews",
     "anonymityNote": "Reviewer identities are kept anonymous — only their role is shown."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist, has moved, or is not yet available on the Innovation to Impact platform.",
+    "homeCta": "Return to homepage",
+    "stagesCta": "Explore the nine-stage journey"
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred while loading this page. The engineering team has been notified. Please try again in a moment.",
+    "retry": "Try again",
+    "homeCta": "Return to homepage",
+    "referenceLabel": "Reference"
   }
 }

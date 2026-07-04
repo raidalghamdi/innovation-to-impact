@@ -41,8 +41,15 @@ export function KnowledgeList({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative max-w-sm flex-1">
-          <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tc('search')} className="ps-9" />
+          <Search aria-hidden="true" className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={tc('search')}
+            aria-label={tc('search')}
+            className="ps-9"
+          />
         </div>
         <div className="flex flex-wrap gap-1.5">
           {TYPE_FILTERS.map((f) => (

@@ -25,16 +25,16 @@ export default async function SettingsPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label>{t('fullName')}</Label>
-              <Input defaultValue="رائد الغامدي" dir="auto" />
+              <Label htmlFor="settings-full-name">{t('fullName')}</Label>
+              <Input id="settings-full-name" defaultValue="رائد الغامدي" dir="auto" />
             </div>
             <div className="space-y-1.5">
-              <Label>{t('email')}</Label>
-              <Input defaultValue="raid.alghamdi@gac.gov.sa" dir="ltr" readOnly />
+              <Label htmlFor="settings-email">{t('email')}</Label>
+              <Input id="settings-email" defaultValue="raid.alghamdi@gac.gov.sa" dir="ltr" readOnly />
             </div>
             <div className="space-y-1.5">
-              <Label>{t('role')}</Label>
-              <Input defaultValue="admin" readOnly />
+              <Label htmlFor="settings-role">{t('role')}</Label>
+              <Input id="settings-role" defaultValue="admin" readOnly />
             </div>
           </CardContent>
         </Card>

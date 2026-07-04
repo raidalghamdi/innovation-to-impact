@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Logo } from '@/components/logo';
+import { SkipToContent } from '@/components/skip-to-content';
 import { AlertCircle } from 'lucide-react';
 
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
@@ -58,7 +59,8 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
-      <Card className="w-full max-w-md">
+      <SkipToContent targetId="auth-main" />
+      <Card id="auth-main" className="w-full max-w-md">
         <CardHeader className="items-center text-center">
           <span className="mx-auto mb-2 text-brand-teal">
             <Logo className="h-14 w-14" />
@@ -106,12 +108,16 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required dir="ltr" />
             </div>
 
-            {error && (
-              <div className="flex items-start gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
+            {/* Error surface uses role=alert + aria-live=polite so screen
+                readers announce authentication failures immediately. */}
+            <div role="alert" aria-live="polite" className="empty:hidden">
+              {error && (
+                <div className="flex items-start gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+            </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
               {isSignup ? t('signUp') : t('signIn')}

@@ -6,6 +6,7 @@ import { LanguageToggle } from '@/components/language-toggle';
 import { SiteFooter } from '@/components/site-footer';
 import { Countdown } from '@/components/countdown';
 import { StickyCta } from '@/components/sticky-cta';
+import { SkipToContent } from '@/components/skip-to-content';
 import { Button } from '@/components/ui/button';
 import { StatsBlock } from '@/components/stats-block';
 import { BackToTop } from '@/components/back-to-top';
@@ -73,6 +74,10 @@ export default async function LandingPage({
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Skip link — first focusable element on every page so keyboard and
+          screen-reader users can jump past the sticky header into #main-content. */}
+      <SkipToContent />
+
       {/* Top bar */}
       <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
         <Link href="/" className="flex items-center gap-2.5">
@@ -95,6 +100,7 @@ export default async function LandingPage({
         </div>
       </header>
 
+      <main id="main-content">
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-teal-dark text-white">
         <div className="pointer-events-none absolute -end-20 -top-20 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl" />
@@ -330,6 +336,7 @@ export default async function LandingPage({
       </section>
       )}
 
+      </main>
       <SiteFooter locale={locale} />
       <BackToTop label={t('common.backToTop')} />
       <StickyCta />

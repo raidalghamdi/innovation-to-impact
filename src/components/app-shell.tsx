@@ -53,9 +53,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             size="icon"
             className="lg:hidden"
             onClick={() => setOpen((o) => !o)}
-            aria-label="Toggle navigation"
+            aria-label={open ? t('common.closeMenu') : t('common.openMenu')}
+            aria-expanded={open}
+            aria-controls="mobile-nav"
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           </Button>
           <Link href="/dashboard" className="flex items-center gap-2.5">
             <CoBrand className="h-12" locale={locale} />
@@ -93,6 +95,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => setOpen(false)}
             />
             <aside
+              id="mobile-nav"
+              aria-label={t('common.openMenu')}
               className={cn(
                 'absolute top-0 h-full w-64 overflow-y-auto bg-card shadow-xl',
                 'start-0'
@@ -102,8 +106,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="text-sm font-semibold text-brand-teal">
                   {t('app.name')}
                 </span>
-                <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-                  <X className="h-5 w-5" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setOpen(false)}
+                  aria-label={t('common.closeMenu')}
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </div>
               <SidebarNav role={role} onNavigate={() => setOpen(false)} />
