@@ -1,13 +1,18 @@
 User-agent: *
-Allow: /
-
-Disallow: /ar/admin
-Disallow: /en/admin
-Disallow: /ar/evaluation
-Disallow: /en/evaluation
-Disallow: /ar/committee
-Disallow: /en/committee
+Disallow: /ar/admin/
+Disallow: /en/admin/
+Disallow: /ar/evaluation/
+Disallow: /en/evaluation/
+Disallow: /ar/committee/
+Disallow: /en/committee/
+Disallow: /ar/audit/
+Disallow: /en/audit/
+Disallow: /ar/analytics/
+Disallow: /en/analytics/
 Disallow: /ar/login
 Disallow: /en/login
+Disallow: /ar/signup
+Disallow: /en/signup
+Disallow: /api/
 
 Sitemap: https://innovation-to-impact.vercel.app/sitemap.xml
