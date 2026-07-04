@@ -64,6 +64,7 @@
     "name": "الاسم",
     "type": "النوع",
     "stage": "المرحلة",
+    "stageShort": "م",
     "total": "الإجمالي",
     "sar": "ريال",
     "yes": "نعم",
@@ -133,8 +134,7 @@
     "audiencePreviewDesc": "رواد الأعمال والجهات الحكومية ومختصو الابتكار.",
     "criteriaPreviewTitle": "كيف تُقيَّم الأفكار",
     "criteriaPreviewDesc": "خمسة معايير موزونة من المواءمة الاستراتيجية إلى الأثر.",
-    "heroPrimaryCta": "قدّم فكرتك",
-    "fourStepsTitle": "كيف يعمل البرنامج"
+    "heroPrimaryCta": "قدّم فكرتك"
   },
   "stages": {
     "s0": "الإطار الاستراتيجي",

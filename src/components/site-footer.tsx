@@ -1,6 +1,14 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { Linkedin, Twitter, Youtube } from 'lucide-react';
+import { SOCIAL_LINKS } from '@/lib/social-links';
+import type { LucideIcon } from 'lucide-react';
+
+const SOCIAL_ICONS: Record<(typeof SOCIAL_LINKS)[number]['id'], LucideIcon> = {
+  linkedin: Linkedin,
+  twitter: Twitter,
+  youtube: Youtube,
+};
 
 const QUICK_LINKS = [
   { href: '/about', key: 'about' },
@@ -30,33 +38,21 @@ export async function SiteFooter({ locale: _locale }: { locale: string }) {
           <h3 className="text-sm font-semibold">{tapp('name')}</h3>
           <p className="mt-3 text-sm text-white/80">{t('tagline')}</p>
           <div className="mt-4 flex gap-3">
-            <a
-              href="https://www.linkedin.com/company/gac-ksa"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LinkedIn"
-              className="text-white/80 hover:text-white"
-            >
-              <Linkedin className="h-5 w-5" />
-            </a>
-            <a
-              href="https://twitter.com/GAC_KSA"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="X (Twitter)"
-              className="text-white/80 hover:text-white"
-            >
-              <Twitter className="h-5 w-5" />
-            </a>
-            <a
-              href="https://www.youtube.com/@GAC_KSA"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="YouTube"
-              className="text-white/80 hover:text-white"
-            >
-              <Youtube className="h-5 w-5" />
-            </a>
+            {SOCIAL_LINKS.map((s) => {
+              const Icon = SOCIAL_ICONS[s.id];
+              return (
+                <a
+                  key={s.id}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={s.label}
+                  className="text-white/80 hover:text-white"
+                >
+                  <Icon className="h-5 w-5" />
+                </a>
+              );
+            })}
           </div>
         </div>
 

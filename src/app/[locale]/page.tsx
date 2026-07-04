@@ -190,7 +190,7 @@ export default async function LandingPage({
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
-              {getText(cms, 'how_it_works', 'title', locale, t('landing.fourStepsTitle'))}
+              {getText(cms, 'how_it_works', 'title', locale, t('landing.howItWorksTitle'))}
             </h2>
             {(() => {
               const subtitle = getText(cms, 'how_it_works', 'subtitle', locale, t('landing.howItWorksSubtitle'));

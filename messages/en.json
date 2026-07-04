@@ -64,6 +64,7 @@
     "name": "Name",
     "type": "Type",
     "stage": "Stage",
+    "stageShort": "S",
     "total": "Total",
     "sar": "SAR",
     "yes": "Yes",
@@ -133,8 +134,7 @@
     "audiencePreviewDesc": "Entrepreneurs, government entities, and innovation specialists.",
     "criteriaPreviewTitle": "How ideas are evaluated",
     "criteriaPreviewDesc": "Five weighted criteria from strategic alignment to impact.",
-    "heroPrimaryCta": "Submit your idea",
-    "fourStepsTitle": "How it works"
+    "heroPrimaryCta": "Submit your idea"
   },
   "stages": {
     "s0": "Strategic Framework",

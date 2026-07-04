@@ -85,7 +85,9 @@ export function SidebarNav({
   role?: Role;
 }) {
   const t = useTranslations('nav');
-  const tStage = useTranslations('common')('stage');
+  const tCommon = useTranslations('common');
+  const tStage = tCommon('stage');
+  const tStageShort = tCommon('stageShort');
   const pathname = usePathname();
 
   return (
@@ -122,23 +124,28 @@ export function SidebarNav({
                       <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                       <span className="flex-1 truncate">{t(item.key)}</span>
                       {item.stage && (
-                        <>
-                          {/* Screen-reader-only separator so labels like
-                              "Ideas" and the stage badge "1–3" are never read
-                              as a single token ("Ideas1–3"). */}
-                          <span className="sr-only">{` — ${tStage} `}</span>
-                          <span
-                            aria-hidden="true"
-                            className={cn(
-                              'ms-2 inline-flex min-w-6 shrink-0 items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none tabular-nums',
-                              active
-                                ? 'bg-white/25 text-white ring-1 ring-white/40'
-                                : 'bg-brand-teal/10 text-brand-teal ring-1 ring-brand-teal/20'
-                            )}
-                          >
-                            {item.stage}
-                          </span>
-                        </>
+                        // Stage pill: single element that starts with a real,
+                        // visible "S" (localized short form of "Stage") plus a
+                        // hair-space before the number. Because it's one span
+                        // containing text of the form "S 0" or "S 1–3", any
+                        // text-extraction pipeline sees the label separated
+                        // from the stage marker — no more "Strategy0".
+                        //
+                        // An sr-only prefix expands "S" to the full localized
+                        // "Stage" word for screen readers, so the accessible
+                        // reading remains "Strategy — Stage 0".
+                        <span
+                          className={cn(
+                            'ms-2 inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none tabular-nums',
+                            active
+                              ? 'bg-white/25 text-white ring-1 ring-white/40'
+                              : 'bg-brand-teal/10 text-brand-teal ring-1 ring-brand-teal/20'
+                          )}
+                        >
+                          <span className="sr-only">{`— ${tStage} `}</span>
+                          <span aria-hidden="true" className="opacity-60">{tStageShort}</span>
+                          <span aria-hidden="true">{item.stage}</span>
+                        </span>
                       )}
                     </Link>
                   </li>
