@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/status-badge';
 import { EvaluationScorecard } from '@/components/evaluation-scorecard';
 import { cn } from '@/lib/utils';
+import { pickFromRow } from '@/lib/i18n-content';
 
 type QueueIdea = {
   id: string;
@@ -58,7 +59,7 @@ export function EvaluationWorkspace({
                   <StatusBadge status={i.status} locale={locale} />
                 </div>
                 <p className="mt-1 line-clamp-1 text-sm font-medium">
-                  {locale === 'ar' ? i.title_ar : i.title_en}
+                  {pickFromRow(i, 'title', locale)}
                 </p>
               </button>
             ))

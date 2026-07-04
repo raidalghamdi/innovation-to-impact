@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
-import { logAction } from '@/lib/audit';
+import { logAudit } from '@/lib/audit';
 import { computeTotal, type CriteriaScores } from '@/lib/evaluation';
 
 export type EvaluationResult = { ok: boolean; error?: string };
@@ -53,12 +53,12 @@ export async function saveEvaluation(input: SaveInput): Promise<EvaluationResult
     return { ok: false, error: error.message };
   }
 
-  await logAction(
+  await logAudit(
     user.id,
     input.submit ? 'evaluation.submit' : 'evaluation.draft',
     'idea',
     input.ideaId,
-    { total_score: row.total_score }
+    { after: { total_score: row.total_score } }
   );
 
   revalidatePath(`/[locale]/evaluation`, 'page');

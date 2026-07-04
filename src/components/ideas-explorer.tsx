@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/empty-state';
 import { Search, Sparkles, Inbox } from 'lucide-react';
 import type { Idea, StrategicTheme, Activity } from '@/lib/demo-data';
 import { PIPELINE_STATUSES } from '@/lib/demo-data';
+import { pickFromRow } from '@/lib/i18n-content';
 
 const STATUSES = [
   'draft', 'submitted', 'screening', 'evaluation', 'committee',
@@ -82,13 +83,13 @@ export function IdeasExplorer({
         <select value={theme} onChange={(e) => setTheme(e.target.value)} className={selectClass}>
           <option value="">{t('filterTheme')}: {tc('all')}</option>
           {themes.map((th) => (
-            <option key={th.id} value={th.id}>{locale === 'ar' ? th.name_ar : th.name_en}</option>
+            <option key={th.id} value={th.id}>{pickFromRow(th, 'name', locale)}</option>
           ))}
         </select>
         <select value={activity} onChange={(e) => setActivity(e.target.value)} className={selectClass}>
           <option value="">{t('filterActivity')}: {tc('all')}</option>
           {activities.map((a) => (
-            <option key={a.id} value={a.id}>{locale === 'ar' ? a.name_ar : a.name_en}</option>
+            <option key={a.id} value={a.id}>{pickFromRow(a, 'name', locale)}</option>
           ))}
         </select>
         <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectClass}>
@@ -132,7 +133,7 @@ export function IdeasExplorer({
                       <StatusBadge status={idea.status} locale={locale} />
                     </div>
                     <p className="line-clamp-2 text-sm font-semibold text-foreground">
-                      {locale === 'ar' ? idea.title_ar : idea.title_en}
+                      {pickFromRow(idea, 'title', locale)}
                     </p>
                     <p className="line-clamp-2 text-xs text-muted-foreground">
                       {idea.problem_statement}

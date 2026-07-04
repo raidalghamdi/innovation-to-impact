@@ -7,6 +7,7 @@ import type {
   SubmissionsPerDayRow,
   TopObjectiveRow,
 } from '@/lib/analytics';
+import { pickFromRow } from '@/lib/i18n-content';
 
 const TEAL = '#20808D';
 const TEAL_DARK = '#1B474D';
@@ -224,7 +225,7 @@ export function TopObjectivesChart({
     <div className="space-y-3">
       {rows.map((r) => {
         const name =
-          (isAr ? r.name_ar : r.name_en) || r.name_en || r.name_ar || '—';
+          pickFromRow(r, 'name', locale) || '—';
         return (
           <div key={r.theme_id} className="flex items-center gap-3">
             <span

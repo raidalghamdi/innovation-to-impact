@@ -34,6 +34,43 @@ export function canTransition(from: LifecycleState, to: LifecycleState): boolean
   return TRANSITIONS[from]?.includes(to) ?? false;
 }
 
+// Thrown when a lifecycle_status write attempts an illegal transition. Carries
+// bilingual messages so callers can surface the right one. Pattern mirrors the
+// PdcaTransitionService guard in cx-platform-v2.
+export class LifecycleTransitionError extends Error {
+  readonly from: LifecycleState;
+  readonly to: LifecycleState;
+  readonly messages: { ar: string; en: string };
+
+  constructor(from: LifecycleState, to: LifecycleState) {
+    const messages = {
+      en: `Illegal lifecycle transition: "${from}" → "${to}".`,
+      ar: `انتقال غير مسموح في دورة الحياة: من "${from}" إلى "${to}".`,
+    };
+    super(messages.en);
+    this.name = 'LifecycleTransitionError';
+    this.from = from;
+    this.to = to;
+    this.messages = messages;
+  }
+}
+
+// Guard a lifecycle_status write. Throws LifecycleTransitionError when the
+// transition is not in TRANSITIONS; otherwise returns the localized success is
+// implicit (no return value). Pass a locale to pick which bilingual message the
+// thrown error surfaces first via `.message`.
+export function assertTransition(
+  from: LifecycleState,
+  to: LifecycleState,
+  locale?: 'ar' | 'en'
+): void {
+  if (!canTransition(from, to)) {
+    const err = new LifecycleTransitionError(from, to);
+    if (locale === 'ar') err.message = err.messages.ar;
+    throw err;
+  }
+}
+
 // Evaluator recommendation -> resulting lifecycle state.
 export type Recommendation = 'approve' | 'revise' | 'reject' | 'escalate';
 

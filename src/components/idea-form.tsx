@@ -19,6 +19,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import type { StrategicTheme, Activity } from '@/lib/demo-data';
+import { pickFromRow } from '@/lib/i18n-content';
 
 // --- Smart title suggestion -----------------------------------------------
 const STOPWORDS_AR = new Set([
@@ -416,7 +417,7 @@ export function IdeaForm({
                             className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm transition hover:border-brand-teal/40"
                           >
                             <span className="line-clamp-1 flex-1" dir={isAr ? 'rtl' : 'ltr'}>
-                              {(isAr ? s.title_ar : s.title_en) || s.title_en || s.title_ar || s.code}
+                              {pickFromRow(s, 'title', locale) || s.code}
                             </span>
                             <span className="shrink-0 rounded-full bg-brand-teal-light px-2 py-0.5 text-[11px] font-medium text-brand-teal">
                               {ts('match', { pct: Math.round(s.similarity * 100) })}
@@ -454,7 +455,7 @@ export function IdeaForm({
                   <select value={theme} onChange={(e) => setTheme(e.target.value)} className={selectClass}>
                     {themes.map((th) => (
                       <option key={th.id} value={th.id}>
-                        {isAr ? th.name_ar : th.name_en}
+                        {pickFromRow(th, 'name', locale)}
                       </option>
                     ))}
                   </select>
@@ -471,7 +472,7 @@ export function IdeaForm({
                   >
                     {activities.map((a) => (
                       <option key={a.id} value={a.id}>
-                        {isAr ? a.name_ar : a.name_en}
+                        {pickFromRow(a, 'name', locale)}
                       </option>
                     ))}
                   </select>
@@ -516,7 +517,7 @@ export function IdeaForm({
                 <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
                   <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('themeLabel')}</dt>
                   <dd className="text-sm text-foreground sm:col-span-2">
-                    {activeTheme ? (isAr ? activeTheme.name_ar : activeTheme.name_en) : '—'}
+                    {activeTheme ? pickFromRow(activeTheme, 'name', locale) : '—'}
                   </dd>
                 </div>
               </dl>

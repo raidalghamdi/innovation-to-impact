@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
-import { logAction } from '@/lib/audit';
+import { logAudit } from '@/lib/audit';
 
 // Committee decision values match the innovation.committee_decision_type enum
 // exactly: {approve, reject, return, study}. Each maps to an ideas.status
@@ -56,6 +56,18 @@ export async function recordDecision(input: DecideInput): Promise<DecisionResult
   }
 
   const nextStatus = STATUS_BY_DECISION[input.decision];
+
+  // Snapshot the pre-decision status of each idea so the audit trail records
+  // the before/after transition, not just the outcome.
+  const priorStatus = new Map<string, string | null>();
+  const { data: priorRows } = await supabase
+    .from('ideas')
+    .select('id, status')
+    .in('id', input.ideaIds);
+  for (const row of priorRows ?? []) {
+    priorStatus.set(row.id as string, (row.status as string | null) ?? null);
+  }
+
   if (nextStatus) {
     const { error: updateError } = await supabase
       .from('ideas')
@@ -70,9 +82,13 @@ export async function recordDecision(input: DecideInput): Promise<DecisionResult
 
   await Promise.all(
     input.ideaIds.map((ideaId) =>
-      logAction(user.id, `committee.${input.decision}`, 'idea', ideaId, {
-        decision: input.decision,
-        comments: input.comments || null,
+      logAudit(user.id, `committee.${input.decision}`, 'idea', ideaId, {
+        before: { status: priorStatus.get(ideaId) ?? null },
+        after: {
+          status: nextStatus ?? priorStatus.get(ideaId) ?? null,
+          decision: input.decision,
+          comments: input.comments || null,
+        },
       })
     )
   );

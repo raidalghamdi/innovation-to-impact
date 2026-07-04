@@ -120,6 +120,140 @@ export async function fetchAuditLogs(limit = 100): Promise<AuditLog[]> {
   return DEMO_AUDIT.slice(0, limit);
 }
 
+// Standards-traceability control (migration 00006 model). Distinct from the
+// legacy demo.ComplianceControl shape used by fetchCompliance().
+export type ComplianceControlV2 = {
+  id: string;
+  standard_body: string;
+  control_code: string;
+  title_ar: string;
+  title_en: string;
+  description_ar: string | null;
+  description_en: string | null;
+  mapped_feature_paths: string[] | null;
+  evidence_urls: string[] | null;
+  owner_id: string | null;
+  status: string;
+  last_reviewed_at: string | null;
+};
+
+const DEMO_CONTROLS: ComplianceControlV2[] = [
+  { id: 'cc-sdaia-1', standard_body: 'SDAIA', control_code: 'SDAIA-AI-01', title_en: 'AI ethics assessment', title_ar: 'تقييم أخلاقيات الذكاء الاصطناعي', description_en: 'AI features carry a documented ethics assessment.', description_ar: 'توثيق تقييم أخلاقي لميزات الذكاء الاصطناعي.', mapped_feature_paths: ['src/lib/ai/'], evidence_urls: [], owner_id: null, status: 'in_progress', last_reviewed_at: '2026-05-01' },
+  { id: 'cc-ndmo-1', standard_body: 'NDMO', control_code: 'NDMO-DM-04', title_en: 'Data classification', title_ar: 'تصنيف البيانات', description_en: 'Personal data classified per NDMO policy.', description_ar: 'تصنيف البيانات الشخصية وفق سياسة مكتب إدارة البيانات.', mapped_feature_paths: ['supabase/migrations/'], evidence_urls: [], owner_id: null, status: 'met', last_reviewed_at: '2026-04-18' },
+  { id: 'cc-dga-1', standard_body: 'DGA', control_code: 'DGA-DX-02', title_en: 'Bilingual digital service', title_ar: 'خدمة رقمية ثنائية اللغة', description_en: 'Service available in Arabic and English with RTL.', description_ar: 'توفر الخدمة بالعربية والإنجليزية مع دعم الاتجاه من اليمين لليسار.', mapped_feature_paths: ['messages/ar.json', 'messages/en.json'], evidence_urls: [], owner_id: null, status: 'met', last_reviewed_at: '2026-04-30' },
+  { id: 'cc-nca-1', standard_body: 'NCA', control_code: 'NCA-ECC-1-2', title_en: 'Audit logging', title_ar: 'تسجيل التدقيق', description_en: 'Tamper-evident audit trail for key actions.', description_ar: 'سجل تدقيق محميّ من التلاعب للإجراءات المهمة.', mapped_feature_paths: ['src/lib/audit.ts', 'supabase/migrations/00005_audit_hash_chain.sql'], evidence_urls: [], owner_id: null, status: 'met', last_reviewed_at: '2026-06-01' },
+  { id: 'cc-cst-1', standard_body: 'CST', control_code: 'CST-DH-03', title_en: 'Data hosting region', title_ar: 'منطقة استضافة البيانات', description_en: 'Data hosted in approved region.', description_ar: 'استضافة البيانات في منطقة معتمدة.', mapped_feature_paths: [], evidence_urls: [], owner_id: null, status: 'not_started', last_reviewed_at: null },
+  { id: 'cc-rdia-1', standard_body: 'RDIA', control_code: 'RDIA-IN-01', title_en: 'Innovation reporting', title_ar: 'تقارير الابتكار', description_en: 'Innovation KPIs reported to RDIA.', description_ar: 'رفع مؤشرات الابتكار إلى هيئة البحث والتطوير والابتكار.', mapped_feature_paths: ['src/app/[locale]/analytics/'], evidence_urls: [], owner_id: null, status: 'not_applicable', last_reviewed_at: null },
+];
+
+export const STANDARD_BODIES = ['SDAIA', 'NDMO', 'DGA', 'NCA', 'CST', 'RDIA'] as const;
+
+export async function fetchComplianceControls(): Promise<ComplianceControlV2[]> {
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('compliance_controls')
+        .select('id, standard_body, control_code, title_ar, title_en, description_ar, description_en, mapped_feature_paths, evidence_urls, owner_id, status, last_reviewed_at')
+        .order('standard_body');
+      logSupabaseError('fetchComplianceControls', error);
+      if (data && data.length) return data as unknown as ComplianceControlV2[];
+    }
+  }
+  return DEMO_CONTROLS;
+}
+
+export type AuditFilters = {
+  entityType?: string;
+  action?: string;
+  actorId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type AuditRow = AuditLog & {
+  chain_seq: number | null;
+  row_hash: string | null;
+};
+
+export type AuditPage = {
+  rows: AuditRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  actorLabels: Record<string, string>;
+};
+
+const AUDIT_SELECT = 'id, actor_id, action, entity_type, entity_id, created_at, chain_seq, row_hash';
+
+// Resolve actor ids to a human label (email → full name → short id) via
+// user_profiles. Best-effort: tolerates a missing email column and never throws.
+async function resolveActorLabels(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  ids: string[]
+): Promise<Record<string, string>> {
+  type ProfileRow = { id: string; email?: string | null; full_name?: string | null };
+  const labels: Record<string, string> = {};
+  if (!ids.length) return labels;
+  let rows: ProfileRow[] | null = null;
+  const withEmail = await supabase
+    .from('user_profiles')
+    .select('id, email, full_name')
+    .in('id', ids);
+  if (withEmail.error) {
+    const fallback = await supabase.from('user_profiles').select('id, full_name').in('id', ids);
+    logSupabaseError('resolveActorLabels', fallback.error);
+    rows = (fallback.data as unknown as ProfileRow[]) ?? null;
+  } else {
+    rows = (withEmail.data as unknown as ProfileRow[]) ?? null;
+  }
+  for (const r of rows ?? []) {
+    labels[r.id] = r.email || r.full_name || `${r.id.slice(0, 8)}…`;
+  }
+  return labels;
+}
+
+// Filtered, server-paginated audit page for the admin viewer. Selects the
+// hash-chain columns (chain_seq, row_hash) added in migration 00005.
+export async function fetchAuditPage(filters: AuditFilters = {}): Promise<AuditPage> {
+  const page = Math.max(1, filters.page ?? 1);
+  const pageSize = filters.pageSize ?? 25;
+  const fromIdx = (page - 1) * pageSize;
+  const toIdx = fromIdx + pageSize - 1;
+
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    if (supabase) {
+      let q = supabase.from('audit_logs').select(AUDIT_SELECT, { count: 'exact' });
+      if (filters.entityType) q = q.eq('entity_type', filters.entityType);
+      if (filters.action) q = q.ilike('action', `%${filters.action}%`);
+      if (filters.actorId) q = q.eq('actor_id', filters.actorId);
+      if (filters.from) q = q.gte('created_at', filters.from);
+      if (filters.to) q = q.lte('created_at', filters.to);
+      const { data, error, count } = await q
+        .order('created_at', { ascending: false })
+        .range(fromIdx, toIdx);
+      logSupabaseError('fetchAuditPage', error);
+      const rows = (data as AuditRow[]) ?? [];
+      const actorIds = Array.from(
+        new Set(rows.map((r) => r.actor_id).filter((x): x is string => Boolean(x)))
+      );
+      const actorLabels = await resolveActorLabels(supabase, actorIds);
+      return { rows, total: count ?? rows.length, page, pageSize, actorLabels };
+    }
+  }
+
+  // Demo fallback: synthesise chain_seq/row_hash so the viewer renders.
+  const demoRows: AuditRow[] = DEMO_AUDIT.map((r, i) => ({
+    ...r,
+    chain_seq: DEMO_AUDIT.length - i,
+    row_hash: null,
+  }));
+  return { rows: demoRows.slice(fromIdx, toIdx + 1), total: demoRows.length, page, pageSize, actorLabels: {} };
+}
+
 export type EvaluatorScorecard = {
   evaluatorId: string;
   evaluatorName: string;

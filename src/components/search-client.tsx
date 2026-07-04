@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
 import { fallbackIdeas } from '@/lib/search-fallback';
+import { pickFromRow } from '@/lib/i18n-content';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -134,7 +135,7 @@ export function SearchClient() {
             </p>
             <ul className="space-y-3">
               {results.map((i) => {
-                const title = (locale === 'ar' ? i.title_ar : i.title_en) || i.title_en || i.title_ar;
+                const title = pickFromRow(i, 'title', locale);
                 return (
                   <li key={i.id}>
                     <Link href={`/ideas/${i.id}` as any}>

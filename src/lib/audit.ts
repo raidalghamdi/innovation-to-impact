@@ -1,14 +1,20 @@
 import { createClient } from '@/lib/supabase/server';
 
-// Phase P — audit log wrapper. Best-effort: never throws so it cannot break the
+export type AuditStates = {
+  before?: Record<string, unknown> | null;
+  after?: Record<string, unknown> | null;
+};
+
+// Universal audit-log wrapper. Best-effort: never throws so it cannot break the
 // primary action it is instrumenting. Writes to innovation.audit_logs; if that
-// table is unavailable the call is silently ignored.
-export async function logAction(
+// table is unavailable the call is silently ignored. Pass `states.before` to
+// capture the pre-change snapshot and `states.after` for the post-change value.
+export async function logAudit(
   actorId: string | null,
   action: string,
   entityType: string,
   entityId: string | null,
-  changes?: Record<string, unknown>
+  states?: AuditStates
 ): Promise<void> {
   try {
     const supabase = await createClient();
@@ -18,7 +24,8 @@ export async function logAction(
       action,
       entity_type: entityType,
       entity_id: entityId,
-      after_state: changes ?? null,
+      before_state: states?.before ?? null,
+      after_state: states?.after ?? null,
     });
   } catch {
     // swallow — auditing must never break the underlying operation
@@ -26,7 +33,21 @@ export async function logAction(
 }
 
 /**
- * Log an API request to innovation.audit_logs. Mirrors logAction's fire-and-
+ * @deprecated Use {@link logAudit} instead. Retained so existing callers keep
+ * working; forwards the legacy `changes` argument as the `after` state.
+ */
+export async function logAction(
+  actorId: string | null,
+  action: string,
+  entityType: string,
+  entityId: string | null,
+  changes?: Record<string, unknown>
+): Promise<void> {
+  return logAudit(actorId, action, entityType, entityId, { after: changes ?? null });
+}
+
+/**
+ * Log an API request to innovation.audit_logs. Mirrors logAudit's fire-and-
  * forget contract: never throws. Used by the API gateway wrapper so every
  * gateway-mediated call leaves a trace with endpoint + user + response status.
  *
@@ -43,17 +64,32 @@ export async function logRequest(
   requestId: string,
   method: string = 'GET'
 ): Promise<void> {
+  return logAudit(userId, `api.${method.toLowerCase()}`, 'api_request', requestId, {
+    after: { endpoint, status, requestId },
+  });
+}
+
+export type AuditChainResult = { ok: boolean; firstBreakSeq: number | null };
+
+/**
+ * Verify the tamper-evident audit hash chain by calling the
+ * innovation.verify_audit_chain() RPC (see migration 00005). Returns whether
+ * the chain is intact and, if not, the chain_seq of the first broken row.
+ * Best-effort: returns { ok: true } when Supabase is unconfigured so previews
+ * and builds don't fail.
+ */
+export async function verifyAuditChain(): Promise<AuditChainResult> {
   try {
     const supabase = await createClient();
-    if (!supabase) return;
-    await supabase.from('audit_logs').insert({
-      actor_id: userId,
-      action: `api.${method.toLowerCase()}`,
-      entity_type: 'api_request',
-      entity_id: requestId,
-      after_state: { endpoint, status, requestId },
-    });
+    if (!supabase) return { ok: true, firstBreakSeq: null };
+    const { data, error } = await supabase.rpc('verify_audit_chain');
+    if (error || !data) return { ok: true, firstBreakSeq: null };
+    const row = Array.isArray(data) ? data[0] : data;
+    return {
+      ok: Boolean(row?.ok),
+      firstBreakSeq: row?.first_break_seq ?? null,
+    };
   } catch {
-    // swallow — request logging must never break the caller
+    return { ok: true, firstBreakSeq: null };
   }
 }

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, XCircle, RotateCcw, Search, X } from 'lucide-react';
 import { recordDecision, type Decision } from '@/app/[locale]/committee/actions';
+import { pickFromRow } from '@/lib/i18n-content';
 
 type EvaluatorScorecard = {
   evaluatorId: string;
@@ -58,7 +59,7 @@ export function CommitteeDecisionPanel({
   const [status, setStatus] = useState<Status>({ kind: 'idle', message: '' });
   const [pending, startTransition] = useTransition();
 
-  const title = (i: CommitteeIdea) => (locale === 'ar' ? i.title_ar : i.title_en);
+  const title = (i: CommitteeIdea) => pickFromRow(i, 'title', locale);
   const allSelected = ideas.length > 0 && selected.size === ideas.length;
 
   function toggle(id: string) {

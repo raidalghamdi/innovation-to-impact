@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -119,9 +119,18 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
   const messages = await getMessages();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
+  // Arabic-first: `--font-body` drives the Tailwind `sans` stack, so AR renders
+  // in IBM Plex Sans Arabic and EN in Inter. Both font variables are still
+  // present on <html> for explicit `font-arabic` usage and glyph fallback.
+  const bodyFont = locale === 'ar' ? 'var(--font-arabic)' : 'var(--font-inter)';
 
   return (
-    <html lang={locale} dir={dir} className={`${inter.variable} ${ibmArabic.variable}`}>
+    <html
+      lang={locale}
+      dir={dir}
+      className={`${inter.variable} ${ibmArabic.variable}`}
+      style={{ '--font-body': bodyFont } as CSSProperties}
+    >
       <body className="font-sans antialiased">
         <NextIntlClientProvider messages={messages}>
           {children}

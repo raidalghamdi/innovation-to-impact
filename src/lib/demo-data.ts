@@ -2,6 +2,8 @@
 // Used as a fallback when Supabase is not configured so the app renders
 // realistic content during build and preview.
 
+import { pick } from '@/lib/i18n-content';
+
 export type Idea = {
   id: string;
   code: string;
@@ -175,12 +177,12 @@ export function userName(id: string) {
 export function themeName(id: string, locale: string) {
   const t = themes.find((x) => x.id === id);
   if (!t) return '—';
-  return locale === 'ar' ? t.name_ar : t.name_en;
+  return pick(t.name_ar, t.name_en, locale);
 }
 export function activityName(id: string, locale: string) {
   const a = activities.find((x) => x.id === id);
   if (!a) return '—';
-  return locale === 'ar' ? a.name_ar : a.name_en;
+  return pick(a.name_ar, a.name_en, locale);
 }
 
 export const PIPELINE_STATUSES = [

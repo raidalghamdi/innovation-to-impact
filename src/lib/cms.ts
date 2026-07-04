@@ -11,6 +11,7 @@
 // Storage: innovation.cms_blocks (see migration 00007). RLS: public read, admin write.
 
 import { createClient } from '@/lib/supabase/server';
+import { pick } from '@/lib/i18n-content';
 
 export type CmsBlock = {
   page: string;
@@ -75,7 +76,7 @@ export function getText(
 ): string {
   const row = cms.get(keyOf(section, key));
   if (!row) return fallback;
-  const val = locale === 'ar' ? row.value_ar : row.value_en;
+  const val = pick(row.value_ar, row.value_en, locale);
   return (val && val.trim()) ? val : fallback;
 }
 

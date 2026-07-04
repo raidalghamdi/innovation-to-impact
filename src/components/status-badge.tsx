@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { pick } from '@/lib/i18n-content';
 
 const STATUS_LABELS: Record<string, { ar: string; en: string; tone: string }> = {
   draft: { ar: 'مسودة', en: 'Draft', tone: 'slate' },
@@ -54,7 +55,7 @@ export function StatusBadge({
         TONES[meta.tone]
       )}
     >
-      {locale === 'ar' ? meta.ar : meta.en}
+      {pick(meta.ar, meta.en, locale)}
     </span>
   );
 }

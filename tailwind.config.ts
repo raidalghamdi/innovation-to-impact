@@ -69,7 +69,7 @@ const config: Config = {
         '3xl': '1.75rem',
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'var(--font-arabic)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-body)', 'var(--font-inter)', 'var(--font-arabic)', 'system-ui', 'sans-serif'],
         arabic: ['var(--font-arabic)', 'sans-serif'],
       },
       keyframes: {
