@@ -34,12 +34,8 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // [DIAG] TEMP: log env-var presence to diagnose auth-bypass P0.
-  console.log('[mw] env ok:', !!supabaseUrl, !!supabaseKey, 'path:', request.nextUrl.pathname);
-
   // If Supabase is not configured (e.g. during build / preview), skip auth.
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('[mw] SKIPPING AUTH — env vars missing');
     return response;
   }
 
@@ -60,13 +56,9 @@ export async function middleware(request: NextRequest) {
   // not silently allowed.
   let user: { id?: string; email?: string | null; user_metadata?: Record<string, unknown> } | null = null;
   try {
-    const { data, error } = await supabase.auth.getUser();
-    if (error) {
-      console.error('[mw] getUser error:', error.message);
-    }
+    const { data } = await supabase.auth.getUser();
     user = data?.user ?? null;
-  } catch (err) {
-    console.error('[mw] getUser threw:', err instanceof Error ? err.message : String(err));
+  } catch {
     user = null;
   }
 
@@ -79,11 +71,7 @@ export async function middleware(request: NextRequest) {
     pathnameWithoutLocale === p || pathnameWithoutLocale.startsWith(`${p}/`)
   );
 
-  // [DIAG] TEMP: log the exact decision inputs.
-  console.log('[mw] decision — path:', pathnameWithoutLocale, 'protected:', isProtected, 'user:', user?.id ?? 'null');
-
   if (isProtected && !user?.id) {
-    console.log('[mw] REDIRECTING to /' + locale + '/login');
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/login`;
     url.searchParams.set('redirect', pathname);
