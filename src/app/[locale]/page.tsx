@@ -1,4 +1,5 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { headers } from 'next/headers';
 import { Link } from '@/i18n/routing';
 import { CoBrand } from '@/components/logo';
 import { LanguageToggle } from '@/components/language-toggle';
@@ -30,6 +31,11 @@ import {
 // The hero countdown reads NEXT_PUBLIC_SUBMISSION_DEADLINE. If the env var
 // is missing or unparseable the Countdown component renders nothing.
 
+// Force per-request rendering by touching the request headers — this opts the
+// route out of static generation without conflicting with the locale layout's
+// generateStaticParams. Guarantees the countdown's initial SSR digits reflect
+// current wall-clock time on every request; CDN cannot ship stale digits.
+
 export default async function LandingPage({
   params,
 }: {
@@ -37,6 +43,8 @@ export default async function LandingPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  // Access request headers to mark this route as dynamic (per-request SSR).
+  headers();
   const t = await getTranslations();
   const stats = getStats();
   const cms = await loadCms('landing');
