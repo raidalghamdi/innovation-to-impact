@@ -87,8 +87,8 @@
     }
   },
   "landing": {
-    "heroTitle": "Start your innovation journey — from an idea or a challenge",
-    "heroSubtitle": "We turn ideas and challenges into real impact on competition in Saudi Arabia, through a clear nine-stage journey.",
+    "heroTitle": "Your idea could change how competition works in Saudi Arabia. Start here.",
+    "heroSubtitle": "Submit your idea, get it evaluated by experts, and see it go from concept to something that actually changes how markets work.",
     "ctaSubmit": "Submit an idea",
     "ctaExplore": "Explore ideas",
     "statsTitle": "Platform activity",
@@ -101,17 +101,17 @@
     "stagesSubtitle": "From strategic framework to impact measurement",
     "heroEyebrow": "Innovation Platform",
     "ctaIHaveIdea": "I have an idea",
-    "ctaIHaveIdeaDesc": "Submit my idea to enter the evaluation and implementation journey",
+    "ctaIHaveIdeaDesc": "Submit it and we'll guide it through the full review process",
     "ctaIHaveChallenge": "I have a challenge",
-    "ctaIHaveChallengeDesc": "Post a challenge for the authority to find solutions",
+    "ctaIHaveChallengeDesc": "Describe a problem and invite the community to solve it",
     "howItWorksTitle": "How it works",
     "howItWorksSubtitle": "",
     "step1Title": "Submit your idea or challenge",
-    "step1Desc": "Guided form with smart title generation and autosave.",
+    "step1Desc": "Takes about 5 minutes. We'll help you frame it clearly.",
     "step2Title": "Evaluated and routed through stages",
-    "step2Desc": "Initial review, specialised evaluation, then committee decision.",
-    "step3Title": "Turned into real impact",
-    "step3Desc": "Pilot, rollout, then impact measurement against objectives.",
+    "step2Desc": "Experts review it against five clear criteria. You can track progress the whole time.",
+    "step3Title": "Turned into something real",
+    "step3Desc": "If approved, it becomes a real project with a team, a budget, and a measured outcome.",
     "viewAllStages": "Explore all nine stages",
     "statsSubtitle": "Last updated a few minutes ago",
     "lastUpdated": "Last updated",
@@ -121,10 +121,10 @@
     "timeframeQuarter": "This quarter",
     "timeframeYear": "This year",
     "finalCtaTitle": "Ready to take part?",
-    "finalCtaSubtitle": "Start with your idea or challenge now — we'll guide you step by step.",
+    "finalCtaSubtitle": "Don't overthink it — just tell us what you're thinking.",
     "backToTop": "Back to top",
     "learnMore": "Learn about the program",
-    "countdownTitle": "Current submission window closes in",
+    "countdownTitle": "Ideas accepted until",
     "countdownEnded": "The current submission window is closed.",
     "days": "Days",
     "hours": "Hours",
@@ -138,11 +138,11 @@
     "statApproved": "Approved",
     "statImplemented": "Implemented",
     "step4Title": "Implement & Measure",
-    "step4Desc": "Approved ideas are piloted, launched, and their impact is measured.",
+    "step4Desc": "We track what actually changed — and let you see the difference your idea made.",
     "audiencePreviewTitle": "Who can participate",
-    "audiencePreviewDesc": "Entrepreneurs, government entities, and innovation specialists.",
+    "audiencePreviewDesc": "Anyone with an idea that could make markets fairer.",
     "criteriaPreviewTitle": "How ideas are evaluated",
-    "criteriaPreviewDesc": "Five weighted criteria from strategic alignment to impact.",
+    "criteriaPreviewDesc": "Ideas are scored on how relevant, original, and feasible they are.",
     "heroPrimaryCta": "Submit your idea"
   },
   "stages": {
@@ -155,19 +155,19 @@
     "s6": "Pilot Implementation",
     "s7": "Measurement & Impact",
     "s8": "Scale & Adoption",
-    "d0": "Define strategic directions and governance framework, linking ideas to GAC objectives.",
-    "d1": "Receive and formally register the idea in the platform.",
-    "d2": "Check completeness and fit before deeper review.",
-    "d3": "Specialized experts score the idea on the evaluation criteria.",
-    "d4": "The innovation committee reviews escalated ideas and decides.",
-    "d5": "Approve the idea and assign resources and a timeline.",
-    "d6": "Run a controlled pilot to validate the solution in practice.",
-    "d7": "Measure outcomes and quantify the realized impact.",
-    "d8": "Scale successful pilots and adopt them as standard practice.",
+    "d0": "Before ideas come in, leadership sets the direction — what problems matter most right now.",
+    "d1": "You submit your idea. It gets a reference number and enters the queue.",
+    "d2": "The team checks your submission meets the basics before sending it to specialist evaluators.",
+    "d3": "Relevant experts read your idea and score it independently across five dimensions.",
+    "d4": "The committee reviews the strongest ideas and makes the final call on each one.",
+    "d5": "Once approved, the idea gets an owner, a budget, and a delivery date.",
+    "d6": "The idea runs as a real experiment — tested in a real context before full rollout.",
+    "d7": "What actually changed? This stage captures the real-world difference the idea made.",
+    "d8": "What worked gets rolled out properly — so the improvement reaches everyone it should.",
     "you0": "Review strategic priorities before submitting your idea.",
-    "you1": "Fill out the idea form and attach supporting documents.",
+    "you1": "Tell us your idea in your own words. Attach anything that helps explain it.",
     "you2": "Participate in events and campaigns linked to priorities.",
-    "you3": "Track your idea's review and respond to any questions.",
+    "you3": "Watch where your idea is in the process. The team may reach out if they need more from you.",
     "you4": "You may be asked for additional information or a short pitch.",
     "you5": "Connect with the assigned owner to implement your idea.",
     "you6": "Participate in the pilot and give feedback on results.",
@@ -205,15 +205,15 @@
     "noIdeasYet": "You haven't submitted any ideas yet",
     "submitFirst": "Start by submitting your first idea",
     "platformActivity": "Platform activity",
-    "platformActivityHint": "Choose a timeframe to view metrics",
+    "platformActivityHint": "Filter by time period",
     "lastUpdated": "Last updated",
     "justNow": "just now",
     "finalCtaTitle": "Have a new idea?",
-    "finalCtaSubtitle": "Don't let it slip — submit it and it will go through a clear evaluation process."
+    "finalCtaSubtitle": "Don't let it slip — submit it now and we'll take it from there."
   },
   "ideas": {
     "title": "Idea repository",
-    "subtitle": "Search, filter and track ideas across the innovation pipeline.",
+    "subtitle": "Browse and search all submitted ideas.",
     "new": "New idea",
     "code": "Code",
     "ideaTitle": "Title",
@@ -225,7 +225,7 @@
     "problemStatement": "Problem statement",
     "proposedSolution": "Proposed solution",
     "expectedBenefits": "Expected benefits",
-    "similarityHint": "Possible related ideas detected",
+    "similarityHint": "Some ideas on a similar theme already exist",
     "relationships": "Relationships",
     "timeline": "Lifecycle timeline",
     "evaluations": "Evaluations",
@@ -243,11 +243,11 @@
     },
     "loginRequired": "You must sign in to submit an idea.",
     "loginToSubmit": "Sign in to submit an idea",
-    "submitSuccess": "Your idea has been submitted. You can find it in My ideas.",
+    "submitSuccess": "Done! Your idea is in — head to My Ideas to follow its progress.",
     "viewMyIdeas": "View my ideas",
     "myIdeasTitle": "My ideas",
     "myIdeasSubtitle": "Ideas you have submitted and their current status",
-    "emptyMyIdeas": "You haven’t submitted any ideas yet. Submit your first one.",
+    "emptyMyIdeas": "You haven't submitted any ideas yet.",
     "submittedOn": "Submitted on",
     "currentStage": "Current stage",
     "viewDetails": "View details",
@@ -278,7 +278,7 @@
   },
   "evaluation": {
     "title": "Evaluation queue",
-    "subtitle": "Score assigned ideas against weighted criteria.",
+    "subtitle": "Review your assigned ideas and score each one.",
     "scorecard": "Scorecard",
     "criteria": "Criteria",
     "weight": "Weight",
@@ -286,7 +286,22 @@
     "totalScore": "Total score",
     "recommendation": "Recommendation",
     "conflict": "Declare conflict of interest",
-    "comments": "Comments"
+    "comments": "Comments",
+    "saveDraft": "Save draft",
+    "selectIdea": "Select an idea from the queue to score it.",
+    "queueEmpty": "No ideas are waiting for your review.",
+    "draftSaved": "Draft saved.",
+    "submitted": "Evaluation submitted.",
+    "conflictRecorded": "Conflict of interest recorded. This idea has been removed from your queue.",
+    "saveError": "Could not save. Please try again.",
+    "saving": "Saving…",
+    "criteriaLabels": {
+      "strategic_alignment": "Strategic alignment",
+      "innovation": "Innovation",
+      "feasibility": "Feasibility",
+      "impact": "Impact",
+      "effort": "Effort"
+    }
   },
   "committee": {
     "title": "Committee decisions",
@@ -297,11 +312,31 @@
     "approve": "Approve",
     "reject": "Reject",
     "return": "Return",
-    "study": "Further study"
+    "study": "Further study",
+    "avgScore": "Average score",
+    "evaluatorsLabel": "Evaluators",
+    "noScores": "No evaluations yet",
+    "perCriterion": "Per-criterion averages",
+    "conflictsNote": "conflict declarations",
+    "details": "Details",
+    "close": "Close",
+    "problem": "Problem",
+    "solution": "Proposed solution",
+    "benefits": "Expected benefits",
+    "selectAll": "Select all",
+    "clearSelection": "Clear",
+    "selectedCount": "selected",
+    "applyToSelected": "Apply decision to selected",
+    "commentPlaceholder": "Add a comment for this decision",
+    "commentRequired": "A comment is required to reject or return an idea.",
+    "decisionRecorded": "Decision recorded.",
+    "decisionError": "Could not record the decision. Please try again.",
+    "saving": "Saving…",
+    "queueEmpty": "No ideas are awaiting a committee decision."
   },
   "pilots": {
     "title": "Pilot & experiment tracker",
-    "subtitle": "Design, run and learn from controlled pilots.",
+    "subtitle": "Run real experiments and capture what worked.",
     "hypothesis": "Hypothesis",
     "plan": "Experiment plan",
     "budget": "Budget",
@@ -311,7 +346,7 @@
   },
   "implementation": {
     "title": "Scale & implementation",
-    "subtitle": "Move validated pilots into operational adoption.",
+    "subtitle": "Turn what worked in the pilot into something permanent.",
     "owner": "Operational owner",
     "plan": "Integration plan",
     "resources": "Resource commitment",
@@ -320,7 +355,7 @@
   },
   "benefits": {
     "title": "Benefits realization",
-    "subtitle": "Track financial and non-financial value delivered by adopted ideas.",
+    "subtitle": "See the real-world difference each implemented idea has made.",
     "financial": "Financial",
     "nonFinancial": "Non-financial",
     "target": "Target value",
@@ -347,7 +382,7 @@
         },
         {
           "heading": "2. Ownership of the Idea",
-          "body": "Upon submission of an idea through the platform, the participant acknowledges that all intellectual property rights related to the idea transfer to the General Authority for Competition. GAC has the exclusive right to develop, implement, modify, and use the idea for any purpose, including licensing to or assignment to third parties."
+          "body": "By submitting your idea, you agree that all intellectual property rights transfer to the General Authority for Competition."
         },
         {
           "heading": "3. Originality Warranty",
@@ -363,7 +398,7 @@
         },
         {
           "heading": "6. Incentives and Rewards",
-          "body": "GAC may, at its sole discretion, grant the participant a moral or material reward if their idea is adopted and implemented. Submission of an idea does not in itself entitle the participant to any reward; this is governed by GAC's approved incentive policy."
+          "body": "If your idea is implemented, GAC may recognise you with a reward — financial or otherwise. Submitting doesn't automatically entitle you to one; any rewards follow GAC's incentive policy."
         },
         {
           "heading": "7. Ownership Exceptions",
@@ -402,7 +437,7 @@
   },
   "compliance": {
     "title": "Compliance control register",
-    "subtitle": "Saudi regulatory controls mapped to platform features.",
+    "subtitle": "How platform features map to NCA, NDMO, SDAIA, and DGA requirements.",
     "regulator": "Regulator",
     "clause": "Clause",
     "applicability": "Applicability",
@@ -457,7 +492,7 @@
     "implemented": "Implemented",
     "empty": "No data available yet.",
     "execTitle": "Executive dashboard",
-    "execSubtitle": "Portfolio health at a glance — stages, throughput, and conversion.",
+    "execSubtitle": "How ideas are moving through the pipeline — where things are flowing and where they're stuck.",
     "platformKpisTitle": "Platform-wide KPIs",
     "byStageTitle": "Ideas by stage",
     "byStageSubtitle": "Distribution across the 9 pipeline stages (0 → 8).",
@@ -470,7 +505,7 @@
     "avgTimeStage": "Stage",
     "avgTimeDays": "Avg. days",
     "conversionTitle": "Submitted → Pilot conversion",
-    "conversionSubtitle": "Share of submitted ideas that reach a pilot or beyond.",
+    "conversionSubtitle": "Of every idea submitted, how many make it to a real pilot.",
     "conversionSubmitted": "Submitted",
     "conversionPilot": "In pilot or beyond",
     "conversionRate": "conversion rate"
@@ -481,6 +516,7 @@
     "users": "Users",
     "roles": "Roles",
     "auditLog": "Audit log",
+    "auditEmpty": "No audit activity recorded yet.",
     "department": "Department",
     "userCategory": "User category"
   },
@@ -504,9 +540,9 @@
   },
   "auth": {
     "loginTitle": "Sign in",
-    "loginSubtitle": "Access the GAC innovation platform.",
+    "loginSubtitle": "Good to see you.",
     "signupTitle": "Create an account",
-    "signupSubtitle": "Join the GAC innovation community.",
+    "signupSubtitle": "Create your account to start submitting ideas.",
     "email": "Email",
     "password": "Password",
     "fullName": "Full name",
@@ -516,7 +552,7 @@
     "signUp": "Create account",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
-    "demoNote": "Demo mode: connect Supabase to enable real authentication.",
+    "demoNote": "This is a demo environment — sign in with the credentials below.",
     "demoCredentials": "Demo credentials",
     "demoCredentialsHint": "Demo innovator: innovator@gac-demo.sa / Demo2026!",
     "useDemoAccount": "Use demo account"
@@ -536,7 +572,7 @@
   },
   "stagesPage": {
     "title": "The Eight Stages of Innovation",
-    "subtitle": "The journey of an idea from strategy to realized impact — eight sequential stages ensuring quality of execution and impact measurement.",
+    "subtitle": "Here's how an idea moves from your head to something that actually changes how GAC operates.",
     "stageLabel": "Stage",
     "ownerLabel": "Owner",
     "owners": {
@@ -594,7 +630,7 @@
     "title": "Search",
     "placeholder": "Search ideas…",
     "resultsFor": "Results for",
-    "noResults": "No results found. Try different keywords or filters.",
+    "noResults": "Nothing matches that search. Try fewer words or a different term.",
     "filtersTitle": "Filters",
     "status": "Status",
     "stage": "Stage",
@@ -618,14 +654,14 @@
     "markAllRead": "Mark all as read",
     "unread": "Unread",
     "all": "All",
-    "none": "You are all caught up."
+    "none": "Nothing new right now."
   },
   "about": {
     "title": "About the Program",
-    "subtitle": "Innovation to Impact — the innovation journey of the General Authority for Competition.",
+    "subtitle": "Innovation to Impact — how the General Authority for Competition turns ideas into real results.",
     "hero": {
       "headline": "Turning Ideas into Impact",
-      "subheadline": "GAC's platform for structured innovation across the organization."
+      "subheadline": "Where GAC employees bring ideas to life."
     },
     "vision": {
       "label": "Our Vision",
@@ -633,11 +669,11 @@
     },
     "mission": {
       "label": "Our Mission",
-      "body": "To capture ideas from across the organization and guide them through a transparent, measurable pipeline — from strategic framing to real, tracked impact."
+      "body": "To make sure good ideas from anywhere in GAC actually get built — with a fair process and visible results."
     },
     "pipeline": {
       "title": "The 9-Stage Pipeline",
-      "body": "Every idea moves through a structured journey — from intake and strategic framing, through evaluation and committee review, into pilot, implementation, and measured benefits. Each stage has clear owners, criteria, and expected outputs so nothing gets lost between an idea and its impact.",
+      "body": "Every idea follows the same path — submitted, reviewed by experts, decided by the committee, piloted, then rolled out. At each step, someone is responsible and the criteria are published, so you always know where your idea stands.",
       "cta": "Explore all 9 stages"
     },
     "participants": {
@@ -664,7 +700,7 @@
     },
     "contact": {
       "title": "Have a question?",
-      "body": "Reach out to the Innovation Office — we're happy to help you shape an idea, understand the pipeline, or explore collaboration.",
+      "body": "Got a question about the program or want to talk through an idea before submitting? Drop us a line.",
       "email": "innovation@gac.gov.sa",
       "cta": "Contact the Innovation Office"
     },
@@ -689,7 +725,7 @@
   },
   "targetAudience": {
     "title": "Who Can Participate",
-    "subtitle": "The program welcomes innovators from across the ecosystem.",
+    "subtitle": "The program is open to anyone with a good idea.",
     "cards": [
       {
         "title": "Entrepreneurs & Startups",
@@ -738,7 +774,7 @@
         "desc": "Cost, complexity, and effort required relative to the expected benefit."
       }
     ],
-    "note": "Each criterion is scored from 1 to 5. The weighted total determines whether an idea advances, requires revision, or is escalated to the committee."
+    "note": "Each evaluator scores 1 to 5 per criterion. Strong ideas advance automatically; borderline ones go to the committee."
   },
   "expectedSolutions": {
     "title": "Solutions We Are Looking For",
@@ -818,7 +854,7 @@
       },
       {
         "q": "How long does evaluation take?",
-        "a": "Initial screening happens within a few working days; full technical evaluation typically completes within two to three weeks."
+        "a": "Initial check: a few working days. Full evaluation: two to three weeks."
       },
       {
         "q": "Is my idea kept confidential?",
@@ -830,7 +866,7 @@
       },
       {
         "q": "What happens if my idea needs changes?",
-        "a": "You will receive structured feedback and can submit a revised version linked to your original idea."
+        "a": "You'll get feedback on what needs work and can update your idea and resubmit."
       },
       {
         "q": "Do I retain ownership of my idea?",
@@ -838,7 +874,7 @@
       },
       {
         "q": "Will I be notified of progress?",
-        "a": "Yes. You receive in-app notifications at each key lifecycle event."
+        "a": "Yes — you'll get a notification every time something happens with your idea."
       },
       {
         "q": "What are the evaluation criteria?",
@@ -982,11 +1018,11 @@
     "themeLabel": "Strategic theme",
     "charsLeft": "{n} characters left",
     "autosaveSaved": "Draft saved",
-    "autosaveRestored": "Draft restored from your last session",
-    "reviewNote": "Review your idea before submitting. You can go back to edit any step.",
+    "autosaveRestored": "Welcome back — we saved your draft",
+    "reviewNote": "Everything look right? Hit submit when you're ready.",
     "attachmentsHint": "Drag & drop files here, or click to browse. PDF, DOCX, PNG, JPG up to 10MB each.",
     "required": "Please complete the required fields in this step.",
-    "themeExplain": "Choose the strategic theme your idea best supports. This helps route it to the right evaluators."
+    "themeExplain": "Pick the area your idea fits best — this helps us send it to the right people."
   },
   "roles": {
     "submitter": "Submitter",
@@ -1064,18 +1100,18 @@
   },
   "ideaSubmitted": {
     "headline": "Your idea has been submitted!",
-    "subhead": "Thank you for contributing to GAC's Innovation to Impact journey.",
+    "subhead": "The team will review it and you'll hear back within a few days.",
     "yourIdeaLabel": "Your idea",
     "whatHappensNext": "What happens next",
     "step1Title": "Initial screening",
     "step1Meta": "Within 5 business days",
-    "step1Body": "Our team confirms your idea meets submission requirements and routes it to the right evaluation track.",
+    "step1Body": "We check your idea is complete and make sure it goes to the right reviewers.",
     "step2Title": "Evaluation committee review",
     "step2Meta": "Within 15 days",
-    "step2Body": "The committee scores your idea against strategic alignment, feasibility, and impact criteria.",
+    "step2Body": "Experts read your idea carefully and score it across five dimensions.",
     "step3Title": "Decision notification",
     "step3Meta": "By email",
-    "step3Body": "You will receive an email with the committee's decision and any next steps.",
+    "step3Body": "We'll email you with what they decided and what comes next.",
     "trackCta": "Track your idea",
     "submitAnotherCta": "Submit another idea",
     "referenceLabel": "Reference"
