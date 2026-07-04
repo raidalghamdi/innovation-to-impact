@@ -7,9 +7,10 @@ import { Link } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/server';
 import { fetchIdeas } from '@/lib/data';
 import { StatusBadge } from '@/components/status-badge';
-import { StageTimeline } from '@/components/stage-timeline';
+import { PipelineIndicator } from '@/components/pipeline-indicator';
+import { PioneerBadge, isPioneerIdea } from '@/components/pioneer-badge';
 import { EmptyState } from '@/components/empty-state';
-import { Lightbulb, Plus, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Lightbulb, Plus, ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default async function MyIdeasPage({
@@ -72,10 +73,14 @@ export default async function MyIdeasPage({
                       <h2 className="text-lg font-semibold text-foreground">
                         {locale === 'ar' ? idea.title_ar : idea.title_en}
                       </h2>
-                      <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
                           {t('submittedOn')}: {formatDate(idea.created_at, locale)}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {tc('lastUpdated')}: {formatDate(idea.updated_at ?? idea.created_at, locale)}
                         </span>
                         <span>·</span>
                         <span>
@@ -83,10 +88,13 @@ export default async function MyIdeasPage({
                         </span>
                       </div>
                     </div>
-                    <StatusBadge status={idea.status} locale={locale} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isPioneerIdea(idea.current_stage) && <PioneerBadge />}
+                      <StatusBadge status={idea.status} locale={locale} />
+                    </div>
                   </div>
 
-                  <StageTimeline current={idea.current_stage} />
+                  <PipelineIndicator current={idea.current_stage} />
 
                   <div className="flex justify-end">
                     <Link

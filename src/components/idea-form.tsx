@@ -276,7 +276,7 @@ export function IdeaForm({
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         {/* Stepper / progress */}
         <div className="mb-6">
           <div className="flex items-center justify-between gap-2">
@@ -472,23 +472,23 @@ export function IdeaForm({
                 {tf('reviewNote')}
               </p>
               <dl className="divide-y divide-border rounded-xl border border-border">
-                <div className="grid grid-cols-3 gap-2 p-3">
-                  <dt className="text-sm font-medium text-muted-foreground">{tf('titleLabel')}</dt>
-                  <dd className="col-span-2 text-sm text-foreground">{title || '—'}</dd>
+                <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('titleLabel')}</dt>
+                  <dd className="text-sm text-foreground sm:col-span-2">{title || '—'}</dd>
                 </div>
-                <div className="grid grid-cols-3 gap-2 p-3">
-                  <dt className="text-sm font-medium text-muted-foreground">{tf('summaryLabel')}</dt>
-                  <dd className="col-span-2 text-sm text-foreground">{summary || '—'}</dd>
+                <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('summaryLabel')}</dt>
+                  <dd className="text-sm text-foreground sm:col-span-2">{summary || '—'}</dd>
                 </div>
-                <div className="grid grid-cols-3 gap-2 p-3">
-                  <dt className="text-sm font-medium text-muted-foreground">{tf('descriptionLabel')}</dt>
-                  <dd className="col-span-2 whitespace-pre-wrap text-sm text-foreground">
+                <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('descriptionLabel')}</dt>
+                  <dd className="whitespace-pre-wrap text-sm text-foreground sm:col-span-2">
                     {description || '—'}
                   </dd>
                 </div>
-                <div className="grid grid-cols-3 gap-2 p-3">
-                  <dt className="text-sm font-medium text-muted-foreground">{tf('themeLabel')}</dt>
-                  <dd className="col-span-2 text-sm text-foreground">
+                <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('themeLabel')}</dt>
+                  <dd className="text-sm text-foreground sm:col-span-2">
                     {activeTheme ? (isAr ? activeTheme.name_ar : activeTheme.name_en) : '—'}
                   </dd>
                 </div>

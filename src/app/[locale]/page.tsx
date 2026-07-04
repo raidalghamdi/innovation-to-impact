@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button';
 import { StatsBlock } from '@/components/stats-block';
 import { BackToTop } from '@/components/back-to-top';
 import { getStats } from '@/lib/demo-data';
+import { fetchIdeas, fetchUsers } from '@/lib/data';
 import { loadCms, getText, isSectionEnabled } from '@/lib/cms';
+import { PioneerBadge, isPioneerIdea } from '@/components/pioneer-badge';
 import {
   Lightbulb,
   ArrowRight,
@@ -22,6 +24,7 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 
 // The hero countdown reads NEXT_PUBLIC_SUBMISSION_DEADLINE. If the env var
@@ -40,6 +43,18 @@ export default async function LandingPage({
   const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
   const faqItems = (t.raw('faq.items') as { q: string; a: string }[]).slice(0, 3);
   const partners = (t.raw('partners.partners') as { name: string }[]).slice(0, 6);
+
+  // Spotlight — top 3 ideas by current_stage. Excludes rejected/withdrawn.
+  const spotlightIdeas = (await fetchIdeas())
+    .filter((i) => i.status !== 'rejected' && i.status !== 'withdrawn')
+    .sort((a, b) => (b.current_stage ?? 0) - (a.current_stage ?? 0))
+    .slice(0, 3);
+  const allUsers = spotlightIdeas.length ? await fetchUsers() : [];
+  const usersById = new Map(allUsers.map((u) => [u.id, u]));
+  const stageLabel = (stage: number) => {
+    const key = `stages.s${Math.max(0, Math.min(8, stage))}`;
+    return t(key);
+  };
 
   const steps = [
     { Icon: Send, key: 'step1' },
@@ -117,6 +132,55 @@ export default async function LandingPage({
           <p className="mt-1 text-sm text-muted-foreground">{t('landing.statsSubtitle')}</p>
         </div>
         <StatsBlock stats={stats} locale={locale} />
+      </section>
+      )}
+
+      {/* ===== Spotlight ===== */}
+      {spotlightIdeas.length > 0 && (
+      <section className="mx-auto max-w-6xl px-4 pb-14 sm:px-8">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-gold">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{t('spotlight.title')}</span>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">{t('spotlight.subtitle')}</p>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {spotlightIdeas.map((idea) => {
+            const submitter = idea.submitter_id ? usersById.get(idea.submitter_id) : undefined;
+            const submitterName = submitter?.full_name ?? '—';
+            const title = locale === 'ar' ? idea.title_ar : idea.title_en;
+            return (
+              <Link
+                key={idea.id}
+                href={`/ideas/${idea.id}`}
+                className="group flex h-full flex-col rounded-3xl border border-border bg-card p-5 transition hover:border-brand-teal/40 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-[11px] font-semibold text-brand-gold">{idea.code}</span>
+                  {isPioneerIdea(idea.current_stage) && <PioneerBadge />}
+                </div>
+                <h3 className="mt-2 line-clamp-2 text-base font-semibold text-brand-teal">{title}</h3>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t('spotlight.submittedBy')}: <span className="font-medium text-foreground">{submitterName}</span>
+                </p>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-teal-light/60 px-2.5 py-1 text-[11px] font-semibold text-brand-teal">
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-teal text-[9px] font-bold text-white">
+                      {idea.current_stage}
+                    </span>
+                    <span>{t('spotlight.stageLabel')} · {stageLabel(idea.current_stage)}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-teal group-hover:gap-2">
+                    {t('ideas.viewDetails')} <Chevron className="h-4 w-4" />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </section>
       )}
 

@@ -72,7 +72,9 @@
     "required": "Required",
     "backToTop": "Back to top",
     "skipToContent": "Skip to content",
-    "close": "Close"
+    "close": "Close",
+    "pipeline": "Pipeline",
+    "lastUpdated": "Last updated"
   },
   "landing": {
     "heroTitle": "Start your innovation journey — from an idea or a challenge",
@@ -1062,5 +1064,17 @@
     "leaderboardCta": "Submit an idea",
     "notificationsTitle": "No notifications yet",
     "notificationsBody": "You'll be notified when your idea status changes."
+  },
+  "recognition": {
+    "pioneer": "Pioneer",
+    "pioneerTooltip": "Awarded to submitters whose ideas have reached Stage 6 (Pilot) or beyond.",
+    "pioneerDescription": "You earned Pioneer status — your idea has advanced to Pilot or beyond."
+  },
+  "spotlight": {
+    "title": "Spotlight on progress",
+    "subtitle": "The ideas making the furthest journey right now.",
+    "submittedBy": "Submitted by",
+    "stageLabel": "Stage",
+    "empty": "No ideas in the spotlight yet — be the first."
   }
 }
