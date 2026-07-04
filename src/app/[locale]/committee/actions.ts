@@ -5,17 +5,18 @@ import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { logAction } from '@/lib/audit';
 
-// Committee decision values and the idea status each one maps to. "further_study"
-// keeps the idea in the committee queue for a later session. Not exported as a
-// value because a 'use server' module may only export async functions; the
-// union type is export-safe (erased at build time).
-export type Decision = 'approved' | 'rejected' | 'returned' | 'further_study';
+// Committee decision values match the innovation.committee_decision_type enum
+// exactly: {approve, reject, return, study}. Each maps to an ideas.status
+// enum value (or null to keep the idea in the committee queue). Not exported
+// as a value because a 'use server' module may only export async functions;
+// the union type is export-safe (erased at build time).
+export type Decision = 'approve' | 'reject' | 'return' | 'study';
 
 const STATUS_BY_DECISION: Record<Decision, string | null> = {
-  approved: 'approved',
-  rejected: 'rejected',
-  returned: 'returned',
-  further_study: null, // stays in committee
+  approve: 'approved',
+  reject: 'rejected',
+  return: 'returned',
+  study: null, // stays in committee
 };
 
 export type DecisionResult = { ok: boolean; error?: string; count?: number };
@@ -27,8 +28,8 @@ type DecideInput = {
 };
 
 // Record a committee decision for one or more ideas. Writes to
-// committee_decisions, updates ideas.status (unless further_study), and logs
-// each decision to the audit trail.
+// committee_decisions, updates ideas.status (unless 'study' — keeps in queue),
+// and logs each decision to the audit trail.
 export async function recordDecision(input: DecideInput): Promise<DecisionResult> {
   if (!input.ideaIds.length) return { ok: false, error: 'no_ideas' };
 

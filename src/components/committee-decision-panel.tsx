@@ -65,7 +65,7 @@ export function CommitteeDecisionPanel({
 
   function decide(ideaIds: string[], decision: Decision) {
     if (!ideaIds.length) return;
-    if ((decision === 'rejected' || decision === 'returned') && !comment.trim()) {
+    if ((decision === 'reject' || decision === 'return') && !comment.trim()) {
       setStatus({ kind: 'error', message: t('commentRequired') });
       return;
     }
@@ -87,10 +87,10 @@ export function CommitteeDecisionPanel({
   const decisionButtons = useMemo(
     () =>
       [
-        { decision: 'approved' as Decision, label: t('approve'), icon: CheckCircle2, variant: 'default' as const },
-        { decision: 'rejected' as Decision, label: t('reject'), icon: XCircle, variant: 'destructive' as const },
-        { decision: 'returned' as Decision, label: t('return'), icon: RotateCcw, variant: 'outline' as const },
-        { decision: 'further_study' as Decision, label: t('study'), icon: Search, variant: 'secondary' as const },
+        { decision: 'approve' as Decision, label: t('approve'), icon: CheckCircle2, variant: 'default' as const },
+        { decision: 'reject' as Decision, label: t('reject'), icon: XCircle, variant: 'destructive' as const },
+        { decision: 'return' as Decision, label: t('return'), icon: RotateCcw, variant: 'outline' as const },
+        { decision: 'study' as Decision, label: t('study'), icon: Search, variant: 'secondary' as const },
       ],
     [t]
   );
