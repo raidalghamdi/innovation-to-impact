@@ -1,31 +1,7 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { Card, CardContent } from '@/components/ui/card';
-import { createClient } from '@/lib/supabase/server';
-
-type AuditRow = {
-  id: string;
-  actor_id: string | null;
-  action: string;
-  entity_type: string;
-  entity_id: string | null;
-  created_at: string;
-};
-
-async function fetchAudit(): Promise<AuditRow[]> {
-  try {
-    const supabase = await createClient();
-    if (!supabase) return [];
-    const { data } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
-    return (data as AuditRow[]) ?? [];
-  } catch {
-    return [];
-  }
-}
+import { fetchAuditLogs } from '@/lib/data';
 
 export default async function AuditPage({
   params,
@@ -35,7 +11,7 @@ export default async function AuditPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('audit');
-  const rows = await fetchAudit();
+  const rows = await fetchAuditLogs(100);
 
   return (
     <AppShell>

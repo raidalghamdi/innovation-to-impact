@@ -2,14 +2,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { fetchUsers } from '@/lib/data';
-
-const AUDIT = [
-  { id: 'al1', entity: 'idea', action: 'status_changed', actor: 'رائد الغامدي', when: '2025-03-12 10:14' },
-  { id: 'al2', entity: 'committee_decision', action: 'approve', actor: 'رائد الغامدي', when: '2025-03-11 16:02' },
-  { id: 'al3', entity: 'evaluation', action: 'submitted', actor: 'سارة العتيبي', when: '2025-03-10 09:31' },
-  { id: 'al4', entity: 'knowledge_article', action: 'published', actor: 'رائد الغامدي', when: '2025-03-09 14:48' },
-];
+import { fetchUsers, fetchAuditLogs } from '@/lib/data';
 
 export default async function AdminPage({
   params,
@@ -21,6 +14,7 @@ export default async function AdminPage({
   const t = await getTranslations('admin');
   const tc = await getTranslations('categories');
   const users = await fetchUsers();
+  const audit = await fetchAuditLogs(8);
 
   return (
     <AppShell>
@@ -65,18 +59,22 @@ export default async function AdminPage({
           <CardTitle className="text-brand-teal">{t('auditLog')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {AUDIT.map((a) => (
-            <div key={a.id} className="flex items-center justify-between rounded-md border border-border p-3 text-sm">
-              <div>
-                <span className="font-medium">{a.action}</span>{' '}
-                <span className="text-muted-foreground">on {a.entity}</span>
+          {audit.length === 0 ? (
+            <p className="p-3 text-sm text-muted-foreground">{t('auditEmpty')}</p>
+          ) : (
+            audit.map((a) => (
+              <div key={a.id} className="flex items-center justify-between rounded-md border border-border p-3 text-sm">
+                <div>
+                  <span className="font-medium">{a.action}</span>{' '}
+                  <span className="text-muted-foreground">on {a.entity_type}</span>
+                </div>
+                <div className="text-end text-xs text-muted-foreground">
+                  <p className="font-mono">{a.actor_id?.slice(0, 8) ?? '—'}</p>
+                  <p dir="ltr">{a.created_at?.slice(0, 19).replace('T', ' ')}</p>
+                </div>
               </div>
-              <div className="text-end text-xs text-muted-foreground">
-                <p>{a.actor}</p>
-                <p dir="ltr">{a.when}</p>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </CardContent>
       </Card>
     </AppShell>
