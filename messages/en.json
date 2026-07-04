@@ -281,26 +281,29 @@
     "subtitle": "Review your assigned ideas and score each one.",
     "scorecard": "Scorecard",
     "criteria": "Criteria",
-    "weight": "Weight",
     "score": "Score",
     "totalScore": "Total score",
     "recommendation": "Recommendation",
-    "conflict": "Declare conflict of interest",
     "comments": "Comments",
     "saveDraft": "Save draft",
     "selectIdea": "Select an idea from the queue to score it.",
     "queueEmpty": "No ideas are waiting for your review.",
     "draftSaved": "Draft saved.",
     "submitted": "Evaluation submitted.",
-    "conflictRecorded": "Conflict of interest recorded. This idea has been removed from your queue.",
+    "alreadySubmitted": "You've already submitted this evaluation.",
+    "coiAcknowledgement": "I confirm I have no conflict of interest with this idea.",
+    "coiRequired": "Please confirm you have no conflict of interest before submitting.",
     "saveError": "Could not save. Please try again.",
     "saving": "Saving…",
     "criteriaLabels": {
       "strategic_alignment": "Strategic alignment",
-      "innovation": "Innovation",
       "feasibility": "Feasibility",
       "impact": "Impact",
-      "effort": "Effort"
+      "innovation": "Innovation",
+      "cost_benefit": "Cost-benefit",
+      "strategic_fit": "Strategic alignment",
+      "cost": "Cost-benefit",
+      "effort": "Cost-benefit"
     }
   },
   "committee": {
@@ -332,7 +335,8 @@
     "decisionRecorded": "Decision recorded.",
     "decisionError": "Could not record the decision. Please try again.",
     "saving": "Saving…",
-    "queueEmpty": "No ideas are awaiting a committee decision."
+    "queueEmpty": "No ideas are awaiting a committee decision.",
+    "individualScores": "Individual scorecards"
   },
   "pilots": {
     "title": "Pilot & experiment tracker",

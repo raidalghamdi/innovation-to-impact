@@ -120,12 +120,23 @@ export async function fetchAuditLogs(limit = 100): Promise<AuditLog[]> {
   return DEMO_AUDIT.slice(0, limit);
 }
 
+export type EvaluatorScorecard = {
+  evaluatorId: string;
+  evaluatorName: string;
+  totalScore: number | null;
+  criteriaScores: Record<string, number> | null;
+  comments: string | null;
+  conflict: boolean;
+  submittedAt: string | null;
+};
+
 export type EvaluationSummary = {
   ideaId: string;
   count: number;
   avgTotal: number | null;
   perCriterion: Record<string, number>;
   conflicts: number;
+  scorecards: EvaluatorScorecard[];
 };
 
 // Aggregate submitted evaluations per idea for the committee queue: average
@@ -141,30 +152,72 @@ export async function fetchEvaluationSummaries(
   const supabase = await createClient();
   const { data, error } = await supabase!
     .from('evaluations')
-    .select('idea_id, total_score, criteria_scores, conflict_of_interest, submitted_at')
+    .select(
+      'idea_id, evaluator_id, total_score, criteria_scores, comments, conflict_of_interest, submitted_at'
+    )
     .in('idea_id', ideaIds)
     .not('submitted_at', 'is', null);
   logSupabaseError('fetchEvaluationSummaries', error);
   if (!data) return result;
 
-  const acc: Record<
-    string,
-    { totals: number[]; criterion: Record<string, number[]>; conflicts: number; count: number }
-  > = {};
-
-  for (const row of data as Array<{
+  type Row = {
     idea_id: string;
+    evaluator_id: string;
     total_score: number | null;
     criteria_scores: Record<string, number> | null;
+    comments: string | null;
     conflict_of_interest: boolean | null;
-  }>) {
+    submitted_at: string | null;
+  };
+  const rows = data as Row[];
+
+  // Resolve evaluator display names in one call.
+  const evaluatorIds = Array.from(new Set(rows.map((r) => r.evaluator_id)));
+  const nameById = new Map<string, string>();
+  if (evaluatorIds.length) {
+    const { data: users } = await supabase!
+      .from('user_profiles')
+      .select('id, full_name, full_name_ar, email')
+      .in('id', evaluatorIds);
+    for (const u of (users ?? []) as Array<{
+      id: string;
+      full_name: string | null;
+      full_name_ar: string | null;
+      email: string | null;
+    }>) {
+      nameById.set(u.id, u.full_name || u.full_name_ar || u.email || u.id);
+    }
+  }
+
+  const acc: Record<
+    string,
+    {
+      totals: number[];
+      criterion: Record<string, number[]>;
+      conflicts: number;
+      count: number;
+      scorecards: EvaluatorScorecard[];
+    }
+  > = {};
+
+  for (const row of rows) {
     const bucket = (acc[row.idea_id] ??= {
       totals: [],
       criterion: {},
       conflicts: 0,
       count: 0,
+      scorecards: [],
     });
     bucket.count += 1;
+    bucket.scorecards.push({
+      evaluatorId: row.evaluator_id,
+      evaluatorName: nameById.get(row.evaluator_id) ?? row.evaluator_id,
+      totalScore: row.total_score,
+      criteriaScores: row.criteria_scores,
+      comments: row.comments,
+      conflict: Boolean(row.conflict_of_interest),
+      submittedAt: row.submitted_at,
+    });
     if (row.conflict_of_interest) {
       bucket.conflicts += 1;
       continue;
@@ -189,6 +242,7 @@ export async function fetchEvaluationSummaries(
         Object.entries(bucket.criterion).map(([k, v]) => [k, Math.round(avg(v) * 10) / 10])
       ),
       conflicts: bucket.conflicts,
+      scorecards: bucket.scorecards,
     };
   }
 

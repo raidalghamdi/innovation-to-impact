@@ -37,6 +37,7 @@ export default async function CommitteePage({
             avgTotal: s.avgTotal,
             perCriterion: s.perCriterion,
             conflicts: s.conflicts,
+            scorecards: s.scorecards,
           }
         : null,
     };

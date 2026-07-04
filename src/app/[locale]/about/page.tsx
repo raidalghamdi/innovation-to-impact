@@ -55,34 +55,41 @@ export default async function AboutPage({
       )}
 
       {/* 2. Vision & Mission */}
-      <section className="mt-12">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="border-brand-teal/15 transition-shadow hover:shadow-md">
-            <CardHeader className="space-y-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal">
-                <Compass className="h-6 w-6" />
-              </div>
-              <CardTitle className="text-xl text-brand-teal">{t('vision.label')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm leading-relaxed text-muted-foreground">{t('vision.body')}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-brand-teal/15 transition-shadow hover:shadow-md">
-            <CardHeader className="space-y-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-gold/15 text-brand-gold">
-                <Target className="h-6 w-6" />
-              </div>
-              <CardTitle className="text-xl text-brand-teal">{t('mission.label')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm leading-relaxed text-muted-foreground">{t('mission.body')}</p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      {(isSectionEnabled(cms, 'vision') || isSectionEnabled(cms, 'mission')) && (
+        <section className="mt-12">
+          <div className="grid gap-4 md:grid-cols-2">
+            {isSectionEnabled(cms, 'vision') && (
+              <Card className="border-brand-teal/15 transition-shadow hover:shadow-md">
+                <CardHeader className="space-y-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal">
+                    <Compass className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-xl text-brand-teal">{t('vision.label')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{t('vision.body')}</p>
+                </CardContent>
+              </Card>
+            )}
+            {isSectionEnabled(cms, 'mission') && (
+              <Card className="border-brand-teal/15 transition-shadow hover:shadow-md">
+                <CardHeader className="space-y-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-gold/15 text-brand-gold">
+                    <Target className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-xl text-brand-teal">{t('mission.label')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{t('mission.body')}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* 3. The Pipeline */}
+      {isSectionEnabled(cms, 'pipeline') && (
       <section className="mt-12">
         <Card className="border-brand-teal/15">
           <CardContent className="flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-center">
@@ -106,8 +113,10 @@ export default async function AboutPage({
           </CardContent>
         </Card>
       </section>
+      )}
 
       {/* 4. Who Can Participate */}
+      {isSectionEnabled(cms, 'participants') && (
       <section className="mt-12">
         <div className="max-w-2xl">
           <h2 className="text-2xl font-semibold text-brand-teal">{t('participants.title')}</h2>
@@ -132,8 +141,10 @@ export default async function AboutPage({
           })}
         </div>
       </section>
+      )}
 
       {/* 5. Partners */}
+      {isSectionEnabled(cms, 'partners') && (
       <section className="mt-12">
         <div className="max-w-2xl">
           <h2 className="text-2xl font-semibold text-brand-teal">{t('partnersSection.title')}</h2>
@@ -153,8 +164,10 @@ export default async function AboutPage({
           ))}
         </div>
       </section>
+      )}
 
       {/* 6. Contact */}
+      {isSectionEnabled(cms, 'contact') && (
       <section className="mt-12 mb-4">
         <Card className="border-brand-teal/20 bg-gradient-to-br from-brand-teal-light/60 to-white">
           <CardContent className="flex flex-col items-start gap-6 p-6 sm:p-8 md:flex-row md:items-center">
@@ -183,6 +196,7 @@ export default async function AboutPage({
           </CardContent>
         </Card>
       </section>
+      )}
     </PublicShell>
   );
 }

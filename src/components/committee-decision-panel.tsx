@@ -9,11 +9,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, XCircle, RotateCcw, Search, X } from 'lucide-react';
 import { recordDecision, type Decision } from '@/app/[locale]/committee/actions';
 
+type EvaluatorScorecard = {
+  evaluatorId: string;
+  evaluatorName: string;
+  totalScore: number | null;
+  criteriaScores: Record<string, number> | null;
+  comments: string | null;
+  conflict: boolean;
+  submittedAt: string | null;
+};
+
 type Summary = {
   count: number;
   avgTotal: number | null;
   perCriterion: Record<string, number>;
   conflicts: number;
+  scorecards: EvaluatorScorecard[];
 };
 
 export type CommitteeIdea = {
@@ -212,6 +223,16 @@ export function CommitteeDecisionPanel({
               )}
             </div>
 
+            {/* Per-item comment (used for single-item reject/return) */}
+            {selected.size === 0 && (
+              <Textarea
+                placeholder={t('commentPlaceholder')}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={2}
+              />
+            )}
+
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={() => setDetail(i)}>
                 {t('details')}
@@ -268,7 +289,7 @@ export function CommitteeDecisionPanel({
                     {Object.entries(detail.summary.perCriterion).map(([key, value]) => (
                       <li key={key} className="flex justify-between border-b border-border py-1">
                         <span>{te(`criteriaLabels.${key}`)}</span>
-                        <span className="font-medium">{value.toFixed(1)} / 5</span>
+                        <span className="font-medium">{value.toFixed(1)}</span>
                       </li>
                     ))}
                   </ul>
@@ -276,6 +297,56 @@ export function CommitteeDecisionPanel({
                   <p className="text-muted-foreground">{t('noScores')}</p>
                 )}
               </div>
+
+              {/* Individual evaluator scorecards (F-20) */}
+              {detail.summary && detail.summary.scorecards.length > 0 && (
+                <div>
+                  <p className="mb-2 font-semibold text-brand-teal">
+                    {t('individualScores')}
+                  </p>
+                  <div className="space-y-3">
+                    {detail.summary.scorecards.map((sc) => (
+                      <div
+                        key={sc.evaluatorId}
+                        className="rounded-md border border-border p-3"
+                      >
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-medium">{sc.evaluatorName}</span>
+                          {sc.conflict ? (
+                            <span className="text-xs font-medium text-brand-gold">
+                              {t('conflictsNote')}
+                            </span>
+                          ) : sc.totalScore != null ? (
+                            <span className="text-sm font-semibold text-brand-teal">
+                              {t('avgScore')}: {sc.totalScore.toFixed(1)}
+                            </span>
+                          ) : null}
+                        </div>
+                        {!sc.conflict && sc.criteriaScores && (
+                          <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                            {Object.entries(sc.criteriaScores).map(([key, value]) => (
+                              <li
+                                key={key}
+                                className="flex justify-between text-xs text-muted-foreground"
+                              >
+                                <span>{te(`criteriaLabels.${key}`)}</span>
+                                <span className="font-medium text-foreground">
+                                  {value}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {sc.comments && (
+                          <p className="mt-2 text-xs italic text-muted-foreground">
+                            “{sc.comments}”
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

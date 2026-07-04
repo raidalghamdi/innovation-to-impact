@@ -39,13 +39,13 @@ export async function recordDecision(input: DecideInput): Promise<DecisionResult
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: 'unauthenticated' };
 
-  const now = new Date().toISOString();
+  // committee_decisions has no created_at column; decided_at defaults to now()
+  // and quorum_met defaults to false, so we omit them from the payload.
   const rows = input.ideaIds.map((ideaId) => ({
     idea_id: ideaId,
     decision: input.decision,
     comments: input.comments || null,
     decided_by: user.id,
-    created_at: now,
   }));
 
   const { error: insertError } = await supabase.from('committee_decisions').insert(rows);
