@@ -540,7 +540,8 @@
     "email": "البريد الإلكتروني",
     "role": "الدور",
     "language": "اللغة",
-    "languagePref": "اللغة المفضلة"
+    "languagePref": "اللغة المفضلة",
+    "session": "الجلسة"
   },
   "auth": {
     "loginTitle": "تسجيل الدخول",

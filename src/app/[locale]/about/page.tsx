@@ -88,8 +88,8 @@ export default async function AboutPage({
         </section>
       )}
 
-      {/* 3. The Pipeline */}
-      {isSectionEnabled(cms, 'pipeline') && (
+      {/* 3. The Pipeline (CMS key: strategy) */}
+      {isSectionEnabled(cms, 'strategy') && (
       <section className="mt-12">
         <Card className="border-brand-teal/15">
           <CardContent className="flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-center">
@@ -115,8 +115,8 @@ export default async function AboutPage({
       </section>
       )}
 
-      {/* 4. Who Can Participate */}
-      {isSectionEnabled(cms, 'participants') && (
+      {/* 4. Who Can Participate (CMS key: goals) */}
+      {isSectionEnabled(cms, 'goals') && (
       <section className="mt-12">
         <div className="max-w-2xl">
           <h2 className="text-2xl font-semibold text-brand-teal">{t('participants.title')}</h2>

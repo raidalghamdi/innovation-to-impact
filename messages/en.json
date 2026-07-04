@@ -540,7 +540,8 @@
     "email": "Email",
     "role": "Role",
     "language": "Language",
-    "languagePref": "Preferred language"
+    "languagePref": "Preferred language",
+    "session": "Session"
   },
   "auth": {
     "loginTitle": "Sign in",

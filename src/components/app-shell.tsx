@@ -9,6 +9,7 @@ import { CoBrand } from '@/components/logo';
 import { NotificationBell } from '@/components/notification-bell';
 import { PointsBadge } from '@/components/points-badge';
 import { GlobalSearch } from '@/components/global-search';
+import { SignOutButton } from '@/components/sign-out-button';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { roleFromEmail, isRole, type Role } from '@/lib/roles';
@@ -76,6 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <PointsBadge userId={userId} />
           <NotificationBell userId={userId} />
           <LanguageToggle />
+          {userId && <SignOutButton />}
         </div>
       </header>
 
