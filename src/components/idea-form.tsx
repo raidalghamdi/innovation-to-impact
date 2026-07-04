@@ -111,6 +111,10 @@ export function IdeaForm({
   const [description, setDescription] = useState('');
   const [theme, setTheme] = useState(themes[0]?.id ?? '');
   const [activity, setActivity] = useState(activities[0]?.id ?? '');
+  // Confidentiality is a data-governance decision the submitter makes. Defaults
+  // to 'internal' — matches the DB default on innovation.ideas and reflects
+  // the safe middle ground (visible inside GAC, hidden from the public feed).
+  const [confidentiality, setConfidentiality] = useState<'public' | 'internal' | 'confidential'>('internal');
   const [ack, setAck] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -299,20 +303,30 @@ export function IdeaForm({
       strategic_theme_id: theme || null,
       activity_id: activity || null,
       ownership_acknowledged: ack,
+      confidentiality,
       status: 'submitted',
       current_stage: 1,
       submitter_id: userData.user.id,
     };
+    // Persist to innovation.ideas. Do NOT swallow errors silently — if the
+      // insert fails (RLS, missing columns, offline) we must surface the message
+    // to the author so they can retry rather than being bounced to an empty
+    // /my-ideas page under the illusion of success.
     let newIdeaId: string | null = null;
-    try {
-      const { data: inserted } = await supabase
+    {
+      const { data: inserted, error: insertErr } = await supabase
         .from('ideas')
         .insert(payload)
         .select('id')
         .single();
+      if (insertErr) {
+        // eslint-disable-next-line no-console
+        console.error('[idea-form] insert failed:', insertErr);
+        setError(insertErr.message || tc('genericError'));
+        setSubmitting(false);
+        return;
+      }
       newIdeaId = (inserted as { id?: string } | null)?.id ?? null;
-    } catch {
-      /* best-effort; fall through to redirect */
     }
     // If duplicates were surfaced and the author submitted anyway, record it.
     if (duplicates.length > 0) {
@@ -576,6 +590,34 @@ export function IdeaForm({
                   </select>
                 </div>
               </div>
+
+              {/* Confidentiality — data-governance selector. Author declares who
+                  can see this idea: public (visible on the marketing feed),
+                  internal (visible only to signed-in GAC staff), or
+                  confidential (restricted to evaluators/committee only). Matches
+                  innovation.confidentiality_level enum and enforces at RLS. */}
+              <div className="space-y-1.5">
+                <Label htmlFor="confidentiality">{t('confidentiality')}</Label>
+                <select
+                  id="confidentiality"
+                  value={confidentiality}
+                  onChange={(e) =>
+                    setConfidentiality(e.target.value as 'public' | 'internal' | 'confidential')
+                  }
+                  className={selectClass}
+                >
+                  <option value="public">{tf('confPublic')}</option>
+                  <option value="internal">{tf('confInternal')}</option>
+                  <option value="confidential">{tf('confConfidential')}</option>
+                </select>
+                <p className="rounded-lg bg-brand-teal-light/40 p-2.5 text-xs text-brand-teal">
+                  {confidentiality === 'public'
+                    ? tf('confPublicHelp')
+                    : confidentiality === 'confidential'
+                      ? tf('confConfidentialHelp')
+                      : tf('confInternalHelp')}
+                </p>
+              </div>
             </div>
           )}
 
@@ -616,6 +658,16 @@ export function IdeaForm({
                   <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('themeLabel')}</dt>
                   <dd className="text-sm text-foreground sm:col-span-2">
                     {activeTheme ? pickFromRow(activeTheme, 'name', locale) : '—'}
+                  </dd>
+                </div>
+                <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{t('confidentiality')}</dt>
+                  <dd className="text-sm text-foreground sm:col-span-2">
+                    {confidentiality === 'public'
+                      ? tf('confPublic')
+                      : confidentiality === 'confidential'
+                        ? tf('confConfidential')
+                        : tf('confInternal')}
                   </dd>
                 </div>
               </dl>

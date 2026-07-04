@@ -14,5 +14,7 @@ export async function signOutAction(formData?: FormData) {
   if (supabase) {
     await supabase.auth.signOut();
   }
-  redirect(`/${locale}/auth/sign-in`);
+  // Route to the canonical login page. The `/auth/sign-in` path never
+  // existed as a route — next-intl routes login as `/[locale]/login`.
+  redirect(`/${locale}/login`);
 }

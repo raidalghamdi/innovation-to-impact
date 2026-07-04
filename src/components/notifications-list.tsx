@@ -34,21 +34,39 @@ export function NotificationsList() {
       setLoaded(true);
       return;
     }
-    supabase.auth.getUser().then(async ({ data }) => {
-      const user = data.user;
-      if (!user) {
+    // Guard the whole flow — auth.getUser() and the notifications fetch have
+    // both been observed to reject (network hiccup, RLS misconfiguration,
+    // realtime channel handshake) which would otherwise bubble as an
+    // unhandled promise rejection and trip the [locale]/error.tsx boundary
+    // with a generic "An unexpected error occurred" screen. On failure we
+    // simply render the empty state instead of taking down the page.
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        const user = data?.user;
+        if (!user) {
+          setLoaded(true);
+          return;
+        }
+        setUserId(user.id);
+        const { data: rows, error: fetchErr } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (fetchErr) {
+          // eslint-disable-next-line no-console
+          console.error('[notifications-list] fetch failed:', fetchErr);
+        } else if (rows) {
+          setItems(rows as unknown as Notif[]);
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[notifications-list] initial load threw:', err);
+      } finally {
         setLoaded(true);
-        return;
       }
-      setUserId(user.id);
-      const { data: rows } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      if (rows) setItems(rows as unknown as Notif[]);
-      setLoaded(true);
-    });
+    })();
   }, []);
 
   // Take over from the initial fetch: merge newly inserted rows live so the

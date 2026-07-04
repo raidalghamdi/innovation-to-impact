@@ -77,7 +77,9 @@
     "pipeline": "Pipeline",
     "lastUpdated": "Last updated",
     "openMenu": "Open navigation menu",
-    "closeMenu": "Close navigation menu"
+    "closeMenu": "Close navigation menu",
+    "logout": "Sign out",
+    "genericError": "Something went wrong. Please try again."
   },
   "brand": {
     "logo": {
@@ -1189,7 +1191,13 @@
     "reviewNote": "Everything look right? Hit submit when you're ready.",
     "attachmentsHint": "Drag & drop files here, or click to browse. PDF, DOCX, PNG, JPG up to 10MB each.",
     "required": "Please complete the required fields in this step.",
-    "themeExplain": "Pick the area your idea fits best — this helps us send it to the right people."
+    "themeExplain": "Pick the area your idea fits best — this helps us send it to the right people.",
+    "confPublic": "Public",
+    "confInternal": "Internal",
+    "confConfidential": "Confidential",
+    "confPublicHelp": "Anyone can see this idea, including visitors on the public site.",
+    "confInternalHelp": "Visible to signed-in GAC staff only. This is the safe default.",
+    "confConfidentialHelp": "Restricted to evaluators and the review committee only."
   },
   "roles": {
     "submitter": "Submitter",
