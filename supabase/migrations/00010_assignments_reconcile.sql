@@ -1,22 +1,48 @@
 -- Migration 00010 — Reconcile innovation.assignments for the WS3 evaluator UI
 -- Purpose: the WS3 evaluator assignments UI expects a table shape
 --   (evaluator_id, assigned_by, assigned_at, due_at, notes, status IN
---    ('pending','completed','declined')) that differs from the legacy
---   public.assignments definition (owner_id/due_date/status='open') laid down
---   in migration 00001.
--- Strategy: create innovation.assignments in the expected shape; if legacy
---   rows exist in public.assignments, port them across with sensible defaults
---   (owner_id → evaluator_id, due_date → due_at, status 'open' → 'pending').
---   Leaves public.assignments untouched so other consumers (if any) keep
---   working.
+--    ('pending','completed','declined')) that differs from the legacy shape
+--   (owner_id/due_date/department/status='open') that was actually installed in
+--   the live innovation schema (from an earlier merge of 00001 into innovation).
+--
+-- Strategy: if the legacy shape is present in innovation.assignments (detected
+--   by the presence of column `owner_id`), DROP it (no FKs reference it and
+--   only 2 legacy seed rows exist — verified). Then create the WS3 shape.
+--   If the WS3 shape is already present, leave everything alone.
 --
 -- Author: Raid Alghamdi
--- Date: 2026-07-04
+-- Date: 2026-07-04 (amended)
 -- Runs manually — do NOT auto-apply.
 
 begin;
 
--- Idempotent: only create if not already present in the innovation schema.
+-- ---------------------------------------------------------------------------
+-- 0. Drop the legacy innovation.assignments shape if we detect it.
+--    Detection: presence of column `owner_id` (WS3 shape uses `evaluator_id`).
+--    Also drops the legacy policies (admin_all_assignments, read_anon_assignments,
+--    read_auth_assignments) because they will not match the new column names.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  legacy_here boolean;
+begin
+  select exists (
+    select 1 from information_schema.columns
+     where table_schema='innovation'
+       and table_name='assignments'
+       and column_name='owner_id'
+  ) into legacy_here;
+
+  if legacy_here then
+    raise notice 'Dropping legacy innovation.assignments (owner_id shape) to recreate in WS3 shape.';
+    drop table innovation.assignments cascade;
+  end if;
+end
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 1. Create innovation.assignments in the WS3 shape.
+-- ---------------------------------------------------------------------------
 create table if not exists innovation.assignments (
   id            uuid primary key default gen_random_uuid(),
   idea_id       uuid not null references innovation.ideas(id) on delete cascade,
@@ -39,18 +65,20 @@ create index if not exists idx_assignments_due_at
   on innovation.assignments (due_at)
   where status = 'pending';
 
--- Backfill from legacy public.assignments when both schemas coexist. Skipped
--- silently if either side is missing (fresh installs, or already migrated).
+-- ---------------------------------------------------------------------------
+-- 2. Backfill from legacy public.assignments if it exists (fresh install case).
+--    Skipped silently if public.assignments is absent.
+-- ---------------------------------------------------------------------------
 do $$
 declare
-  legacy_exists boolean;
+  legacy_public_exists boolean;
 begin
   select exists (
     select 1 from information_schema.tables
      where table_schema = 'public' and table_name = 'assignments'
-  ) into legacy_exists;
+  ) into legacy_public_exists;
 
-  if legacy_exists then
+  if legacy_public_exists then
     insert into innovation.assignments (
       id, idea_id, evaluator_id, assigned_at, due_at, status, created_at
     )
@@ -75,8 +103,10 @@ begin
 end
 $$;
 
--- RLS: admins full, evaluators see their own rows, submitters see rows for
--- their own ideas (so a submitter can tell an evaluation is in progress).
+-- ---------------------------------------------------------------------------
+-- 3. RLS: admins full, evaluators see their own rows, submitters see rows
+--    tied to their own ideas.
+-- ---------------------------------------------------------------------------
 alter table innovation.assignments enable row level security;
 
 drop policy if exists assignments_admin_all on innovation.assignments;
@@ -128,10 +158,13 @@ create policy assignments_submitter_visibility
 commit;
 
 -- POST-VERIFY:
---   select count(*) from innovation.assignments;
+--   select column_name, data_type
+--     from information_schema.columns
+--    where table_schema='innovation' and table_name='assignments'
+--    order by ordinal_position;
+--   -- expect: id, idea_id, evaluator_id, assigned_by, assigned_at, due_at,
+--   --         status, notes, created_at
 --   select status, count(*) from innovation.assignments group by 1;
---   -- as admin: expect full visibility
---   -- as evaluator: expect only rows where evaluator_id = your uid
 --
 -- ROLLBACK (manual):
 -- begin;
