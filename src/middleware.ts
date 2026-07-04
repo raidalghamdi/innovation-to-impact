@@ -2,7 +2,7 @@ import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { routing } from './i18n/routing';
-import { canAccess, roleFromEmail, ROLE_HOME, isRole, type Role } from './lib/roles';
+import { canAccess, resolveRoleSync, ROLE_HOME, type Role } from './lib/roles';
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -80,9 +80,9 @@ export async function middleware(request: NextRequest) {
 
   // RBAC — enforce role-based access on protected routes.
   if (isProtected && user) {
-    const role: Role = isRole(user.user_metadata?.role)
-      ? (user.user_metadata!.role as Role)
-      : roleFromEmail(user.email);
+    // Edge runtime: no DB queries per request, so use the sync resolver
+    // (metadata → email). See resolveRoleSync in src/lib/roles.ts.
+    const role: Role = resolveRoleSync(user);
     // Exception: /admin/analytics is allowed for judges (not the rest of /admin).
     const isAnalyticsRoute =
       pathnameWithoutLocale === '/admin/analytics' ||

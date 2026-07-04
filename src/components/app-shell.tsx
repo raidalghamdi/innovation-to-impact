@@ -13,7 +13,7 @@ import { GlobalSearch } from '@/components/global-search';
 import { SignOutButton } from '@/components/sign-out-button';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
-import { roleFromEmail, isRole, type Role } from '@/lib/roles';
+import { resolveRoleSync, type Role } from '@/lib/roles';
 import { Menu, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,11 +31,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       const user = data.user;
       if (!user) return;
       setUserId(user.id);
-      setRole(
-        isRole(user.user_metadata?.role)
-          ? (user.user_metadata!.role as Role)
-          : roleFromEmail(user.email)
-      );
+      // Client: no DB access here, use the sync resolver (metadata → email).
+      setRole(resolveRoleSync(user));
     });
   }, []);
 

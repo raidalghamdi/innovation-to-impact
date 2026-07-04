@@ -49,3 +49,41 @@ export function roleFromEmail(email?: string | null): Role {
   if (local.startsWith('evaluator')) return 'evaluator';
   return 'submitter';
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Canonical role resolution
+// ─────────────────────────────────────────────────────────────────────────────
+// Two helpers, one priority order. Use the one that matches the data you have:
+//
+//   resolveRoleWithProfile — server contexts that can query user_profiles.
+//     Priority: user_profiles.role → user_metadata.role → roleFromEmail(email).
+//     user_profiles is the canonical RBAC storage; metadata is a JWT-embedded
+//     cache that can drift; email is a demo fallback.
+//
+//   resolveRoleSync — edge/middleware and client components that only have
+//     the JWT (no DB access per request). Priority: user_metadata.role →
+//     roleFromEmail(email). Same intent as above but skips the profile step.
+//
+// Keep these in sync. If you add a new source of truth (e.g. app_metadata),
+// change both.
+
+type MinimalUser = {
+  email?: string | null;
+  user_metadata?: { role?: unknown } | null;
+} | null | undefined;
+
+export function resolveRoleWithProfile(input: {
+  profileRole?: unknown;
+  metadataRole?: unknown;
+  email?: string | null;
+}): Role {
+  if (isRole(input.profileRole)) return input.profileRole;
+  if (isRole(input.metadataRole)) return input.metadataRole;
+  return roleFromEmail(input.email);
+}
+
+export function resolveRoleSync(user: MinimalUser): Role {
+  const metadataRole = user?.user_metadata?.role;
+  if (isRole(metadataRole)) return metadataRole;
+  return roleFromEmail(user?.email ?? null);
+}

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
-import { ROLE_HOME, roleFromEmail, isRole, type Role } from '@/lib/roles';
+import { ROLE_HOME, resolveRoleWithProfile, type Role } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,32 +50,30 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         if (error) throw error;
       }
       // Resolve the signed-in user's role and route to their landing dashboard.
-      // Try user_profiles.role first (source of truth), then user_metadata.role,
-      // then fall back to roleFromEmail (which returns 'submitter' in
-      // production and demo-derives only under DEMO_MODE). Redirecting to a
-      // role-appropriate home avoids the empty /dashboard placeholder page.
+      // Canonical priority: user_profiles.role → user_metadata.role →
+      // roleFromEmail (returns 'submitter' outside DEMO_MODE). See
+      // resolveRoleWithProfile in src/lib/roles.ts.
       const { data: userData } = await supabase.auth.getUser();
       const authUser = userData?.user;
       let role: Role = 'submitter';
       if (authUser) {
-        // 1) user_profiles.role — canonical role storage per RBAC design.
+        let profileRole: unknown = undefined;
         try {
           const { data: profile } = await supabase
             .from('user_profiles')
             .select('role')
             .eq('id', authUser.id)
             .maybeSingle();
-          const profileRole = (profile as { role?: unknown } | null)?.role;
-          if (isRole(profileRole)) role = profileRole;
-          else if (isRole(authUser.user_metadata?.role)) role = authUser.user_metadata.role as Role;
-          else role = roleFromEmail(authUser.email);
+          profileRole = (profile as { role?: unknown } | null)?.role;
         } catch {
-          // If user_profiles is unreachable (permissions, offline, etc.),
-          // gracefully degrade to metadata / email heuristics rather than
-          // blocking the sign-in with an error.
-          if (isRole(authUser.user_metadata?.role)) role = authUser.user_metadata.role as Role;
-          else role = roleFromEmail(authUser.email);
+          // user_profiles unreachable — fall through to metadata/email so
+          // sign-in isn't blocked by a permissions or connectivity issue.
         }
+        role = resolveRoleWithProfile({
+          profileRole,
+          metadataRole: authUser.user_metadata?.role,
+          email: authUser.email,
+        });
       }
       router.push(ROLE_HOME[role] as any);
       router.refresh();
