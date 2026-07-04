@@ -87,6 +87,7 @@ export function DataTable<T extends Record<string, any>>({
               {columns.map((c) => (
                 <th
                   key={String(c.key)}
+                  scope="col"
                   className={cn(
                     'px-4 py-3 text-start text-xs font-semibold uppercase tracking-wide',
                     c.className

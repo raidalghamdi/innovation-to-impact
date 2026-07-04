@@ -5,6 +5,7 @@ import { LanguageToggle } from '@/components/language-toggle';
 import { SiteFooter } from '@/components/site-footer';
 import { Breadcrumbs, type Crumb } from '@/components/breadcrumbs';
 import { BackToTop } from '@/components/back-to-top';
+import { SkipToContent } from '@/components/skip-to-content';
 import { Button } from '@/components/ui/button';
 
 const NAV = [
@@ -29,6 +30,7 @@ export async function PublicShell({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <SkipToContent targetId="main-content" />
       <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <CoBrand className="h-12" locale={locale} />
