@@ -1103,7 +1103,7 @@
     "roleJudge": "Judge",
     "ratingLabel": "Rating",
     "recommendationLabel": "Recommendation",
-    "countBadge": "feedback",
+    "countBadge": "reviews",
     "anonymityNote": "Reviewer identities are kept anonymous — only their role is shown."
   }
 }
