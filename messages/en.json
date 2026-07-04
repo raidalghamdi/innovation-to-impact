@@ -79,6 +79,13 @@
     "openMenu": "Open navigation menu",
     "closeMenu": "Close navigation menu"
   },
+  "brand": {
+    "logo": {
+      "programMark": "Innovation to Impact — General Authority for Competition",
+      "wordmarkAr": "Competition Innovation Program (Arabic wordmark)",
+      "gacAuthority": "General Authority for Competition"
+    }
+  },
   "landing": {
     "heroTitle": "Start your innovation journey — from an idea or a challenge",
     "heroSubtitle": "We turn ideas and challenges into real impact on competition in Saudi Arabia, through a clear nine-stage journey.",
