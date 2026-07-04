@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { updateControlStatus } from '@/app/[locale]/compliance/actions';
+import { EvidenceUploader } from '@/components/evidence-uploader';
 import type { ComplianceControlV2 } from '@/lib/data';
 
 const STATUS_STYLE: Record<string, string> = {
@@ -95,6 +96,17 @@ export function ComplianceControlCard({
             </ul>
           ) : (
             <p className="text-xs text-muted-foreground">{t('noEvidence')}</p>
+          )}
+          {isAdmin && (
+            <div className="mt-3">
+              <EvidenceUploader
+                entityType="compliance_control"
+                entityId={control.id}
+                context="compliance"
+                accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx"
+                locale={locale}
+              />
+            </div>
           )}
         </div>
 

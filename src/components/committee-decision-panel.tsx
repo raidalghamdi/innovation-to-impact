@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, XCircle, RotateCcw, Search, X } from 'lucide-react';
 import { recordDecision, type Decision } from '@/app/[locale]/committee/actions';
+import { EvidenceUploader } from '@/components/evidence-uploader';
 import { pickFromRow } from '@/lib/i18n-content';
 
 type EvaluatorScorecard = {
@@ -348,6 +349,18 @@ export function CommitteeDecisionPanel({
                   </div>
                 </div>
               )}
+
+              <div>
+                <p className="mb-2 font-semibold text-brand-teal">{t('evidenceTitle')}</p>
+                <EvidenceUploader
+                  key={`ev-${detail.id}`}
+                  entityType="idea"
+                  entityId={detail.id}
+                  ideaId={detail.id}
+                  context="committee"
+                  locale={locale}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

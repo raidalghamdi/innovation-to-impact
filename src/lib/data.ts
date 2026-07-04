@@ -6,6 +6,7 @@
 // by the demo fallback.
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import * as demo from '@/lib/demo-data';
+import { isFullScope, scopeAllowsTheme, type Scope } from '@/lib/scope';
 
 function logSupabaseError(fn: string, error: unknown) {
   if (!error) return;
@@ -661,4 +662,313 @@ export async function fetchMyQueue(evaluatorId: string): Promise<AssignmentRow[]
     (a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? '')
   );
   return enrichFromDemo(rows);
+}
+
+// ---------------------------------------------------------------------------
+// WS5 — Executive summary + pillar drill-down.
+// Both compose the schema-aware fetchers above (fetchIdeas/Themes/Benefits/
+// Users), so they inherit the Supabase-or-demo fallback for free, and apply the
+// caller's Scope so a judge only ever sees their assigned themes.
+// ---------------------------------------------------------------------------
+
+export type ExecKpi = {
+  id: string;
+  current: number;
+  previous: number;
+  series: { date: string; value: number }[];
+};
+export type PillarSummary = {
+  theme_id: string;
+  title_ar: string;
+  title_en: string;
+  count: number;
+  budget: number;
+  progress: number;
+};
+export type ExecFunnel = {
+  submitted: number;
+  under_review: number;
+  approved: number;
+  pilot: number;
+  implemented: number;
+};
+export type ExecDecision = {
+  id: string;
+  idea_title_ar: string;
+  idea_title_en: string;
+  outcome: string;
+  decided_at: string;
+};
+export type ExecutiveSummary = {
+  kpis: ExecKpi[];
+  byPillar: PillarSummary[];
+  funnel: ExecFunnel;
+  recentDecisions: ExecDecision[];
+};
+
+const APPROVED_STATUSES = new Set([
+  'approved',
+  'in_pilot',
+  'in_implementation',
+  'benefits_tracking',
+  'closed',
+]);
+const UNDER_REVIEW_STATUSES = new Set([
+  'submitted',
+  'screening',
+  'evaluation',
+  'committee',
+  'assigned',
+  'returned',
+]);
+const IMPLEMENTED_STATUSES = new Set(['in_implementation', 'benefits_tracking', 'closed']);
+
+function monthKey(iso: string | null | undefined): string {
+  return iso ? String(iso).slice(0, 7) : '';
+}
+
+// Per-month counts of ideas matching `predicate`, last `n` months present in
+// the data (chronological). Drives the KPI sparklines.
+function monthlySeries(
+  ideas: demo.Idea[],
+  predicate: (i: demo.Idea) => boolean,
+  n = 6
+): { date: string; value: number }[] {
+  const counts = new Map<string, number>();
+  for (const i of ideas) {
+    if (!predicate(i)) continue;
+    const k = monthKey(i.created_at);
+    if (!k) continue;
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-n)
+    .map(([date, value]) => ({ date, value }));
+}
+
+function cycleDays(i: demo.Idea): number | null {
+  const stage = Number(i.current_stage ?? 0);
+  if (stage <= 0) return null;
+  const start = Date.parse(i.created_at);
+  const end = Date.parse(i.updated_at ?? i.created_at);
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return null;
+  return (end - start) / (1000 * 60 * 60 * 24);
+}
+
+function avgCycle(ideas: demo.Idea[]): number {
+  const vals = ideas.map(cycleDays).filter((d): d is number => d !== null);
+  if (!vals.length) return 0;
+  return Number((vals.reduce((s, d) => s + d, 0) / vals.length).toFixed(1));
+}
+
+function approvalRate(ideas: demo.Idea[]): number {
+  const submitted = ideas.filter((i) => i.status !== 'draft').length;
+  const approved = ideas.filter((i) => APPROVED_STATUSES.has(i.status)).length;
+  return submitted > 0 ? Number(((approved / submitted) * 100).toFixed(1)) : 0;
+}
+
+export async function fetchExecutiveSummary(scope: Scope): Promise<ExecutiveSummary> {
+  const [allIdeas, allThemes, benefits, users] = await Promise.all([
+    fetchIdeas(),
+    fetchThemes(),
+    fetchBenefits(),
+    fetchUsers(),
+  ]);
+
+  // Scope narrowing: a non-admin only sees ideas/themes for their allowed
+  // themes (empty list → nothing).
+  const themes = isFullScope(scope)
+    ? allThemes
+    : allThemes.filter((t) => scopeAllowsTheme(scope, t.id));
+  const themeIds = new Set(themes.map((t) => t.id));
+  const ideas = isFullScope(scope)
+    ? allIdeas
+    : allIdeas.filter((i) => themeIds.has(i.strategic_theme_id));
+
+  // Split off the most recent month so KPI deltas compare "now" vs "as of the
+  // start of the current month".
+  const months = Array.from(new Set(ideas.map((i) => monthKey(i.created_at)).filter(Boolean))).sort();
+  const latestMonth = months[months.length - 1] ?? '';
+  const prior = ideas.filter((i) => monthKey(i.created_at) < latestMonth);
+
+  const financialFor = (set: demo.Idea[], field: 'realized_value' | 'target_value') => {
+    const ids = new Set(set.map((i) => i.id));
+    return benefits
+      .filter((b) => b.benefit_type === 'financial' && ids.has(b.idea_id))
+      .reduce((s, b) => s + (b[field] ?? 0), 0);
+  };
+  const activePilots = (set: demo.Idea[]) =>
+    set.filter((i) => Number(i.current_stage ?? 0) >= 6 && i.status !== 'closed').length;
+  const evaluatorsActive = users.filter((u) => u.role === 'evaluator').length;
+
+  const kpis: ExecKpi[] = [
+    {
+      id: 'ideas_submitted',
+      current: ideas.filter((i) => i.status !== 'draft').length,
+      previous: prior.filter((i) => i.status !== 'draft').length,
+      series: monthlySeries(ideas, (i) => i.status !== 'draft'),
+    },
+    {
+      id: 'avg_cycle_time',
+      current: avgCycle(ideas),
+      previous: avgCycle(prior),
+      series: monthlySeries(ideas, (i) => Number(i.current_stage ?? 0) > 0),
+    },
+    {
+      id: 'approval_rate',
+      current: approvalRate(ideas),
+      previous: approvalRate(prior),
+      series: monthlySeries(ideas, (i) => APPROVED_STATUSES.has(i.status)),
+    },
+    {
+      id: 'active_pilots',
+      current: activePilots(ideas),
+      previous: activePilots(prior),
+      series: monthlySeries(ideas, (i) => Number(i.current_stage ?? 0) >= 6),
+    },
+    {
+      id: 'roi_ytd',
+      current: financialFor(ideas, 'realized_value'),
+      previous: financialFor(prior, 'realized_value'),
+      series: monthlySeries(ideas, (i) => IMPLEMENTED_STATUSES.has(i.status)),
+    },
+    {
+      id: 'evaluators_active',
+      current: evaluatorsActive,
+      previous: evaluatorsActive,
+      series: monthlySeries(ideas, (i) => Number(i.current_stage ?? 0) >= 4),
+    },
+  ];
+
+  const byPillar: PillarSummary[] = themes
+    .map((t) => {
+      const themeIdeas = ideas.filter((i) => i.strategic_theme_id === t.id);
+      const implemented = themeIdeas.filter((i) => IMPLEMENTED_STATUSES.has(i.status)).length;
+      return {
+        theme_id: t.id,
+        title_ar: t.name_ar,
+        title_en: t.name_en,
+        count: themeIdeas.length,
+        budget: financialFor(themeIdeas, 'realized_value'),
+        progress: themeIdeas.length ? Math.round((implemented / themeIdeas.length) * 100) : 0,
+      };
+    })
+    .sort((a, b) => b.count - a.count);
+
+  const funnel: ExecFunnel = {
+    submitted: ideas.filter((i) => i.status !== 'draft').length,
+    under_review: ideas.filter((i) => UNDER_REVIEW_STATUSES.has(i.status)).length,
+    approved: ideas.filter((i) => APPROVED_STATUSES.has(i.status)).length,
+    pilot: ideas.filter((i) => Number(i.current_stage ?? 0) >= 6).length,
+    implemented: ideas.filter((i) => IMPLEMENTED_STATUSES.has(i.status)).length,
+  };
+
+  const recentDecisions = await fetchRecentDecisions(ideas);
+
+  return { kpis, byPillar, funnel, recentDecisions };
+}
+
+// Last 10 committee decisions with the idea title. Reads committee_decisions
+// when Supabase is live; otherwise derives plausible outcomes from idea status.
+async function fetchRecentDecisions(scopedIdeas: demo.Idea[]): Promise<ExecDecision[]> {
+  const byId = new Map(scopedIdeas.map((i) => [i.id, i]));
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('committee_decisions')
+        .select('id, idea_id, decision, decided_at')
+        .order('decided_at', { ascending: false })
+        .limit(10);
+      logSupabaseError('fetchRecentDecisions', error);
+      if (data && data.length) {
+        return (data as { id: string; idea_id: string; decision: string; decided_at: string }[])
+          .filter((d) => byId.has(d.idea_id))
+          .map((d) => {
+            const idea = byId.get(d.idea_id)!;
+            return {
+              id: d.id,
+              idea_title_ar: idea.title_ar,
+              idea_title_en: idea.title_en,
+              outcome: d.decision,
+              decided_at: d.decided_at,
+            };
+          });
+      }
+    }
+  }
+  const OUTCOME_BY_STATUS: Record<string, string> = {
+    approved: 'approve',
+    returned: 'return',
+    committee: 'study',
+    in_pilot: 'approve',
+    in_implementation: 'approve',
+    benefits_tracking: 'approve',
+    closed: 'approve',
+  };
+  return scopedIdeas
+    .filter((i) => OUTCOME_BY_STATUS[i.status])
+    .sort((a, b) => String(b.updated_at ?? b.created_at).localeCompare(String(a.updated_at ?? a.created_at)))
+    .slice(0, 10)
+    .map((i) => ({
+      id: `dec-${i.id}`,
+      idea_title_ar: i.title_ar,
+      idea_title_en: i.title_en,
+      outcome: OUTCOME_BY_STATUS[i.status],
+      decided_at: String(i.updated_at ?? i.created_at),
+    }));
+}
+
+export type PillarDetail = {
+  theme: { id: string; title_ar: string; title_en: string; description: string; owner: string | null };
+  kpis: { ideas: number; budgetSpent: number; budgetAllocated: number; pilotsActive: number; implementationsDone: number };
+  timeline: { date: string; value: number }[];
+  ideas: { id: string; code: string; title_ar: string; title_en: string; status: string; current_stage: number }[];
+};
+
+export async function fetchPillarDetail(themeId: string, scope: Scope): Promise<PillarDetail | null> {
+  if (!scopeAllowsTheme(scope, themeId)) return null;
+
+  const [allThemes, allIdeas, benefits, users] = await Promise.all([
+    fetchThemes(),
+    fetchIdeas(),
+    fetchBenefits(),
+    fetchUsers(),
+  ]);
+  const theme = allThemes.find((t) => t.id === themeId);
+  if (!theme) return null;
+
+  const themeIdeas = allIdeas.filter((i) => i.strategic_theme_id === themeId);
+  const ideaIds = new Set(themeIdeas.map((i) => i.id));
+  const financial = benefits.filter((b) => b.benefit_type === 'financial' && ideaIds.has(b.idea_id));
+  const owner = users.find((u) => u.id === (theme as { owner_id?: string }).owner_id);
+
+  return {
+    theme: {
+      id: theme.id,
+      title_ar: theme.name_ar,
+      title_en: theme.name_en,
+      description: (theme as { description?: string }).description ?? '',
+      owner: owner?.full_name ?? null,
+    },
+    kpis: {
+      ideas: themeIdeas.length,
+      budgetSpent: financial.reduce((s, b) => s + (b.realized_value ?? 0), 0),
+      budgetAllocated: financial.reduce((s, b) => s + (b.target_value ?? 0), 0),
+      pilotsActive: themeIdeas.filter((i) => Number(i.current_stage ?? 0) >= 6 && i.status !== 'closed').length,
+      implementationsDone: themeIdeas.filter((i) => IMPLEMENTED_STATUSES.has(i.status)).length,
+    },
+    timeline: monthlySeries(themeIdeas, () => true, 12),
+    ideas: themeIdeas
+      .sort((a, b) => Number(b.current_stage ?? 0) - Number(a.current_stage ?? 0))
+      .map((i) => ({
+        id: i.id,
+        code: i.code,
+        title_ar: i.title_ar,
+        title_en: i.title_en,
+        status: i.status,
+        current_stage: Number(i.current_stage ?? 0),
+      })),
+  };
 }

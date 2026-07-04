@@ -279,6 +279,7 @@
   "evaluation": {
     "title": "Evaluation queue",
     "subtitle": "Review your assigned ideas and score each one.",
+    "evidenceTitle": "Supporting evidence",
     "scorecard": "Scorecard",
     "criteria": "Criteria",
     "score": "Score",
@@ -313,6 +314,7 @@
   "committee": {
     "title": "Committee decisions",
     "subtitle": "Review evaluated ideas and record decisions with quorum tracking.",
+    "evidenceTitle": "Supporting evidence",
     "quorum": "Quorum",
     "quorumMet": "Quorum met",
     "decision": "Decision",
@@ -532,7 +534,22 @@
     "conversionSubtitle": "Of every idea submitted, how many make it to a real pilot.",
     "conversionSubmitted": "Submitted",
     "conversionPilot": "In pilot or beyond",
-    "conversionRate": "conversion rate"
+    "conversionRate": "conversion rate",
+    "pillarChartHint": "Click a bar to drill into that pillar.",
+    "pillar": {
+      "owner": "Owner",
+      "ideas": "Ideas",
+      "budget": "Budget (spent / allocated)",
+      "budgetHint": "Realized vs targeted financial value",
+      "pilotsActive": "Active pilots",
+      "implementations": "Implementations done",
+      "timeline": "Ideas over time",
+      "ideasTable": "Contributing ideas",
+      "colCode": "Code",
+      "colTitle": "Idea",
+      "colStatus": "Status",
+      "colStage": "Stage"
+    }
   },
   "admin": {
     "title": "Administration",
@@ -1232,7 +1249,8 @@
     "nudgeTitle": "Similar ideas already exist",
     "nudge": "Consider refining your idea or joining an existing one to strengthen its impact.",
     "relatedTitle": "Related ideas",
-    "relatedEmpty": "No related ideas found."
+    "relatedEmpty": "No related ideas found.",
+    "duplicatesTitle": "{n} similar ideas may already exist"
   },
   "ideaSubmitted": {
     "headline": "Your idea has been submitted!",
@@ -1299,5 +1317,66 @@
     "retry": "Try again",
     "homeCta": "Return to homepage",
     "referenceLabel": "Reference"
+  },
+  "evidence": {
+    "dropzone": "Drop files here or click to upload",
+    "hint": "PDF, images, or documents up to 10MB each",
+    "tooLarge": "File exceeds the 10MB limit",
+    "uploadError": "Upload failed — please try again",
+    "loading": "Loading attachments…",
+    "empty": "No evidence attached yet",
+    "delete": "Delete attachment"
+  },
+  "import": {
+    "title": "Bulk import",
+    "subtitle": "Import ideas, evaluators, or strategic themes from a CSV file.",
+    "entity": {
+      "ideas": "Ideas",
+      "evaluators": "Evaluators",
+      "strategic_themes": "Strategic themes"
+    },
+    "pickFile": "Choose a CSV file",
+    "pickHint": "Accepts .csv with a header row",
+    "mapColumns": "Map columns",
+    "unmapped": "— not mapped —",
+    "requiredUnmapped": "Map these required fields before importing: {fields}",
+    "preview": "Preview ({n} rows)",
+    "importing": "Importing…",
+    "importValid": "Import valid rows",
+    "resultOk": "Imported {inserted} rows · {skipped} skipped",
+    "resultError": "Import failed: {error}",
+    "rowError": "Row {row} · {field}: {message}",
+    "err": {
+      "required": "required value missing",
+      "invalid_email": "invalid email",
+      "invalid_uuid": "invalid ID format",
+      "fk_mismatch": "referenced record not found"
+    }
+  },
+  "changeRequests": {
+    "title": "Change requests",
+    "subtitle": "Review and apply proposed edits across the platform.",
+    "rejectedPill": "Rejected ({n})",
+    "transitionError": "That move isn't allowed from the current status.",
+    "columnEmpty": "Nothing here",
+    "detailTitle": "Change request",
+    "close": "Close",
+    "fieldPath": "Field",
+    "currentValue": "Current",
+    "proposedValue": "Proposed",
+    "reason": "Reason",
+    "approve": "Approve",
+    "reject": "Reject",
+    "status": {
+      "requested": "Requested",
+      "in_review": "In review",
+      "approved": "Approved",
+      "applied": "Applied"
+    },
+    "age": {
+      "days": "{n}d ago",
+      "hours": "{n}h ago",
+      "minutes": "{n}m ago"
+    }
   }
 }

@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/status-badge';
 import { EvaluationScorecard } from '@/components/evaluation-scorecard';
+import { EvidenceUploader } from '@/components/evidence-uploader';
 import { cn } from '@/lib/utils';
 import { pickFromRow } from '@/lib/i18n-content';
 
@@ -83,11 +84,28 @@ export function EvaluationWorkspace({
       <div className="lg:col-span-2">
         <h2 className="section-title mb-3">{t('scorecard')}</h2>
         {selectedId ? (
-          <EvaluationScorecard
-            key={selectedId}
-            ideaId={selectedId}
-            onSaved={() => router.refresh()}
-          />
+          <div className="space-y-4">
+            <EvaluationScorecard
+              key={selectedId}
+              ideaId={selectedId}
+              onSaved={() => router.refresh()}
+            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base text-brand-teal">{t('evidenceTitle')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EvidenceUploader
+                  key={`ev-${selectedId}`}
+                  entityType="idea"
+                  entityId={selectedId}
+                  ideaId={selectedId}
+                  context="evaluation"
+                  locale={locale}
+                />
+              </CardContent>
+            </Card>
+          </div>
         ) : (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">

@@ -308,7 +308,8 @@
     "myQueue": {
       "dueLabel": "الاستحقاق",
       "overdue": "متأخرة"
-    }
+    },
+    "evidenceTitle": "الأدلة الداعمة"
   },
   "committee": {
     "title": "قرارات اللجنة",
@@ -340,7 +341,8 @@
     "decisionError": "تعذّر تسجيل القرار. حاول مرة أخرى.",
     "saving": "جارٍ الحفظ…",
     "queueEmpty": "لا توجد أفكار بانتظار قرار اللجنة.",
-    "individualScores": "بطاقات المُقيّمين"
+    "individualScores": "بطاقات المُقيّمين",
+    "evidenceTitle": "الأدلة الداعمة"
   },
   "pilots": {
     "title": "متتبع التجارب والاختبارات",
@@ -532,7 +534,22 @@
     "conversionSubtitle": "من كل فكرة مقدَّمة، كم منها يصل إلى تجربة فعلية.",
     "conversionSubmitted": "مقدَّمة",
     "conversionPilot": "في التجربة أو ما بعدها",
-    "conversionRate": "معدل التحويل"
+    "conversionRate": "معدل التحويل",
+    "pillarChartHint": "انقر على أي عمود للتعمق في ذلك المحور.",
+    "pillar": {
+      "owner": "المالك",
+      "ideas": "الأفكار",
+      "budget": "الميزانية (المنفق / المخصص)",
+      "budgetHint": "القيمة المالية المحققة مقابل المستهدفة",
+      "pilotsActive": "التجارب النشطة",
+      "implementations": "التطبيقات المنجزة",
+      "timeline": "الأفكار عبر الزمن",
+      "ideasTable": "الأفكار المساهمة",
+      "colCode": "الرمز",
+      "colTitle": "الفكرة",
+      "colStatus": "الحالة",
+      "colStage": "المرحلة"
+    }
   },
   "admin": {
     "title": "الإدارة",
@@ -1232,7 +1249,8 @@
     "nudgeTitle": "توجد أفكار مشابهة بالفعل",
     "nudge": "فكّر في تحسين فكرتك أو الانضمام إلى فكرة قائمة لتعزيز أثرها.",
     "relatedTitle": "أفكار ذات صلة",
-    "relatedEmpty": "لا توجد أفكار ذات صلة."
+    "relatedEmpty": "لا توجد أفكار ذات صلة.",
+    "duplicatesTitle": "قد توجد {n} أفكار مشابهة بالفعل"
   },
   "ideaSubmitted": {
     "headline": "تم تقديم فكرتك بنجاح!",
@@ -1299,5 +1317,66 @@
     "retry": "إعادة المحاولة",
     "homeCta": "العودة إلى الرئيسيّة",
     "referenceLabel": "مرجع الطلب"
+  },
+  "evidence": {
+    "dropzone": "أفلِت الملفات هنا أو انقر للرفع",
+    "hint": "ملفات PDF أو صور أو مستندات حتى 10 ميغابايت لكل ملف",
+    "tooLarge": "يتجاوز الملف الحد الأقصى 10 ميغابايت",
+    "uploadError": "فشل الرفع — يرجى المحاولة مرة أخرى",
+    "loading": "جارٍ تحميل المرفقات…",
+    "empty": "لا توجد أدلة مرفقة بعد",
+    "delete": "حذف المرفق"
+  },
+  "import": {
+    "title": "الاستيراد الجماعي",
+    "subtitle": "استورد الأفكار أو المُقيّمين أو المحاور الاستراتيجية من ملف CSV.",
+    "entity": {
+      "ideas": "الأفكار",
+      "evaluators": "المُقيّمون",
+      "strategic_themes": "المحاور الاستراتيجية"
+    },
+    "pickFile": "اختر ملف CSV",
+    "pickHint": "يقبل ملفات .csv مع صف عناوين",
+    "mapColumns": "مطابقة الأعمدة",
+    "unmapped": "— غير مطابَق —",
+    "requiredUnmapped": "طابِق هذه الحقول المطلوبة قبل الاستيراد: {fields}",
+    "preview": "معاينة ({n} صفوف)",
+    "importing": "جارٍ الاستيراد…",
+    "importValid": "استيراد الصفوف الصالحة",
+    "resultOk": "تم استيراد {inserted} صفوف · تم تخطي {skipped}",
+    "resultError": "فشل الاستيراد: {error}",
+    "rowError": "الصف {row} · {field}: {message}",
+    "err": {
+      "required": "قيمة مطلوبة مفقودة",
+      "invalid_email": "بريد إلكتروني غير صالح",
+      "invalid_uuid": "صيغة المعرّف غير صالحة",
+      "fk_mismatch": "السجل المشار إليه غير موجود"
+    }
+  },
+  "changeRequests": {
+    "title": "طلبات التغيير",
+    "subtitle": "راجع التعديلات المقترحة وطبّقها عبر المنصة.",
+    "rejectedPill": "مرفوضة ({n})",
+    "transitionError": "هذا الانتقال غير مسموح من الحالة الراهنة.",
+    "columnEmpty": "لا شيء هنا",
+    "detailTitle": "طلب تغيير",
+    "close": "إغلاق",
+    "fieldPath": "الحقل",
+    "currentValue": "الحالي",
+    "proposedValue": "المقترح",
+    "reason": "السبب",
+    "approve": "اعتماد",
+    "reject": "رفض",
+    "status": {
+      "requested": "مطلوب",
+      "in_review": "قيد المراجعة",
+      "approved": "معتمد",
+      "applied": "مُطبَّق"
+    },
+    "age": {
+      "days": "قبل {n} يوم",
+      "hours": "قبل {n} ساعة",
+      "minutes": "قبل {n} دقيقة"
+    }
   }
 }

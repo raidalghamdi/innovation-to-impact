@@ -22,10 +22,10 @@ import { ANALYTICS_ROLES, ROLE_HOME } from '@/lib/roles';
 import {
   IdeasByStageChart,
   SubmissionsLineChart,
-  TopObjectivesChart,
   AvgTimePerStageTable,
   ConversionStatCard,
 } from '@/components/executive-analytics';
+import { PillarBarChart } from '@/components/charts/PillarBarChart';
 import {
   Send,
   CheckCircle2,
@@ -262,15 +262,15 @@ export default async function AdminAnalyticsPage({
             <CardHeader>
               <CardTitle className="text-brand-teal">{t('topObjectivesTitle')}</CardTitle>
               <p className="text-xs text-muted-foreground">
-                {t('topObjectivesSubtitle')}
+                {t('pillarChartHint')}
               </p>
             </CardHeader>
             <CardContent>
-              <TopObjectivesChart
-                rows={topObjectives}
-                empty={t('empty')}
-                locale={locale}
-              />
+              {topObjectives.some((o) => o.count > 0) ? (
+                <PillarBarChart rows={topObjectives} title={t('topObjectivesTitle')} />
+              ) : (
+                <p className="text-sm text-muted-foreground">{t('empty')}</p>
+              )}
             </CardContent>
           </Card>
 

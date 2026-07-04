@@ -17,6 +17,8 @@ import {
   Paperclip,
   CheckCircle2,
   AlertTriangle,
+  Copy,
+  ChevronDown,
 } from 'lucide-react';
 import type { StrategicTheme, Activity } from '@/lib/demo-data';
 import { pickFromRow } from '@/lib/i18n-content';
@@ -63,6 +65,15 @@ type SimilarIdea = {
   similarity: number;
 };
 
+type DupCandidate = {
+  ideaId: string;
+  code: string | null;
+  title_ar: string | null;
+  title_en: string | null;
+  score: number;
+  matched_field: 'title' | 'description';
+};
+
 // Character limits per field.
 const LIMITS = { title: 120, summary: 300, description: 2000 };
 
@@ -106,6 +117,8 @@ export function IdeaForm({
   const [savedNote, setSavedNote] = useState<string | null>(null);
   const [similar, setSimilar] = useState<SimilarIdea[]>([]);
   const [checkingSimilar, setCheckingSimilar] = useState(false);
+  const [duplicates, setDuplicates] = useState<DupCandidate[]>([]);
+  const [dupOpen, setDupOpen] = useState(true);
   const restored = useRef(false);
 
   // Ref to the current step's heading. On step change we move keyboard focus
@@ -193,6 +206,38 @@ export function IdeaForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
+  // Duplicate detection (WS7 F3): debounced 500ms POST to the duplicate-check
+  // endpoint as the title (and description) change. Surfaced as a collapsible
+  // card above the description field on the details step.
+  useEffect(() => {
+    const q = title.trim();
+    if (q.length < 4) {
+      setDuplicates([]);
+      return;
+    }
+    const id = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/ideas/duplicate-check', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            title_ar: isAr ? title : null,
+            title_en: !isAr ? title : null,
+            description,
+          }),
+        });
+        if (res.ok) {
+          const json = (await res.json()) as { duplicates?: DupCandidate[] };
+          setDuplicates(json.duplicates ?? []);
+        }
+      } catch {
+        /* best-effort */
+      }
+    }, 500);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, description]);
+
   const strongMatches = similar.filter((s) => s.similarity > 0.5).length;
 
   function suggestTitle() {
@@ -268,6 +313,18 @@ export function IdeaForm({
       newIdeaId = (inserted as { id?: string } | null)?.id ?? null;
     } catch {
       /* best-effort; fall through to redirect */
+    }
+    // If duplicates were surfaced and the author submitted anyway, record it.
+    if (duplicates.length > 0) {
+      try {
+        await fetch('/api/ideas/duplicate-check', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ dismissed: true, excludeId: newIdeaId, candidates: duplicates }),
+        });
+      } catch {
+        /* best-effort */
+      }
     }
     try {
       localStorage.removeItem(DRAFT_KEY);
@@ -435,6 +492,47 @@ export function IdeaForm({
           {/* ---- Step 2: Details ---- */}
           {step === 1 && (
             <div className="space-y-5">
+              {/* Duplicate-idea warning (WS7 F3) — collapsible, above the
+                  description field so the author reconsiders before elaborating. */}
+              {duplicates.length > 0 && (
+                <div className="rounded-2xl border border-brand-gold/40 bg-brand-gold-light/30 p-4">
+                  <button
+                    type="button"
+                    onClick={() => setDupOpen((o) => !o)}
+                    className="flex w-full items-center justify-between gap-2 text-sm font-semibold text-brand-teal"
+                    aria-expanded={dupOpen}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Copy className="h-4 w-4 text-brand-gold" />
+                      {ts('duplicatesTitle', { n: duplicates.length })}
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${dupOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {dupOpen && (
+                    <ul className="mt-3 space-y-1.5">
+                      {duplicates.map((d) => (
+                        <li key={d.ideaId}>
+                          <Link
+                            href={`/ideas/${d.ideaId}` as any}
+                            target="_blank"
+                            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm transition hover:border-brand-teal/40"
+                          >
+                            <span className="line-clamp-1 flex-1" dir={isAr ? 'rtl' : 'ltr'}>
+                              {pickFromRow(d, 'title', locale) || d.code || d.ideaId}
+                            </span>
+                            <span className="shrink-0 rounded-full bg-brand-gold-light px-2 py-0.5 text-[11px] font-medium text-brand-teal">
+                              {ts('match', { pct: Math.round(d.score * 100) })}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <Label htmlFor="description">{tf('descriptionLabel')}</Label>
                 <Textarea
