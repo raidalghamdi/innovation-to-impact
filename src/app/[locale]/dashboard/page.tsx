@@ -1,17 +1,19 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/status-badge';
 import { StageTimeline } from '@/components/stage-timeline';
 import { StatsBlock } from '@/components/stats-block';
 import { GamificationPanel } from '@/components/gamification-panel';
 import { BackToTop } from '@/components/back-to-top';
+import { QuickActions } from '@/components/quick-actions';
 import { Link } from '@/i18n/routing';
-import { createClient } from '@/lib/supabase/server';
 import { fetchIdeas } from '@/lib/data';
 import { getStats } from '@/lib/demo-data';
 import { formatDate } from '@/lib/utils';
+import { getCurrentUser } from '@/lib/user';
+import { loadCms, isSectionEnabled } from '@/lib/cms';
 import {
   Lightbulb,
   ArrowRight,
@@ -32,24 +34,35 @@ export default async function DashboardPage({
   const stats = getStats();
   const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
 
-  // Get current user and their ideas
-  const supabase = await createClient();
-  const userId = supabase
-    ? (await supabase.auth.getUser()).data.user?.id
-    : null;
+  // Canonical role resolution (user_profiles → metadata → email).
+  const user = await getCurrentUser();
+  const userId = user?.id ?? null;
+  const role = user?.role ?? 'submitter';
+  const displayName =
+    user?.fullName ??
+    (user?.email ? user.email.split('@')[0] : null) ??
+    (locale === 'ar' ? 'زائر' : 'Guest');
+
   const allIdeas = await fetchIdeas();
   const myIdeas = userId
     ? allIdeas.filter((i: any) => i.submitter_id === userId).slice(0, 3)
     : [];
 
+  // Widget visibility from CMS (admins toggle these at /admin/cms).
+  const cms = await loadCms('dashboard');
+  const show = (id: string) => isSectionEnabled(cms, id);
+
   return (
     <AppShell>
-      {/* ===== Welcome strip — what to do today ===== */}
+      {/* ===== Welcome strip — unified home pattern from the prototype ===== */}
       <section className="rounded-3xl bg-gradient-to-br from-brand-teal to-brand-teal-dark p-6 text-white sm:p-8">
         <p className="text-xs font-medium uppercase tracking-wider text-brand-cyan-light">
           {t('welcomeBack')}
         </p>
-        <h1 className="mt-1 text-2xl font-bold sm:text-3xl">{t('whatToDo')}</h1>
+        <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
+          {locale === 'ar' ? `أهلًا، ${displayName}` : `Hi, ${displayName}`}
+        </h1>
+        <p className="mt-2 text-sm text-brand-cyan-light">{t('whatToDo')}</p>
 
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Link
@@ -65,9 +78,18 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      {/* ===== My recent ideas — only if logged in ===== */}
-      {userId && (
-        <section className="mt-8">
+      {/* ===== Quick actions — role-aware, ported from prototype's QA{} ===== */}
+      {show('quick_actions') && (
+        <QuickActions
+          role={role}
+          locale={locale}
+          title={locale === 'ar' ? 'الإجراءات السريعة' : 'Quick actions'}
+        />
+      )}
+
+      {/* ===== My recent ideas ===== */}
+      {show('my_recent_ideas') && userId && (
+        <section className="mt-8" data-widget="my_recent_ideas">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-xl font-bold text-brand-teal">{t('myRecentIdeas')}</h2>
             <Link
@@ -125,17 +147,23 @@ export default async function DashboardPage({
         </section>
       )}
 
-      {/* ===== Gamification — points, level, badges ===== */}
-      {userId && <GamificationPanel userId={userId} locale={locale} />}
-
-      {/* ===== Platform activity with timeframe toggle ===== */}
-      <section className="mt-10">
-        <div className="mb-2">
-          <h2 className="text-xl font-bold text-brand-teal">{t('platformActivity')}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">{t('platformActivityHint')}</p>
+      {/* ===== Gamification ===== */}
+      {show('gamification') && userId && (
+        <div data-widget="gamification">
+          <GamificationPanel userId={userId} locale={locale} />
         </div>
-        <StatsBlock stats={stats} locale={locale} />
-      </section>
+      )}
+
+      {/* ===== Platform activity ===== */}
+      {show('platform_activity') && (
+        <section className="mt-10" data-widget="platform_activity">
+          <div className="mb-2">
+            <h2 className="text-xl font-bold text-brand-teal">{t('platformActivity')}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">{t('platformActivityHint')}</p>
+          </div>
+          <StatsBlock stats={stats} locale={locale} />
+        </section>
+      )}
 
       {/* ===== Final CTA ===== */}
       <section className="mt-10 rounded-3xl border border-brand-cyan/20 bg-gradient-to-br from-brand-teal-light/40 to-brand-cyan-light/40 p-6 text-center sm:p-8">

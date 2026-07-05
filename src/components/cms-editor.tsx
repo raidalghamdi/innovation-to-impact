@@ -25,6 +25,7 @@ type Block = {
 
 const PAGE_ROUTE: Record<string, string> = {
   landing: '/',
+  dashboard: '/dashboard',
   about: '/about',
   faq: '/faq',
   partners: '/partners',
@@ -38,6 +39,7 @@ const PAGE_ROUTE: Record<string, string> = {
 
 const PAGE_LABEL: Record<string, { en: string; ar: string }> = {
   landing: { en: 'Landing', ar: 'الرئيسية' },
+  dashboard: { en: 'Dashboard widgets', ar: 'ودجات لوحة العمل' },
   about: { en: 'About', ar: 'عن المنصة' },
   faq: { en: 'FAQ', ar: 'الأسئلة الشائعة' },
   partners: { en: 'Partners', ar: 'الشركاء' },
