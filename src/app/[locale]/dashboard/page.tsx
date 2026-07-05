@@ -42,6 +42,7 @@ export default async function DashboardPage({
     user?.fullName ??
     (user?.email ? user.email.split('@')[0] : null) ??
     (locale === 'ar' ? 'زائر' : 'Guest');
+  const isFirstSession = user?.isFirstSession ?? false;
 
   const allIdeas = await fetchIdeas();
   const myIdeas = userId
@@ -57,10 +58,16 @@ export default async function DashboardPage({
       {/* ===== Welcome strip — unified home pattern from the prototype ===== */}
       <section className="rounded-3xl bg-gradient-to-br from-brand-teal to-brand-teal-dark p-6 text-white sm:p-8">
         <p className="text-xs font-medium uppercase tracking-wider text-brand-cyan-light">
-          {t('welcomeBack')}
+          {isFirstSession ? t('welcomeFirstTime') : t('welcomeBack')}
         </p>
         <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
-          {locale === 'ar' ? `أهلًا، ${displayName}` : `Hi, ${displayName}`}
+          {isFirstSession
+            ? locale === 'ar'
+              ? `مرحباً، ${displayName}`
+              : `Welcome, ${displayName}`
+            : locale === 'ar'
+              ? `أهلًا بعودتك، ${displayName}`
+              : `Welcome back, ${displayName}`}
         </h1>
         <p className="mt-2 text-sm text-brand-cyan-light">{t('whatToDo')}</p>
 
@@ -147,8 +154,8 @@ export default async function DashboardPage({
         </section>
       )}
 
-      {/* ===== Gamification ===== */}
-      {show('gamification') && userId && (
+      {/* ===== Gamification — submitters only ===== */}
+      {show('gamification') && userId && role === 'submitter' && (
         <div data-widget="gamification">
           <GamificationPanel userId={userId} locale={locale} />
         </div>

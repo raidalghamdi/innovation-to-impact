@@ -9,6 +9,7 @@ export type CurrentUser = {
   email: string | null;
   role: Role;
   fullName: string | null;
+  isFirstSession: boolean;
 } | null;
 
 export async function getCurrentUser(): Promise<CurrentUser> {
@@ -33,6 +34,12 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     // user_profiles unreachable — fall through to metadata/email.
   }
 
+  // First-time vs returning: Supabase sets last_sign_in_at ~= created_at on
+  // the very first sign-in. Compare with a small tolerance for clock skew.
+  const createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+  const lastSignInAt = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
+  const isFirstSession = Math.abs(lastSignInAt - createdAt) < 60_000;
+
   return {
     id: user.id,
     email: user.email ?? null,
@@ -42,5 +49,6 @@ export async function getCurrentUser(): Promise<CurrentUser> {
       email: user.email,
     }),
     fullName: (user.user_metadata?.full_name as string) ?? null,
+    isFirstSession,
   };
 }

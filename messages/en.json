@@ -39,7 +39,9 @@
     "audit": "Audit Log",
     "events": "Events",
     "leaderboard": "Leaderboard",
-    "adminAnalytics": "Analytics"
+    "adminAnalytics": "Analytics",
+    "team": "My Team",
+    "tracks": "Tracks"
   },
   "common": {
     "search": "Search",
@@ -145,7 +147,88 @@
     "audiencePreviewDesc": "Anyone with an idea that could make markets fairer.",
     "criteriaPreviewTitle": "How ideas are evaluated",
     "criteriaPreviewDesc": "Ideas are scored on how relevant, original, and feasible they are.",
-    "heroPrimaryCta": "Submit your idea"
+    "heroPrimaryCta": "Submit your idea",
+    "sectionAbout": "About the Hackathon",
+    "sectionObjectives": "Objectives",
+    "sectionTracks": "Tracks & Challenges",
+    "sectionDetails": "Hackathon Details",
+    "sectionNumbers": "By the Numbers",
+    "sectionTimeline": "Timeline",
+    "sectionCriteria": "Evaluation Criteria",
+    "sectionPrizes": "Prizes",
+    "sectionPrevious": "Previous Edition",
+    "sectionPartners": "Success Partners",
+    "sectionFaq": "FAQ",
+    "about": {
+      "title": "About the Hackathon",
+      "body": "Innovation to Impact brings together employees, entrepreneurs, and government entities to turn innovative ideas into practical solutions with real impact on the sector.",
+      "mission": "Our mission: accelerate the journey from idea to execution through one unified, transparent platform."
+    },
+    "objectives": {
+      "title": "Objectives",
+      "items": [
+        "Foster a culture of institutional innovation",
+        "Accelerate turning ideas into actionable initiatives",
+        "Strengthen collaboration across teams and entities",
+        "Build a reusable knowledge base of solutions",
+        "Measure the real-world impact of implemented ideas"
+      ]
+    },
+    "details": {
+      "title": "Hackathon Details",
+      "rulesTitle": "Rules",
+      "rules": [
+        "Register individually or as a team of up to 5 members",
+        "Every idea must fall under one of the approved tracks",
+        "Each team member signs the IP terms independently"
+      ],
+      "formatTitle": "Format",
+      "format": "An open competition on a digital platform, spanning submission, evaluation, pitching, and final decision stages.",
+      "eligibilityTitle": "Eligibility",
+      "eligibility": "Open to Authority employees, entrepreneurs, government entities, and innovation specialists."
+    },
+    "criteria": {
+      "title": "Evaluation Criteria",
+      "items": [
+        "Innovation & distinction",
+        "Feasibility",
+        "Expected impact",
+        "Economic viability",
+        "Alignment with the Authority’s goals"
+      ]
+    },
+    "prizes": {
+      "title": "Prizes",
+      "items": [
+        {
+          "tier": "First Place",
+          "value": "SAR 100,000 + implementation support"
+        },
+        {
+          "tier": "Second Place",
+          "value": "SAR 60,000"
+        },
+        {
+          "tier": "Third Place",
+          "value": "SAR 30,000"
+        }
+      ]
+    },
+    "previous": {
+      "title": "Previous Edition",
+      "body": "The previous edition saw wide participation, with several ideas adopted and actually implemented.",
+      "archiveLabel": "Browse the previous edition archive"
+    },
+    "navAbout": "About",
+    "navObjectives": "Objectives",
+    "navTracks": "Tracks",
+    "navTimeline": "Timeline",
+    "navCriteria": "Criteria",
+    "navPrizes": "Prizes",
+    "navFaq": "FAQ",
+    "navPartners": "Partners",
+    "heroCtaRegister": "Register Now",
+    "searchPlaceholder": "Search the platform..."
   },
   "stages": {
     "s0": "Strategic Framework",
@@ -211,7 +294,9 @@
     "lastUpdated": "Last updated",
     "justNow": "just now",
     "finalCtaTitle": "Have a new idea?",
-    "finalCtaSubtitle": "Don't let it slip — submit it now and we'll take it from there."
+    "finalCtaSubtitle": "Don't let it slip — submit it now and we'll take it from there.",
+    "welcomeFirstTime": "Welcome",
+    "welcomeGreetingFirst": "Welcome, {name}"
   },
   "ideas": {
     "title": "Idea repository",
@@ -268,7 +353,8 @@
     "filterStage": "Stage",
     "filterStatus": "Status",
     "filterActivity": "Activity",
-    "emptyRepo": "No ideas match the current filters."
+    "emptyRepo": "No ideas match the current filters.",
+    "ipSignNote": "Each team member will independently sign the IP terms after submission."
   },
   "migrate": {
     "title": "Legacy idea migration",
@@ -774,7 +860,10 @@
     "allStages": "All stages",
     "allThemes": "All themes",
     "searchButton": "Search",
-    "countLabel": "result(s)"
+    "countLabel": "result(s)",
+    "groupIdeas": "Ideas",
+    "groupTracks": "Tracks",
+    "groupTeams": "Teams"
   },
   "notifications": {
     "title": "Notifications",
@@ -1192,7 +1281,7 @@
     "titleLabel": "Idea title",
     "summaryLabel": "Summary",
     "descriptionLabel": "Detailed description",
-    "themeLabel": "Strategic theme",
+    "themeLabel": "Track",
     "charsLeft": "{n} characters left",
     "autosaveSaved": "Draft saved",
     "autosaveRestored": "Welcome back — we saved your draft",
@@ -1204,7 +1293,7 @@
     "attachmentsRejectSize": "exceeds 10MB",
     "attachmentsRejectCount": "Only 5 files allowed; extras were skipped.",
     "required": "Please complete the required fields in this step.",
-    "themeExplain": "Pick the area your idea fits best — this helps us send it to the right people.",
+    "themeExplain": "Choose the track that best fits your idea among the approved tracks.",
     "confPublic": "Public",
     "confInternal": "Internal",
     "confConfidential": "Confidential",
@@ -1482,5 +1571,60 @@
       "change_request": "Change request",
       "sla": "SLA"
     }
-  }
+  },
+  "team": {
+    "title": "My Team",
+    "createTitle": "Create your team",
+    "nameArLabel": "Team name (Arabic)",
+    "nameEnLabel": "Team name (English) — optional",
+    "createButton": "Create team",
+    "membersTitle": "Members",
+    "pendingInvitationsTitle": "Pending invitations",
+    "inviteTitle": "Invite a member",
+    "inviteEmailLabel": "Email",
+    "inviteButton": "Send invite",
+    "revoke": "Revoke",
+    "remove": "Remove",
+    "leave": "Leave team",
+    "leaderBadge": "Team leader",
+    "memberBadge": "Member",
+    "noTeamIdea": "No idea linked to this team yet",
+    "teamIdeaTitle": "Team's idea",
+    "created": "Team created successfully",
+    "invited": "Invitation sent successfully",
+    "genericError": "Something went wrong, please try again"
+  },
+  "invite": {
+    "title": "Team invitation",
+    "expired": "This invitation has expired",
+    "revoked": "This invitation has been revoked",
+    "accepted": "This invitation was already accepted",
+    "declined": "This invitation was declined",
+    "accept": "Accept",
+    "decline": "Decline",
+    "acceptedConfirm": "Invitation accepted — you joined the team",
+    "declinedConfirm": "Invitation declined",
+    "wrongAccount": "This invitation was sent to a different email than your account",
+    "loginRequired": "Please log in to view this invitation"
+  },
+  "ipSign": {
+    "title": "Sign IP Terms",
+    "body": "Before participation is complete, each team member must sign the IP terms independently.",
+    "linkLabel": "Read the IP terms",
+    "signButton": "Sign",
+    "signedConfirm": "Signed successfully",
+    "alreadySigned": "You have already signed these terms"
+  },
+  "profileLevel": {
+    "title": "My Level",
+    "howToLevelUp": "How to level up?",
+    "actionsList": [
+      "Submit a new idea",
+      "Complete your profile",
+      "Participate in evaluating ideas",
+      "Get an idea approved",
+      "Contribute to implementing an idea"
+    ]
+  },
+  "welcomeFirstTime": "Welcome"
 }

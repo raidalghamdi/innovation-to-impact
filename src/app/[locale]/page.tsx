@@ -10,32 +10,31 @@ import { SkipToContent } from '@/components/skip-to-content';
 import { Button } from '@/components/ui/button';
 import { StatsBlock } from '@/components/stats-block';
 import { BackToTop } from '@/components/back-to-top';
+import { HeaderSearch } from '@/components/header-search';
+import { TimelineModern, stages as defaultStages } from '@/components/timeline-modern';
 import { getStats } from '@/lib/demo-data';
-import { fetchIdeas, fetchUsers } from '@/lib/data';
-import { loadCms, getText, isSectionEnabled } from '@/lib/cms';
-import { PioneerBadge, isPioneerIdea } from '@/components/pioneer-badge';
+import { fetchThemes } from '@/lib/data';
+import { pickFromRow } from '@/lib/i18n-content';
 import {
   Lightbulb,
   ArrowRight,
-  Send,
-  ClipboardCheck,
-  CheckCircle2,
-  Rocket,
-  Users,
-  ScrollText,
+  Target,
   Building2,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
+  Award,
+  ChevronDown,
+  CheckCircle2,
+  ClipboardList,
 } from 'lucide-react';
 
-// The hero countdown reads NEXT_PUBLIC_SUBMISSION_DEADLINE. If the env var
-// is missing or unparseable the Countdown component renders nothing.
-
-// Force per-request rendering by touching the request headers — this opts the
-// route out of static generation without conflicting with the locale layout's
-// generateStaticParams. Guarantees the countdown's initial SSR digits reflect
-// current wall-clock time on every request; CDN cannot ship stale digits.
+// Anchor nav items — order matches the 12 landing sections.
+const ANCHOR_NAV = [
+  { href: '#about', key: 'navAbout' },
+  { href: '#tracks', key: 'navTracks' },
+  { href: '#timeline', key: 'navTimeline' },
+  { href: '#criteria', key: 'navCriteria' },
+  { href: '#prizes', key: 'navPrizes' },
+  { href: '#faq', key: 'navFaq' },
+] as const;
 
 export default async function LandingPage({
   params,
@@ -44,55 +43,46 @@ export default async function LandingPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  // Access request headers to mark this route as dynamic (per-request SSR).
+  // Touch request headers to force per-request rendering (dynamic countdown).
   headers();
   const t = await getTranslations();
   const stats = getStats();
-  const cms = await loadCms('landing');
-  const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
-  const faqItems = (t.raw('faq.items') as { q: string; a: string }[]).slice(0, 3);
-  const partners = (t.raw('partners.partners') as { name: string }[]).slice(0, 6);
-
-  // Spotlight — top 3 ideas by current_stage. Excludes rejected/withdrawn.
-  const spotlightIdeas = (await fetchIdeas())
-    .filter((i) => i.status !== 'rejected' && i.status !== 'withdrawn')
-    .sort((a, b) => (b.current_stage ?? 0) - (a.current_stage ?? 0))
-    .slice(0, 3);
-  const allUsers = spotlightIdeas.length ? await fetchUsers() : [];
-  const usersById = new Map(allUsers.map((u) => [u.id, u]));
-  const stageLabel = (stage: number) => {
-    const key = `stages.s${Math.max(0, Math.min(8, stage))}`;
-    return t(key);
-  };
-
-  const steps = [
-    { Icon: Send, key: 'step1' },
-    { Icon: ClipboardCheck, key: 'step2' },
-    { Icon: CheckCircle2, key: 'step3' },
-    { Icon: Rocket, key: 'step4' },
-  ];
+  const themes = await fetchThemes();
+  const faqItems = (t.raw('faq.items') as { q: string; a: string }[]).slice(0, 8);
+  const partners = (t.raw('partners.partners') as { name: string }[]);
+  const objectives = t.raw('landing.objectives.items') as string[];
+  const rules = t.raw('landing.details.rules') as string[];
+  const criteriaItems = t.raw('landing.criteria.items') as string[];
+  const prizeItems = t.raw('landing.prizes.items') as { tier: string; value: string }[];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Skip link — first focusable element on every page so keyboard and
-          screen-reader users can jump past the sticky header into #main-content. */}
       <SkipToContent />
 
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
+      {/* ===== Top bar (anchor nav + smooth scroll) ===== */}
+      <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-3 border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <CoBrand className="h-12" locale={locale} />
         </Link>
+        <nav
+          className="hidden items-center gap-1 lg:flex"
+          aria-label={t('footer.quickLinks')}
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          {ANCHOR_NAV.map((n) => (
+            <a
+              key={n.href}
+              href={n.href}
+              className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
+            >
+              {t(`landing.${n.key}`)}
+            </a>
+          ))}
+        </nav>
         <div className="flex items-center gap-1 sm:gap-2">
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/about">{t('footer.about')}</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/roadmap">{t('footer.roadmap')}</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/faq">{t('footer.faq')}</Link>
-          </Button>
+          <div className="hidden md:block">
+            <HeaderSearch />
+          </div>
           <Button asChild variant="ghost" size="sm">
             <Link href="/login">{t('nav.login')}</Link>
           </Button>
@@ -100,243 +90,289 @@ export default async function LandingPage({
         </div>
       </header>
 
-      <main id="main-content">
-      {/* ===== HERO ===== */}
-      <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-teal-dark text-white">
-        <div className="pointer-events-none absolute -end-20 -top-20 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -start-20 h-80 w-80 rounded-full bg-brand-cyan-light/10 blur-3xl" />
+      <main id="main-content" style={{ scrollBehavior: 'smooth' }}>
+        {/* ===== 1. HERO ===== */}
+        <section
+          id="hero"
+          className="relative scroll-mt-24 overflow-hidden border-b border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-teal-dark py-16 text-white sm:py-24"
+        >
+          <div className="pointer-events-none absolute -end-20 -top-20 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -start-20 h-80 w-80 rounded-full bg-brand-cyan-light/10 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-8 sm:py-20">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand-cyan-light">
-            {getText(cms, 'hero', 'eyebrow', locale, t('landing.heroEyebrow'))}
-          </p>
-          <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-            {getText(cms, 'hero', 'title', locale, t('landing.heroTitle'))}
-          </h1>
-          <p className="mt-4 max-w-2xl text-base text-white/85 sm:text-lg">
-            {getText(cms, 'hero', 'subtitle', locale, t('landing.heroSubtitle'))}
-          </p>
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-cyan-light">
+              {t('landing.heroEyebrow')}
+            </p>
+            <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
+              {t('landing.heroTitle')}
+            </h1>
+            <p className="mt-4 max-w-2xl text-base text-white/85 sm:text-lg">
+              {t('landing.heroSubtitle')}
+            </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg" variant="gold">
-              <Link href="/ideas/new">
-                <Lightbulb className="h-5 w-5" />
-                {getText(cms, 'hero', 'primary_cta', locale, t('landing.heroPrimaryCta'))}
-                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/40 bg-white/5 text-white hover:bg-white/15">
-              <Link href="/about">{getText(cms, 'hero', 'learn_more', locale, t('landing.learnMore'))}</Link>
-            </Button>
-          </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button asChild size="lg" variant="gold">
+                <Link href="/ideas/new">
+                  <Lightbulb className="h-5 w-5" />
+                  {t('landing.heroCtaRegister')}
+                  <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                </Link>
+              </Button>
+              <a
+                href="#about"
+                className="inline-flex items-center gap-2 rounded-md border border-white/40 bg-white/5 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/15"
+              >
+                {t('landing.learnMore')}
+              </a>
+            </div>
 
-          {isSectionEnabled(cms, 'countdown') && (
             <div className="mt-10 max-w-xl">
               <Countdown />
             </div>
-          )}
-        </div>
-      </section>
-
-      {/* ===== Stats strip ===== */}
-      {isSectionEnabled(cms, 'stats') && (
-      <section id="stats" className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">{t('landing.statsTitle')}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t('landing.statsSubtitle')}</p>
-        </div>
-        <StatsBlock stats={stats} locale={locale} />
-      </section>
-      )}
-
-      {/* ===== Spotlight ===== */}
-      {spotlightIdeas.length > 0 && (
-      <section className="mx-auto max-w-6xl px-4 pb-14 sm:px-8">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-gold">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>{t('spotlight.title')}</span>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground sm:text-base">{t('spotlight.subtitle')}</p>
           </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {spotlightIdeas.map((idea) => {
-            const submitter = idea.submitter_id ? usersById.get(idea.submitter_id) : undefined;
-            const submitterName = submitter?.full_name ?? '—';
-            const title = locale === 'ar' ? idea.title_ar : idea.title_en;
-            return (
-              <Link
-                key={idea.id}
-                href={`/ideas/${idea.id}`}
-                className="group flex h-full flex-col rounded-3xl border border-border bg-card p-5 transition hover:border-brand-teal/40 hover:shadow-md"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-[11px] font-semibold text-brand-gold">{idea.code}</span>
-                  {isPioneerIdea(idea.current_stage) && <PioneerBadge />}
-                </div>
-                <h3 className="mt-2 line-clamp-2 text-base font-semibold text-brand-teal">{title}</h3>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {t('spotlight.submittedBy')}: <span className="font-medium text-foreground">{submitterName}</span>
-                </p>
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-teal-light/60 px-2.5 py-1 text-[11px] font-semibold text-brand-teal">
-                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-teal text-[9px] font-bold text-white">
-                      {idea.current_stage}
-                    </span>
-                    <span>{t('spotlight.stageLabel')} · {stageLabel(idea.current_stage)}</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-teal group-hover:gap-2">
-                    {t('ideas.viewDetails')} <Chevron className="h-4 w-4" />
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-      )}
+        </section>
 
-      {/* ===== How it works — 4 steps ===== */}
-      {isSectionEnabled(cms, 'how_it_works') && (
-      <section className="border-y border-border bg-brand-teal-light/40">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
-          <div className="text-center">
+        {/* ===== 2. ABOUT ===== */}
+        <section id="about" className="scroll-mt-24 py-16 sm:py-24">
+          <div className="mx-auto max-w-4xl px-4 sm:px-8">
             <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
-              {getText(cms, 'how_it_works', 'title', locale, t('landing.howItWorksTitle'))}
+              {t('landing.about.title')}
             </h2>
-            {(() => {
-              const subtitle = getText(cms, 'how_it_works', 'subtitle', locale, t('landing.howItWorksSubtitle'));
-              return subtitle ? (
-                <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
-              ) : null;
-            })()}
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+              {t('landing.about.body')}
+            </p>
+            <p className="mt-3 rounded-2xl bg-brand-teal-light/40 p-4 text-sm font-medium text-brand-teal">
+              {t('landing.about.mission')}
+            </p>
           </div>
-          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map((s, i) => (
-              <div key={s.key} className="rounded-3xl border border-border bg-card p-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-teal text-white">
-                    <s.Icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-xs font-bold text-brand-cyan">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
+        </section>
+
+        {/* ===== 3. OBJECTIVES ===== */}
+        <section id="objectives" className="scroll-mt-24 border-y border-border bg-brand-teal-light/30 py-16 sm:py-24">
+          <div className="mx-auto max-w-5xl px-4 sm:px-8">
+            <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+              {t('landing.objectives.title')}
+            </h2>
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {objectives.map((item, i) => (
+                <div key={i} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-teal" />
+                  <span className="text-sm text-foreground">{item}</span>
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-brand-teal">
-                  {t(`landing.${s.key}Title`)}
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== 4. TRACKS ===== */}
+        <section id="tracks" className="scroll-mt-24 py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-8">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+              <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+                {t('landing.sectionTracks')}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {themes.slice(0, 6).map((theme) => (
+                <Link
+                  key={theme.id}
+                  href={`/tracks/${theme.id}` as any}
+                  className="group flex h-full flex-col rounded-3xl border border-border bg-card p-6 transition hover:border-brand-teal/40 hover:shadow-md"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal">
+                    <Target className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-base font-semibold text-brand-teal">
+                    {pickFromRow(theme, 'name', locale)}
+                  </h3>
+                  <p className="mt-1.5 line-clamp-3 text-sm text-muted-foreground">
+                    {theme.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== 5. DETAILS ===== */}
+        <section id="details" className="scroll-mt-24 border-y border-border bg-card py-16 sm:py-24">
+          <div className="mx-auto max-w-5xl px-4 sm:px-8">
+            <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+              {t('landing.details.title')}
+            </h2>
+            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-brand-teal">
+                  <ClipboardList className="h-4 w-4" /> {t('landing.details.rulesTitle')}
                 </h3>
-                <p className="mt-1.5 text-sm text-muted-foreground">{t(`landing.${s.key}Desc`)}</p>
+                <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+                  {rules.map((r, i) => (
+                    <li key={i}>• {r}</li>
+                  ))}
+                </ul>
               </div>
-            ))}
-          </div>
-          <div className="mt-8 text-center">
-            <Button asChild variant="outline" className="border-brand-teal text-brand-teal hover:bg-brand-teal-light">
-              <Link href="/stages">
-                {t('landing.viewAllStages')}
-                <Chevron className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-      )}
-
-      {/* ===== Preview cards: audience + criteria ===== */}
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Link href="/target-audience" className="group rounded-3xl border border-border bg-card p-6 transition hover:border-brand-teal/40 hover:shadow-md">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal">
-              <Users className="h-6 w-6" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold text-brand-teal">{t('landing.audiencePreviewTitle')}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{t('landing.audiencePreviewDesc')}</p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-teal group-hover:gap-2">
-              {t('footer.targetAudience')} <Chevron className="h-4 w-4" />
-            </span>
-          </Link>
-          <Link href="/evaluation-criteria" className="group rounded-3xl border border-border bg-card p-6 transition hover:border-brand-teal/40 hover:shadow-md">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal">
-              <ScrollText className="h-6 w-6" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold text-brand-teal">{t('landing.criteriaPreviewTitle')}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{t('landing.criteriaPreviewDesc')}</p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-teal group-hover:gap-2">
-              {t('footer.evaluationCriteria')} <Chevron className="h-4 w-4" />
-            </span>
-          </Link>
-        </div>
-      </section>
-
-      {/* ===== Partners strip ===== */}
-      {isSectionEnabled(cms, 'partners') && (
-      <section className="border-y border-border bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8">
-          <h2 className="text-center text-xl font-bold text-brand-teal">{t('landing.partnersTitle')}</h2>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
-            {partners.map((p, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
-                <Building2 className="h-4 w-4 text-brand-teal" />
-                {p.name}
+              <div>
+                <h3 className="text-sm font-semibold text-brand-teal">
+                  {t('landing.details.formatTitle')}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">{t('landing.details.format')}</p>
               </div>
-            ))}
-          </div>
-          <div className="mt-6 text-center">
-            <Button asChild variant="ghost" size="sm" className="text-brand-teal">
-              <Link href="/partners">
-                {t('footer.partners')} <Chevron className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-      )}
-
-      {/* ===== FAQ preview ===== */}
-      {isSectionEnabled(cms, 'faq_preview') && (
-      <section className="mx-auto max-w-4xl px-4 py-14 sm:px-8">
-        <h2 className="text-center text-2xl font-bold text-brand-teal sm:text-3xl">{t('landing.faqTitle')}</h2>
-        <div className="mt-8 divide-y divide-border rounded-xl border border-border bg-card">
-          {faqItems.map((it, i) => (
-            <div key={i} className="px-4 py-4">
-              <p className="text-sm font-medium text-foreground">{it.q}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{it.a}</p>
+              <div>
+                <h3 className="text-sm font-semibold text-brand-teal">
+                  {t('landing.details.eligibilityTitle')}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {t('landing.details.eligibility')}
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
-        <div className="mt-6 text-center">
-          <Button asChild variant="outline" className="border-brand-teal text-brand-teal hover:bg-brand-teal-light">
-            <Link href="/faq">
-              {t('landing.faqViewAll')} <Chevron className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </section>
-      )}
-
-      {/* ===== Final CTA ===== */}
-      {isSectionEnabled(cms, 'cta_footer') && (
-      <section className="border-t border-border bg-gradient-to-br from-brand-teal-light/60 to-brand-cyan-light/40">
-        <div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-8">
-          <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">{getText(cms, 'cta_footer', 'title', locale, t('landing.finalCtaTitle'))}</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
-            {getText(cms, 'cta_footer', 'subtitle', locale, t('landing.finalCtaSubtitle'))}
-          </p>
-          <div className="mt-6 flex justify-center">
-            <Button asChild size="lg">
-              <Link href="/ideas/new">
-                <Lightbulb className="h-4 w-4" />
-                {getText(cms, 'cta_footer', 'button', locale, t('landing.heroPrimaryCta'))}
-                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-              </Link>
-            </Button>
           </div>
-        </div>
-      </section>
-      )}
+        </section>
 
+        {/* ===== 6. NUMBERS ===== */}
+        <section id="numbers" className="scroll-mt-24 py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+                {t('landing.statsTitle')}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t('landing.statsSubtitle')}</p>
+            </div>
+            <StatsBlock stats={stats} locale={locale} />
+          </div>
+        </section>
+
+        {/* ===== 7. TIMELINE ===== */}
+        <section id="timeline" className="scroll-mt-24 border-y border-border bg-brand-teal-light/30 py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-8">
+            <h2 className="text-center text-2xl font-bold text-brand-teal sm:text-3xl">
+              {t('landing.sectionTimeline')}
+            </h2>
+            <div className="mt-10">
+              <TimelineModern stages={defaultStages} locale={locale} />
+            </div>
+          </div>
+        </section>
+
+        {/* ===== 8. CRITERIA ===== */}
+        <section id="criteria" className="scroll-mt-24 py-16 sm:py-24">
+          <div className="mx-auto max-w-4xl px-4 sm:px-8">
+            <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+              {t('landing.criteria.title')}
+            </h2>
+            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {criteriaItems.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm font-medium text-foreground">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== 9. PRIZES ===== */}
+        <section id="prizes" className="scroll-mt-24 border-y border-border bg-card py-16 sm:py-24">
+          <div className="mx-auto max-w-5xl px-4 sm:px-8">
+            <h2 className="text-center text-2xl font-bold text-brand-teal sm:text-3xl">
+              {t('landing.prizes.title')}
+            </h2>
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {prizeItems.map((p, i) => (
+                <div
+                  key={i}
+                  className={`rounded-3xl border p-6 text-center ${i === 0 ? 'border-brand-gold bg-brand-gold-light/30' : 'border-border bg-background'}`}
+                >
+                  <Award className={`mx-auto h-8 w-8 ${i === 0 ? 'text-brand-gold' : 'text-brand-teal'}`} />
+                  <h3 className="mt-3 text-base font-semibold text-brand-teal">{p.tier}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{p.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== 10. PREVIOUS EDITION ===== */}
+        <section id="previous" className="scroll-mt-24 py-16 sm:py-24">
+          <div className="mx-auto max-w-4xl px-4 text-center sm:px-8">
+            <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+              {t('landing.previous.title')}
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm text-muted-foreground sm:text-base">
+              {t('landing.previous.body')}
+            </p>
+          </div>
+        </section>
+
+        {/* ===== 11. PARTNERS ===== */}
+        {partners.length > 0 && (
+          <section id="partners" className="scroll-mt-24 border-y border-border bg-card py-16 sm:py-24">
+            <div className="mx-auto max-w-6xl px-4 sm:px-8">
+              <h2 className="text-center text-xl font-bold text-brand-teal sm:text-2xl">
+                {t('landing.sectionPartners')}
+              </h2>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+                {partners.map((p, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground"
+                  >
+                    <Building2 className="h-4 w-4 text-brand-teal" />
+                    {p.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ===== 12. FAQ ===== */}
+        <section id="faq" className="scroll-mt-24 py-16 sm:py-24">
+          <div className="mx-auto max-w-4xl px-4 sm:px-8">
+            <h2 className="text-center text-2xl font-bold text-brand-teal sm:text-3xl">
+              {t('landing.faqTitle')}
+            </h2>
+            <div className="mt-8 divide-y divide-border rounded-xl border border-border bg-card">
+              {faqItems.map((it, i) => (
+                <details key={i} className="group px-4 py-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium text-foreground">
+                    {it.q}
+                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <p className="mt-2 text-sm text-muted-foreground">{it.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== Final CTA ===== */}
+        <section className="border-t border-border bg-gradient-to-br from-brand-teal-light/60 to-brand-cyan-light/40 py-16 sm:py-24">
+          <div className="mx-auto max-w-4xl px-4 text-center sm:px-8">
+            <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+              {t('landing.finalCtaTitle')}
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
+              {t('landing.finalCtaSubtitle')}
+            </p>
+            <div className="mt-6 flex justify-center">
+              <Button asChild size="lg">
+                <Link href="/ideas/new">
+                  <Lightbulb className="h-4 w-4" />
+                  {t('landing.heroCtaRegister')}
+                  <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
       </main>
+
       <SiteFooter locale={locale} />
       <BackToTop label={t('common.backToTop')} />
       <StickyCta />

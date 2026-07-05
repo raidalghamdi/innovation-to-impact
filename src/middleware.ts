@@ -9,22 +9,18 @@ const intlMiddleware = createMiddleware(routing);
 // Routes that require authentication (locale prefix stripped before matching)
 const PROTECTED_PREFIXES = [
   '/dashboard',
-  '/strategy',
   '/ideas',
   '/my-ideas',
   '/activities',
   '/evaluation',
   '/committee',
   '/pilots',
-  '/implementation',
-  '/benefits',
-  '/ip',
-  '/knowledge',
-  '/compliance',
   '/analytics',
   '/admin',
   '/settings',
   '/notifications',
+  '/team',
+  '/profile',
 ];
 
 export async function middleware(request: NextRequest) {

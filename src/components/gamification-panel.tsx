@@ -55,7 +55,7 @@ export async function GamificationPanel({
           <p className="mt-1 text-xs text-muted-foreground">{t('subtitle')}</p>
         </div>
         <Link
-          href="/leaderboard"
+          href="/profile/level"
           className="inline-flex items-center gap-1 text-sm font-medium text-brand-teal hover:underline"
         >
           <Trophy className="h-4 w-4" />

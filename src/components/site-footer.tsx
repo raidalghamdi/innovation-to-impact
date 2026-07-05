@@ -1,4 +1,6 @@
-import { getTranslations } from 'next-intl/server';
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Linkedin, Twitter, Youtube } from 'lucide-react';
 import { SOCIAL_LINKS } from '@/lib/social-links';
@@ -11,25 +13,25 @@ const SOCIAL_ICONS: Record<(typeof SOCIAL_LINKS)[number]['id'], LucideIcon> = {
 };
 
 const QUICK_LINKS = [
-  { href: '/about', key: 'about' },
-  { href: '/target-audience', key: 'targetAudience' },
-  { href: '/evaluation-criteria', key: 'evaluationCriteria' },
-  { href: '/expected-solutions', key: 'expectedSolutions' },
-  { href: '/roadmap', key: 'roadmap' },
+  { href: '/#about', key: 'about' },
+  { href: '/#about', key: 'targetAudience' },
+  { href: '/#criteria', key: 'evaluationCriteria' },
+  { href: '/#tracks', key: 'expectedSolutions' },
+  { href: '/#timeline', key: 'roadmap' },
   { href: '/events', key: 'events' },
 ] as const;
 
 const SUPPORT_LINKS = [
-  { href: '/faq', key: 'faq' },
+  { href: '/#faq', key: 'faq' },
   { href: '/support', key: 'support' },
-  { href: '/partners', key: 'partners' },
+  { href: '/#partners', key: 'partners' },
   { href: '/privacy', key: 'privacy' },
   { href: '/terms', key: 'terms' },
 ] as const;
 
-export async function SiteFooter({ locale: _locale }: { locale: string }) {
-  const t = await getTranslations('footer');
-  const tapp = await getTranslations('app');
+export function SiteFooter({ locale: _locale }: { locale: string }) {
+  const t = useTranslations('footer');
+  const tapp = useTranslations('app');
 
   return (
     <footer className="border-t border-border bg-brand-teal text-white">

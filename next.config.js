@@ -77,6 +77,70 @@ const nextConfig = {
         destination: '/ideas',
         permanent: true,
       },
+
+      // ── Landing subpages folded into one-page landing anchors ──────────
+      { source: '/:locale(ar|en)/about', destination: '/:locale/#about', permanent: true },
+      { source: '/about', destination: '/#about', permanent: true },
+
+      { source: '/:locale(ar|en)/roadmap', destination: '/:locale/#timeline', permanent: true },
+      { source: '/roadmap', destination: '/#timeline', permanent: true },
+
+      // NOTE: only the exact /tracks route redirects — /tracks/[id] subroutes
+      // are a real, separate page and must NOT be caught by this rule.
+      { source: '/:locale(ar|en)/tracks', destination: '/:locale/#tracks', permanent: true },
+      { source: '/tracks', destination: '/#tracks', permanent: true },
+
+      { source: '/:locale(ar|en)/timeline', destination: '/:locale/#timeline', permanent: true },
+      { source: '/timeline', destination: '/#timeline', permanent: true },
+
+      { source: '/:locale(ar|en)/criteria', destination: '/:locale/#criteria', permanent: true },
+      { source: '/criteria', destination: '/#criteria', permanent: true },
+
+      { source: '/:locale(ar|en)/prizes', destination: '/:locale/#prizes', permanent: true },
+      { source: '/prizes', destination: '/#prizes', permanent: true },
+
+      { source: '/:locale(ar|en)/faq', destination: '/:locale/#faq', permanent: true },
+      { source: '/faq', destination: '/#faq', permanent: true },
+
+      { source: '/:locale(ar|en)/partners', destination: '/:locale/#partners', permanent: true },
+      { source: '/partners', destination: '/#partners', permanent: true },
+
+      { source: '/:locale(ar|en)/stages', destination: '/:locale/#timeline', permanent: true },
+      { source: '/stages', destination: '/#timeline', permanent: true },
+
+      { source: '/:locale(ar|en)/expected-solutions', destination: '/:locale/#tracks', permanent: true },
+      { source: '/expected-solutions', destination: '/#tracks', permanent: true },
+
+      { source: '/:locale(ar|en)/target-audience', destination: '/:locale/#about', permanent: true },
+      { source: '/target-audience', destination: '/#about', permanent: true },
+
+      { source: '/:locale(ar|en)/evaluation-criteria', destination: '/:locale/#criteria', permanent: true },
+      { source: '/evaluation-criteria', destination: '/#criteria', permanent: true },
+
+      // ── Deleted pages merged into other routes ──────────────────────────
+      { source: '/:locale(ar|en)/ip', destination: '/:locale/ip-terms', permanent: true },
+      { source: '/ip', destination: '/ip-terms', permanent: true },
+
+      { source: '/:locale(ar|en)/implementation', destination: '/:locale/pilots', permanent: true },
+      { source: '/implementation', destination: '/pilots', permanent: true },
+
+      // strategy/benefits/compliance/knowledge content moved into track detail
+      // pages and the one-page landing. Redirect old URLs to the closest
+      // relevant landing anchor so external links / bookmarks still resolve.
+      { source: '/:locale(ar|en)/strategy', destination: '/:locale/#about', permanent: true },
+      { source: '/strategy', destination: '/#about', permanent: true },
+
+      { source: '/:locale(ar|en)/benefits', destination: '/:locale/#numbers', permanent: true },
+      { source: '/benefits', destination: '/#numbers', permanent: true },
+
+      { source: '/:locale(ar|en)/compliance', destination: '/:locale/#details', permanent: true },
+      { source: '/compliance', destination: '/#details', permanent: true },
+
+      { source: '/:locale(ar|en)/knowledge', destination: '/:locale/#previous', permanent: true },
+      { source: '/knowledge', destination: '/#previous', permanent: true },
+
+      { source: '/:locale(ar|en)/leaderboard', destination: '/:locale/profile/level', permanent: true },
+      { source: '/leaderboard', destination: '/profile/level', permanent: true },
     ];
   },
 };

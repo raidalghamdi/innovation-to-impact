@@ -387,7 +387,9 @@ export function IdeaForm({
     }
     setSubmitting(false);
     if (newIdeaId) {
-      router.push(`/ideas/${newIdeaId}/submitted` as any);
+      // Each team member signs the IP terms independently after submission —
+      // route through /ip-sign rather than straight to the confirmation page.
+      router.push(`/ideas/${newIdeaId}/ip-sign` as any);
     } else {
       router.push('/my-ideas');
     }
@@ -811,6 +813,10 @@ export function IdeaForm({
                   </Link>
                 </span>
               </label>
+
+              <p className="rounded-lg bg-brand-cyan-light/30 p-3 text-xs text-brand-teal">
+                {t('ipSignNote')}
+              </p>
             </div>
           )}
 

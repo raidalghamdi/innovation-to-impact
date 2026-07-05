@@ -8,7 +8,7 @@ import { Star } from 'lucide-react';
 
 // Compact points/level pill shown in the app header. Fetches the current user's
 // points client-side; renders nothing until data is available.
-export function PointsBadge({ userId }: { userId: string | null }) {
+export function PointsBadge({ userId, role }: { userId: string | null; role?: string }) {
   const t = useTranslations('leaderboard');
   const [data, setData] = useState<{ points: number; level: number } | null>(null);
 
@@ -32,10 +32,11 @@ export function PointsBadge({ userId }: { userId: string | null }) {
   }, [userId]);
 
   if (!data) return null;
+  if (role && role !== 'submitter') return null;
 
   return (
     <Link
-      href="/leaderboard"
+      href="/profile/level"
       className="hidden items-center gap-1.5 rounded-full border border-border bg-brand-teal-light/40 px-2.5 py-1 text-xs font-medium text-brand-teal transition hover:bg-brand-teal-light sm:inline-flex"
       title={`${t('levelShort')} ${data.level} · ${data.points} ${t('pointsUnit')}`}
     >

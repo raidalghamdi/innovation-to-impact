@@ -86,7 +86,7 @@ export default async function AnalyticsPage({
           value={`${formatSAR(realized, locale)} SAR`}
           icon={TrendingUp}
           accent="gold"
-          href="/benefits"
+          href="/ideas?stage=8"
           hrefLabel={t('viewBenefits')}
           locale={locale}
         />

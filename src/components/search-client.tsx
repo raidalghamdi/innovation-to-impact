@@ -10,7 +10,7 @@ import { pickFromRow } from '@/lib/i18n-content';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search as SearchIcon } from 'lucide-react';
+import { Search as SearchIcon, Lightbulb, Target, Users } from 'lucide-react';
 
 type Idea = {
   id: string;
@@ -23,6 +23,19 @@ type Idea = {
   created_at: string | null;
 };
 
+type Track = {
+  id: string;
+  name_ar: string | null;
+  name_en: string | null;
+  description: string | null;
+};
+
+type Team = {
+  id: string;
+  name_ar: string | null;
+  name_en: string | null;
+};
+
 export function SearchClient() {
   const t = useTranslations('search');
   const locale = useLocale();
@@ -31,6 +44,8 @@ export function SearchClient() {
   const [status, setStatus] = useState('');
   const [sort, setSort] = useState('newest');
   const [results, setResults] = useState<Idea[]>([]);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
   const [ran, setRan] = useState(false);
 
@@ -39,18 +54,36 @@ export function SearchClient() {
       setLoading(true);
       setRan(true);
       let data: Idea[] = [];
+      let trackData: Track[] = [];
+      let teamData: Team[] = [];
       try {
         const supabase = createClient();
         if (supabase && query) {
           const like = `%${query}%`;
-          const res = await supabase
-            .from('ideas')
-            .select('*')
-            .or(
-              `title_ar.ilike.${like},title_en.ilike.${like},problem_statement.ilike.${like},proposed_solution.ilike.${like}`
-            )
-            .limit(50);
-          if (res.data) data = res.data as unknown as Idea[];
+
+          const [ideasRes, tracksRes, teamsRes] = await Promise.all([
+            supabase
+              .from('ideas')
+              .select('*')
+              .or(
+                `title_ar.ilike.${like},title_en.ilike.${like},problem_statement.ilike.${like},proposed_solution.ilike.${like}`
+              )
+              .limit(50),
+            supabase
+              .from('strategic_themes')
+              .select('id,name_ar,name_en,description')
+              .or(`name_ar.ilike.${like},name_en.ilike.${like},description.ilike.${like}`)
+              .limit(20),
+            supabase
+              .from('teams')
+              .select('id,name_ar,name_en')
+              .or(`name_ar.ilike.${like},name_en.ilike.${like}`)
+              .limit(20),
+          ]);
+
+          if (ideasRes.data) data = ideasRes.data as unknown as Idea[];
+          if (tracksRes.data) trackData = tracksRes.data as unknown as Track[];
+          if (teamsRes.data) teamData = teamsRes.data as unknown as Team[];
         }
       } catch {
         /* fall through to demo data */
@@ -69,6 +102,8 @@ export function SearchClient() {
       if (sort === 'newest')
         data.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
       setResults(data);
+      setTracks(trackData);
+      setTeams(teamData);
       setLoading(false);
     },
     [status, sort]
@@ -78,6 +113,8 @@ export function SearchClient() {
     if (params.get('q')) run(params.get('q')!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const totalCount = results.length + tracks.length + teams.length;
 
   return (
     <div>
@@ -123,15 +160,17 @@ export function SearchClient() {
         <Button type="submit">{t('searchButton')}</Button>
       </form>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-8">
         {loading && <p className="text-sm text-muted-foreground">…</p>}
-        {!loading && ran && results.length === 0 && (
+        {!loading && ran && totalCount === 0 && (
           <p className="text-sm text-muted-foreground">{t('noResults')}</p>
         )}
+
         {!loading && results.length > 0 && (
-          <>
-            <p className="mb-3 text-sm text-muted-foreground">
-              {results.length} {t('countLabel')}
+          <div>
+            <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-teal">
+              <Lightbulb className="h-4 w-4" />
+              {t('groupIdeas')} · {results.length}
             </p>
             <ul className="space-y-3">
               {results.map((i) => {
@@ -154,7 +193,59 @@ export function SearchClient() {
                 );
               })}
             </ul>
-          </>
+          </div>
+        )}
+
+        {!loading && tracks.length > 0 && (
+          <div>
+            <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-teal">
+              <Target className="h-4 w-4" />
+              {t('groupTracks')} · {tracks.length}
+            </p>
+            <ul className="space-y-3">
+              {tracks.map((track) => {
+                const title = locale === 'ar' ? track.name_ar || track.name_en : track.name_en || track.name_ar;
+                const desc = track.description;
+                return (
+                  <li key={track.id}>
+                    <Link href={`/tracks/${track.id}` as any}>
+                      <Card className="transition-colors hover:border-brand-teal/40">
+                        <CardContent className="p-4">
+                          <p className="font-medium text-brand-teal">{title}</p>
+                          {desc && (
+                            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{desc}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {!loading && teams.length > 0 && (
+          <div>
+            <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-teal">
+              <Users className="h-4 w-4" />
+              {t('groupTeams')} · {teams.length}
+            </p>
+            <ul className="space-y-3">
+              {teams.map((team) => {
+                const title = locale === 'ar' ? team.name_ar || team.name_en : team.name_en || team.name_ar;
+                return (
+                  <li key={team.id}>
+                    <Card>
+                      <CardContent className="p-4">
+                        <p className="font-medium text-brand-teal">{title}</p>
+                      </CardContent>
+                    </Card>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </div>
     </div>
