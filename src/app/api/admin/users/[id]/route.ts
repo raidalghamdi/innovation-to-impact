@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isCurrentUserAdmin } from '@/lib/db-roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const actor = await getCurrentUser();
-  if (!actor || actor.role !== 'admin') {
+  if (!actor || !(await isCurrentUserAdmin(actor.role))) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 

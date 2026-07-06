@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/page-header';
 import { Link } from '@/i18n/routing';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isCurrentUserAdmin } from '@/lib/db-roles';
 import { getRoleIcon } from '@/lib/role-icons';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -28,7 +29,7 @@ export default async function AdminUsersPage({
   const Chevron = isAr ? ChevronLeft : ChevronRight;
 
   const user = await getCurrentUser();
-  if (!user || user.role !== 'admin') {
+  if (!user || !(await isCurrentUserAdmin(user.role))) {
     redirect(`/${locale}/dashboard`);
   }
 

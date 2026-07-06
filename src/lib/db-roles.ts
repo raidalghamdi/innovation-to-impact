@@ -104,3 +104,19 @@ export async function getPlatformSetting<T = unknown>(key: string, fallback: T):
   if (error || !data) return fallback;
   return (data.value as T) ?? fallback;
 }
+
+/**
+ * src/lib/db-roles.ts — isCurrentUserAdmin()
+ * Phase 11.3/11.4 fix — admin gate for the new /admin/users and /admin/roles
+ * pages. A user should reach these pages if EITHER the legacy single-value
+ * `user_profiles.role === 'admin'` (the pattern every pre-existing admin
+ * page under /admin/* already checks — left untouched there) OR they hold
+ * the new DB-driven `admin` role via `innovation.user_roles` (Batch B
+ * multi-role users who were never migrated to the legacy column). This is
+ * additive only: no existing admin page's gating logic is changed.
+ */
+export async function isCurrentUserAdmin(legacyRole: string | null | undefined): Promise<boolean> {
+  if (legacyRole === 'admin') return true;
+  const myRoles = await getMyUserRoles();
+  return myRoles.some((r) => r.role_code === 'admin');
+}

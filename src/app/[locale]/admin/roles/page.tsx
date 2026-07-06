@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { getCurrentUser } from '@/lib/user';
-import { getAllRoles } from '@/lib/db-roles';
+import { getAllRoles, isCurrentUserAdmin } from '@/lib/db-roles';
 import { RolesCatalogClient } from '@/components/roles-catalog-client';
 
 // src/app/[locale]/admin/roles/page.tsx:1
@@ -18,7 +18,7 @@ export default async function AdminRolesPage({
   const t = await getTranslations('admin');
 
   const user = await getCurrentUser();
-  if (!user || user.role !== 'admin') {
+  if (!user || !(await isCurrentUserAdmin(user.role))) {
     redirect(`/${locale}/dashboard`);
   }
 

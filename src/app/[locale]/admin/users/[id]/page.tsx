@@ -4,7 +4,7 @@ import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getActiveRoles } from '@/lib/db-roles';
+import { getActiveRoles, isCurrentUserAdmin } from '@/lib/db-roles';
 import { UserRoleEditorClient } from '@/components/user-role-editor-client';
 
 // src/app/[locale]/admin/users/[id]/page.tsx:1
@@ -22,7 +22,7 @@ export default async function AdminUserDetailPage({
   const isAr = locale === 'ar';
 
   const actor = await getCurrentUser();
-  if (!actor || actor.role !== 'admin') {
+  if (!actor || !(await isCurrentUserAdmin(actor.role))) {
     redirect(`/${locale}/dashboard`);
   }
 

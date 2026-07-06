@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isCurrentUserAdmin } from '@/lib/db-roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // Admin-only. Creates a new (non-system) role.
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== 'admin') {
+  if (!user || !(await isCurrentUserAdmin(user.role))) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
