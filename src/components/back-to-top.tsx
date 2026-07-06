@@ -22,8 +22,8 @@ export function BackToTop({ label }: { label: string }) {
       title={label}
       className={cn(
         'fixed bottom-6 z-40 flex items-center gap-2 rounded-full bg-brand-teal px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all hover:bg-brand-teal-dark',
-        // RTL-aware position
-        'end-6',
+        // RTL-aware position (explicit directional to avoid logical-inset quirks)
+        'ltr:right-6 rtl:left-6',
         show ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
       )}
     >

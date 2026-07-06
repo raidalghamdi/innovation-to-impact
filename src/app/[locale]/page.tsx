@@ -59,8 +59,8 @@ export default async function LandingPage({
           id="hero"
           className="relative scroll-mt-24 overflow-hidden border-b border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-teal-dark py-16 text-white sm:py-24"
         >
-          <div className="pointer-events-none absolute -end-20 -top-20 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-20 -start-20 h-80 w-80 rounded-full bg-brand-cyan-light/10 blur-3xl" />
+          <div className="pointer-events-none absolute end-0 top-0 h-64 w-64 rounded-full bg-brand-cyan/10 blur-3xl sm:h-80 sm:w-80" />
+          <div className="pointer-events-none absolute bottom-0 start-0 h-64 w-64 rounded-full bg-brand-cyan-light/10 blur-3xl sm:h-80 sm:w-80" />
 
           <div className="relative mx-auto max-w-6xl px-4 text-center sm:px-8">
             <p className="inline-flex items-center gap-2 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 px-4 py-1.5 text-xs font-semibold tracking-wider text-brand-cyan-light sm:text-sm">
