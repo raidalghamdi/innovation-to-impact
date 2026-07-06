@@ -37,7 +37,7 @@ const ANCHOR_NAV = [
   { anchor: 'faq', key: 'navFaq' },
 ] as const;
 
-export function LandingNav({ locale }: { locale: string }) {
+export function LandingNav({ locale, hideLoginCta = false }: { locale: string; hideLoginCta?: boolean }) {
   const t = useTranslations();
   const pathname = usePathname() ?? '/';
   const [open, setOpen] = useState(false);
@@ -101,9 +101,11 @@ export function LandingNav({ locale }: { locale: string }) {
         <div className="hidden md:block">
           <HeaderSearch />
         </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/login">{t('nav.login')}</Link>
-        </Button>
+        {!hideLoginCta && (
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/login">{t('nav.login')}</Link>
+          </Button>
+        )}
         <LanguageToggle />
       </div>
 
@@ -176,13 +178,15 @@ export function LandingNav({ locale }: { locale: string }) {
           </div>
         </nav>
 
-        <div className="shrink-0 border-t border-border p-4">
-          <Button asChild variant="gold" size="lg" className="w-full">
-            <Link href="/login" onClick={() => setOpen(false)}>
-              {t('nav.login')}
-            </Link>
-          </Button>
-        </div>
+        {!hideLoginCta && (
+          <div className="shrink-0 border-t border-border p-4">
+            <Button asChild variant="gold" size="lg" className="w-full">
+              <Link href="/login" onClick={() => setOpen(false)}>
+                {t('nav.login')}
+              </Link>
+            </Button>
+          </div>
+        )}
       </aside>
     </>
   );

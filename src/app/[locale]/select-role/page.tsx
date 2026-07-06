@@ -26,7 +26,7 @@ export default async function SelectRolePage({
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingNav locale={locale} />
+      <LandingNav locale={locale} hideLoginCta />
       <main className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-brand-teal sm:text-3xl">{t('selectRoleTitle')}</h1>
