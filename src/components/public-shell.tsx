@@ -1,22 +1,18 @@
 import { getTranslations } from 'next-intl/server';
-import { Link } from '@/i18n/routing';
-import { CoBrand } from '@/components/logo';
-import { LanguageToggle } from '@/components/language-toggle';
+import { LandingNav } from '@/components/landing-nav';
 import { SiteFooter } from '@/components/site-footer';
 import { Breadcrumbs, type Crumb } from '@/components/breadcrumbs';
 import { BackToTop } from '@/components/back-to-top';
 import { SkipToContent } from '@/components/skip-to-content';
-import { Button } from '@/components/ui/button';
 
-const NAV = [
-  { href: '/about', key: 'about' },
-  { href: '/evaluation-criteria', key: 'evaluationCriteria' },
-  { href: '/roadmap', key: 'roadmap' },
-  { href: '/events', key: 'events' },
-  { href: '/faq', key: 'faq' },
-] as const;
-
-// Shared chrome for public marketing / content pages (Phase F).
+/**
+ * Shared chrome for public (pre-login) pages.
+ *
+ * Uses the unified `LandingNav` so the top bar is identical across the home
+ * page and every other public page (tracks, terms, privacy, events, etc.).
+ * Anchor links become smart: on `/` they smooth-scroll to the target section,
+ * on any other public page they navigate to `/[locale]/#section`.
+ */
 export async function PublicShell({
   children,
   locale,
@@ -31,27 +27,7 @@ export async function PublicShell({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SkipToContent targetId="main-content" />
-      <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <CoBrand className="h-12" locale={locale} />
-        </Link>
-        <nav className="hidden items-center gap-1 lg:flex" aria-label={t('footer.quickLinks')}>
-          {NAV.map((n) => (
-            <Button key={n.href} asChild variant="ghost" size="sm">
-              <Link href={n.href}>{t(`footer.${n.key}`)}</Link>
-            </Button>
-          ))}
-        </nav>
-        <div className="flex items-center gap-2">
-          <Button asChild size="sm" variant="gold" className="hidden sm:inline-flex">
-            <Link href="/ideas/new">{t('nav.submitIdea')}</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/login">{t('nav.login')}</Link>
-          </Button>
-          <LanguageToggle />
-        </div>
-      </header>
+      <LandingNav locale={locale} />
 
       <main id="main-content" className="flex-1">
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-8">

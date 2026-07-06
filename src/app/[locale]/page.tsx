@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { StatsBlock } from '@/components/stats-block';
 import { BackToTop } from '@/components/back-to-top';
 import { HeaderSearch } from '@/components/header-search';
+import { LandingNav } from '@/components/landing-nav';
 import { TimelineModern, stages as defaultStages } from '@/components/timeline-modern';
 import { getStats } from '@/lib/demo-data';
 import { fetchThemes } from '@/lib/data';
@@ -25,16 +26,6 @@ import {
   CheckCircle2,
   ClipboardList,
 } from 'lucide-react';
-
-// Anchor nav items — order matches the 12 landing sections.
-const ANCHOR_NAV = [
-  { href: '#about', key: 'navAbout' },
-  { href: '#tracks', key: 'navTracks' },
-  { href: '#timeline', key: 'navTimeline' },
-  { href: '#criteria', key: 'navCriteria' },
-  { href: '#prizes', key: 'navPrizes' },
-  { href: '#faq', key: 'navFaq' },
-] as const;
 
 export default async function LandingPage({
   params,
@@ -59,35 +50,8 @@ export default async function LandingPage({
     <div className="min-h-screen bg-background">
       <SkipToContent />
 
-      {/* ===== Top bar (anchor nav + smooth scroll) ===== */}
-      <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-3 border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
-          <CoBrand className="h-12" locale={locale} />
-        </Link>
-        <nav
-          className="hidden items-center gap-1 lg:flex"
-          aria-label={t('footer.quickLinks')}
-        >
-          {ANCHOR_NAV.map((n) => (
-            <a
-              key={n.href}
-              href={n.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
-            >
-              {t(`landing.${n.key}`)}
-            </a>
-          ))}
-        </nav>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <div className="hidden md:block">
-            <HeaderSearch />
-          </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/login">{t('nav.login')}</Link>
-          </Button>
-          <LanguageToggle />
-        </div>
-      </header>
+      {/* Unified public Nav Bar (shared across all pre-login pages) */}
+      <LandingNav locale={locale} />
 
       <main id="main-content">
         {/* ===== 1. HERO ===== */}

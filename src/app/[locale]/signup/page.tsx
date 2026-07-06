@@ -1,5 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { AuthForm } from '@/components/auth-form';
+import { LandingNav } from '@/components/landing-nav';
 
 export default async function SignupPage({
   params,
@@ -8,5 +9,12 @@ export default async function SignupPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <AuthForm mode="signup" />;
+  return (
+    <div className="min-h-screen bg-background">
+      <LandingNav locale={locale} />
+      <main>
+        <AuthForm mode="signup" />
+      </main>
+    </div>
+  );
 }
