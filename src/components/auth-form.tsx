@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
-import { ROLE_HOME, resolveRoleWithProfile, type Role } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +12,12 @@ import { Logo } from '@/components/logo';
 import { SkipToContent } from '@/components/skip-to-content';
 import { AlertCircle } from 'lucide-react';
 
+// src/components/auth-form.tsx:1
+// Login mode is now OTP-first (Batch B / Phase 10.2): password is verified
+// server-side WITHOUT establishing a session, then the user is routed to
+// /[locale]/login/verify to enter the emailed OTP. Signup mode is unchanged
+// (external self-registration; see Phase 10.4 for the DB-driven toggle
+// applied on the signup page itself).
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const t = useTranslations('auth');
   const tc = useTranslations('categories');
@@ -28,7 +33,38 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
 
   const isSignup = mode === 'signup';
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleLoginStart(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/login-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error === 'invalid_credentials' ? t('invalidCredentials') : t('loginFailed'));
+        return;
+      }
+      // Password is kept only in sessionStorage for the brief hop to the
+      // verify step (never written to the URL/query string) — login-verify
+      // needs it to establish the real Supabase session after OTP success.
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('i2i_pending_pw', password);
+      }
+      const qs = new URLSearchParams({ email });
+      if (data.devOtp) qs.set('devOtp', data.devOtp);
+      router.push((`/login/verify?${qs.toString()}`) as any);
+    } catch (err: any) {
+      setError(err?.message ?? t('loginFailed'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const supabase = createClient();
@@ -38,44 +74,15 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
     }
     setLoading(true);
     try {
-      if (isSignup) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: fullName, department, user_category: category } },
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
-      // Resolve the signed-in user's role and route to their landing dashboard.
-      // Canonical priority: user_profiles.role → user_metadata.role →
-      // roleFromEmail (returns 'submitter' outside DEMO_MODE). See
-      // resolveRoleWithProfile in src/lib/roles.ts.
-      const { data: userData } = await supabase.auth.getUser();
-      const authUser = userData?.user;
-      let role: Role = 'submitter';
-      if (authUser) {
-        let profileRole: unknown = undefined;
-        try {
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', authUser.id)
-            .maybeSingle();
-          profileRole = (profile as { role?: unknown } | null)?.role;
-        } catch {
-          // user_profiles unreachable — fall through to metadata/email so
-          // sign-in isn't blocked by a permissions or connectivity issue.
-        }
-        role = resolveRoleWithProfile({
-          profileRole,
-          metadataRole: authUser.user_metadata?.role,
-          email: authUser.email,
-        });
-      }
-      router.push(ROLE_HOME[role] as any);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName, department, user_category: category } },
+      });
+      if (error) throw error;
+      // Signup does not skip OTP — route through the same login flow so the
+      // freshly created account still verifies via OTP on first sign-in.
+      router.push(('/login') as any);
       router.refresh();
     } catch (err: any) {
       setError(err?.message ?? 'Authentication failed');
@@ -83,6 +90,8 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       setLoading(false);
     }
   }
+
+  const handleSubmit = isSignup ? handleSignup : handleLoginStart;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
@@ -135,6 +144,18 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required dir="ltr" />
             </div>
 
+            {!isSignup && (
+              <p className="text-xs text-muted-foreground">{t('otpHint')}</p>
+            )}
+
+            {!isSignup && (
+              <p className="text-end text-xs">
+                <Link href={('/forgot-password') as any} className="font-medium text-brand-teal hover:underline">
+                  {t('forgotPassword')}
+                </Link>
+              </p>
+            )}
+
             {/* Error surface uses role=alert + aria-live=polite so screen
                 readers announce authentication failures immediately. */}
             <div role="alert" aria-live="polite" className="empty:hidden">
@@ -147,7 +168,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {isSignup ? t('signUp') : t('signIn')}
+              {loading ? t('pleaseWait') : isSignup ? t('signUp') : t('continueToOtp')}
             </Button>
 
             {!isSignup && (

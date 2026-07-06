@@ -190,11 +190,26 @@
       "weightLabel": "الوزن",
       "totalLabel": "الإجمالي",
       "items": [
-        { "label": "الابتكار", "weight": 25 },
-        { "label": "الأثر", "weight": 25 },
-        { "label": "قابلية التنفيذ", "weight": 20 },
-        { "label": "قابلية التوسع", "weight": 20 },
-        { "label": "جودة العرض", "weight": 10 }
+        {
+          "label": "الابتكار",
+          "weight": 25
+        },
+        {
+          "label": "الأثر",
+          "weight": 25
+        },
+        {
+          "label": "قابلية التنفيذ",
+          "weight": 20
+        },
+        {
+          "label": "قابلية التوسع",
+          "weight": 20
+        },
+        {
+          "label": "جودة العرض",
+          "weight": 10
+        }
       ]
     },
     "prizes": {
@@ -232,7 +247,11 @@
     },
     "hero": {
       "eyebrow": "برنامج ابتكار المنافسة",
-      "words": ["ابتكر", "نافس", "أثِّر"],
+      "words": [
+        "ابتكر",
+        "نافس",
+        "أثِّر"
+      ],
       "stable": "فكرتك قد تُغيّر طريقة عمل المنافسة في السعودية",
       "ctaRegister": "سجّل الآن",
       "ctaLearn": "تعرّف على البرنامج"
@@ -766,7 +785,12 @@
       "pageOf": "صفحة {page} من {pages}",
       "prev": "السابق",
       "next": "التالي"
-    }
+    },
+    "settingsTitle": "إعدادات المنصة",
+    "settingsSubtitle": "إعدادات تشغيلية يتحكم بها المسؤول مباشرة دون الحاجة لمتغيرات بيئة.",
+    "employeesImport": "استيراد الموظفين",
+    "rolesCatalog": "كتالوج الأدوار",
+    "usersManagement": "إدارة المستخدمين"
   },
   "strategy": {
     "title": "الاستراتيجية والحوكمة",
@@ -804,7 +828,29 @@
     "demoNote": "هذه بيئة تجريبية، سجّل الدخول باستخدام بيانات الاعتماد أدناه.",
     "demoCredentials": "بيانات الدخول التجريبية",
     "demoCredentialsHint": "مشارك تجريبي: innovator@gac-demo.sa / Demo2026!",
-    "useDemoAccount": "استخدم الحساب التجريبي"
+    "useDemoAccount": "استخدم الحساب التجريبي",
+    "otpHint": "سنرسل لك رمزاً لمرة واحدة (OTP) للتحقق من هويتك بعد التحقق من كلمة المرور.",
+    "continueToOtp": "متابعة",
+    "pleaseWait": "جارٍ التحقق…",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "loginFailed": "تعذّر تسجيل الدخول. حاول مرة أخرى.",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "otpTitle": "التحقق برمز لمرة واحدة",
+    "otpSubtitle": "أدخل الرمز المرسل إلى",
+    "otpLabel": "رمز التحقق",
+    "verifyAndSignIn": "تحقق وسجّل الدخول",
+    "devOtpNotice": "وضع التطوير: رمز التحقق هو {code}",
+    "otpExpired": "انتهت صلاحية الرمز. اطلب رمزاً جديداً.",
+    "otpTooManyAttempts": "تجاوزت عدد المحاولات المسموح بها. اطلب رمزاً جديداً.",
+    "otpMismatch": "الرمز غير صحيح. حاول مرة أخرى.",
+    "otpNotFound": "لا يوجد رمز نشط لهذا البريد. ابدأ من جديد.",
+    "forgotPasswordTitle": "استعادة كلمة المرور",
+    "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني لإرسال رمز إعادة التعيين.",
+    "sendResetCode": "إرسال رمز إعادة التعيين",
+    "newPassword": "كلمة المرور الجديدة",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "registrationClosedTitle": "التسجيل الخارجي مغلق حالياً",
+    "registrationClosedBody": "لا يمكن للمستخدمين الخارجيين إنشاء حساب في الوقت الحالي. تواصل مع إدارة المنصة لمزيد من المعلومات."
   },
   "categories": {
     "employee": "موظف",
@@ -1337,7 +1383,16 @@
     "submitter": "مقدّم فكرة",
     "evaluator": "مقيّم",
     "judge": "عضو لجنة",
-    "admin": "مسؤول النظام"
+    "admin": "مسؤول النظام",
+    "selectRoleTitle": "اختر دورك",
+    "selectRoleSubtitle": "لديك أكثر من دور في المنصة. اختر الدور الذي تريد المتابعة به الآن.",
+    "code": {
+      "innovator": "مبتكر",
+      "judge": "محكم",
+      "committee": "لجنة",
+      "supervisor": "مشرف",
+      "admin": "مدير النظام"
+    }
   },
   "audit": {
     "title": "سجل التدقيق",
@@ -1658,5 +1713,33 @@
       "ساهم في تنفيذ فكرة"
     ]
   },
-  "welcomeFirstTime": "مرحباً"
+  "welcomeFirstTime": "مرحباً",
+  "employeeImport": {
+    "title": "استيراد الموظفين",
+    "subtitle": "ارفع ملف إكسل لاستيراد بيانات الموظفين وأدوارهم المسبقة.",
+    "templateTitle": "قالب إكسل",
+    "templateHint": "نزّل القالب الفارغ بالأعمدة الصحيحة قبل التعبئة.",
+    "downloadTemplate": "تنزيل القالب",
+    "dropHint": "اسحب ملف إكسل هنا أو اضغط للاختيار",
+    "acceptedFormats": "الصيغ المقبولة: xlsx, xls, csv",
+    "validRows": "{count} صف صالح",
+    "invalidRows": "{count} صف به أخطاء",
+    "colName": "الاسم",
+    "colEmail": "البريد الإلكتروني",
+    "colDept": "الإدارة",
+    "colRoles": "الأدوار",
+    "colStatus": "الحالة",
+    "ok": "جاهز",
+    "previewLimited": "تُعرض أول 20 صفاً فقط من أصل {total}.",
+    "importing": "جارٍ الاستيراد…",
+    "importButton": "استيراد {count} صف",
+    "resultTitle": "نتيجة الاستيراد",
+    "imported": "مُضاف",
+    "updated": "مُحدَّث",
+    "skipped": "متجاوَز",
+    "rowLabel": "صف",
+    "errRequiredName": "الاسم بالعربي مطلوب",
+    "errRequiredEmail": "البريد الإلكتروني مطلوب",
+    "errDomain": "يجب أن ينتهي بريد الموظف الداخلي بـ @gac.gov.sa"
+  }
 }

@@ -190,11 +190,26 @@
       "weightLabel": "Weight",
       "totalLabel": "Total",
       "items": [
-        { "label": "Innovation", "weight": 25 },
-        { "label": "Impact", "weight": 25 },
-        { "label": "Feasibility", "weight": 20 },
-        { "label": "Scalability", "weight": 20 },
-        { "label": "Presentation quality", "weight": 10 }
+        {
+          "label": "Innovation",
+          "weight": 25
+        },
+        {
+          "label": "Impact",
+          "weight": 25
+        },
+        {
+          "label": "Feasibility",
+          "weight": 20
+        },
+        {
+          "label": "Scalability",
+          "weight": 20
+        },
+        {
+          "label": "Presentation quality",
+          "weight": 10
+        }
       ]
     },
     "prizes": {
@@ -232,7 +247,11 @@
     },
     "hero": {
       "eyebrow": "Competition Innovation Program",
-      "words": ["Innovate", "Compete", "Impact"],
+      "words": [
+        "Innovate",
+        "Compete",
+        "Impact"
+      ],
       "stable": "Your idea could change how competition works in Saudi Arabia",
       "ctaRegister": "Register now",
       "ctaLearn": "Learn about the program"
@@ -766,7 +785,12 @@
       "pageOf": "Page {page} of {pages}",
       "prev": "Previous",
       "next": "Next"
-    }
+    },
+    "settingsTitle": "Platform Settings",
+    "settingsSubtitle": "Runtime configuration the admin controls directly — no environment variables required.",
+    "employeesImport": "Employee Import",
+    "rolesCatalog": "Roles Catalog",
+    "usersManagement": "User Management"
   },
   "strategy": {
     "title": "Strategy & governance",
@@ -804,7 +828,29 @@
     "demoNote": "This is a demo environment — sign in with the credentials below.",
     "demoCredentials": "Demo credentials",
     "demoCredentialsHint": "Demo innovator: innovator@gac-demo.sa / Demo2026!",
-    "useDemoAccount": "Use demo account"
+    "useDemoAccount": "Use demo account",
+    "otpHint": "We'll send you a one-time code (OTP) to verify your identity after your password is checked.",
+    "continueToOtp": "Continue",
+    "pleaseWait": "Verifying…",
+    "invalidCredentials": "Incorrect email or password.",
+    "loginFailed": "Sign-in failed. Please try again.",
+    "forgotPassword": "Forgot password?",
+    "otpTitle": "One-Time Code Verification",
+    "otpSubtitle": "Enter the code sent to",
+    "otpLabel": "Verification code",
+    "verifyAndSignIn": "Verify & Sign In",
+    "devOtpNotice": "Dev mode: your OTP is {code}",
+    "otpExpired": "This code has expired. Request a new one.",
+    "otpTooManyAttempts": "Too many attempts. Request a new code.",
+    "otpMismatch": "Incorrect code. Please try again.",
+    "otpNotFound": "No active code for this email. Start again.",
+    "forgotPasswordTitle": "Reset your password",
+    "forgotPasswordSubtitle": "Enter your email to receive a reset code.",
+    "sendResetCode": "Send reset code",
+    "newPassword": "New password",
+    "resetPassword": "Reset password",
+    "registrationClosedTitle": "External registration is currently closed",
+    "registrationClosedBody": "External users cannot self-register at this time. Contact the platform administrators for more information."
   },
   "categories": {
     "employee": "Employee",
@@ -1337,7 +1383,16 @@
     "submitter": "Submitter",
     "evaluator": "Evaluator",
     "judge": "Judge",
-    "admin": "Administrator"
+    "admin": "Administrator",
+    "selectRoleTitle": "Choose your role",
+    "selectRoleSubtitle": "You have more than one role on the platform. Pick the one you want to continue with.",
+    "code": {
+      "innovator": "Innovator",
+      "judge": "Judge",
+      "committee": "Committee",
+      "supervisor": "Supervisor",
+      "admin": "Administrator"
+    }
   },
   "audit": {
     "title": "Audit Log",
@@ -1658,5 +1713,33 @@
       "Contribute to implementing an idea"
     ]
   },
-  "welcomeFirstTime": "Welcome"
+  "welcomeFirstTime": "Welcome",
+  "employeeImport": {
+    "title": "Employee Import",
+    "subtitle": "Upload an Excel file to import employees and their pre-assigned roles.",
+    "templateTitle": "Excel Template",
+    "templateHint": "Download the blank template with the correct columns before filling it in.",
+    "downloadTemplate": "Download Template",
+    "dropHint": "Drag an Excel file here, or click to choose",
+    "acceptedFormats": "Accepted formats: xlsx, xls, csv",
+    "validRows": "{count} valid rows",
+    "invalidRows": "{count} rows with errors",
+    "colName": "Name",
+    "colEmail": "Email",
+    "colDept": "Department",
+    "colRoles": "Roles",
+    "colStatus": "Status",
+    "ok": "Ready",
+    "previewLimited": "Showing first 20 of {total} rows.",
+    "importing": "Importing…",
+    "importButton": "Import {count} rows",
+    "resultTitle": "Import Result",
+    "imported": "Imported",
+    "updated": "Updated",
+    "skipped": "Skipped",
+    "rowLabel": "Row",
+    "errRequiredName": "Arabic full name is required",
+    "errRequiredEmail": "Email is required",
+    "errDomain": "Internal employees must use an @gac.gov.sa email"
+  }
 }

@@ -21,6 +21,7 @@ const PROTECTED_PREFIXES = [
   '/notifications',
   '/team',
   '/profile',
+  '/select-role',
 ];
 
 export async function middleware(request: NextRequest) {
