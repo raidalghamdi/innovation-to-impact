@@ -41,7 +41,9 @@
     "leaderboard": "Leaderboard",
     "adminAnalytics": "Analytics",
     "team": "My Team",
-    "tracks": "Tracks"
+    "tracks": "Tracks",
+    "usersManagement": "Users",
+    "rolesCatalog": "Roles Catalog"
   },
   "common": {
     "search": "Search",

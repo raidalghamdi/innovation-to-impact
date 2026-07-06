@@ -22,6 +22,8 @@ import {
   Bell,
   Search,
   History,
+  UserCog,
+  Shapes,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -59,6 +61,8 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
       { href: '/analytics', key: 'analytics', icon: BarChart3, roles: ['admin'] },
       { href: '/admin/analytics', key: 'adminAnalytics', icon: BarChart3, roles: ['admin'] },
       { href: '/admin', key: 'admin', icon: Cog, roles: ['admin'] },
+      { href: '/admin/users', key: 'usersManagement', icon: UserCog, roles: ['admin'] },
+      { href: '/admin/roles', key: 'rolesCatalog', icon: Shapes, roles: ['admin'] },
       { href: '/admin/audit', key: 'audit', icon: History, roles: ['admin'] },
       { href: '/settings', key: 'settings', icon: Settings },
     ],

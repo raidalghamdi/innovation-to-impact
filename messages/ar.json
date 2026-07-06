@@ -41,7 +41,9 @@
     "leaderboard": "لوحة المتصدرين",
     "adminAnalytics": "التحليلات",
     "team": "فريقي",
-    "tracks": "المسارات"
+    "tracks": "المسارات",
+    "usersManagement": "المستخدمون",
+    "rolesCatalog": "كتالوج الأدوار"
   },
   "common": {
     "search": "بحث",

@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,11 +9,19 @@ import { StatsBlock } from '@/components/stats-block';
 import { GamificationPanel } from '@/components/gamification-panel';
 import { BackToTop } from '@/components/back-to-top';
 import { QuickActions } from '@/components/quick-actions';
+import { LandingNav } from '@/components/landing-nav';
+import { DashboardRoleHeader } from '@/components/dashboard-role-header';
+import { InnovatorDashboard } from '@/components/dashboards/innovator-dashboard';
+import { JudgeDashboard } from '@/components/dashboards/judge-dashboard';
+import { CommitteeDashboard } from '@/components/dashboards/committee-dashboard';
+import { AdminDashboard } from '@/components/dashboards/admin-dashboard';
+import { SupervisorDashboard } from '@/components/dashboards/supervisor-dashboard';
 import { Link } from '@/i18n/routing';
 import { fetchIdeas } from '@/lib/data';
 import { getStats } from '@/lib/demo-data';
 import { formatDate } from '@/lib/utils';
 import { getCurrentUser } from '@/lib/user';
+import { getMyUserRoles, isValidRoleCode } from '@/lib/db-roles';
 import { loadCms, isSectionEnabled } from '@/lib/cms';
 import {
   Lightbulb,
@@ -22,6 +31,15 @@ import {
   Inbox,
 } from 'lucide-react';
 
+// src/app/[locale]/dashboard/page.tsx:25
+// Phase 12.1 — dashboard root. Users who have 1+ rows in the new
+// `innovation.user_roles` system (Batch B multi-role) get the new
+// role-based dashboard (LandingNav + DashboardRoleHeader + role component,
+// selected via the `i2i_active_role` cookie set at login/role-selection).
+// Users with 0 rows there (pre-existing accounts never migrated — see
+// Non-goals in the brief, backfill intentionally not run yet) fall back
+// unchanged to the legacy unified dashboard below, so no existing
+// functionality is removed.
 export default async function DashboardPage({
   params,
 }: {
@@ -43,6 +61,48 @@ export default async function DashboardPage({
     (user?.email ? user.email.split('@')[0] : null) ??
     (locale === 'ar' ? 'زائر' : 'Guest');
   const isFirstSession = user?.isFirstSession ?? false;
+
+  // Phase 12.1 — Batch B multi-role dashboard routing.
+  const myRoles = userId ? await getMyUserRoles() : [];
+  if (userId && myRoles.length > 0) {
+    const cookieStore = await cookies();
+    const cookieRole = cookieStore.get('i2i_active_role')?.value;
+    const activeRole =
+      cookieRole && myRoles.some((r) => r.role_code === cookieRole)
+        ? cookieRole
+        : myRoles.find((r) => r.is_primary)?.role_code ?? myRoles[0].role_code;
+
+    const roleOptions = myRoles.map((r) => ({
+      code: r.role_code,
+      name_ar: r.role_name_ar,
+      name_en: r.role_name_en,
+    }));
+
+    return (
+      <div className="min-h-screen bg-background">
+        <LandingNav locale={locale} />
+        <DashboardRoleHeader roles={roleOptions} activeRole={activeRole} displayName={displayName} />
+        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          {isValidRoleCode(activeRole) && activeRole === 'innovator' && (
+            <InnovatorDashboard userId={userId} locale={locale} />
+          )}
+          {isValidRoleCode(activeRole) && activeRole === 'judge' && (
+            <JudgeDashboard userId={userId} locale={locale} />
+          )}
+          {isValidRoleCode(activeRole) && activeRole === 'committee' && (
+            <CommitteeDashboard locale={locale} />
+          )}
+          {isValidRoleCode(activeRole) && activeRole === 'admin' && (
+            <AdminDashboard locale={locale} />
+          )}
+          {isValidRoleCode(activeRole) && activeRole === 'supervisor' && (
+            <SupervisorDashboard userId={userId} locale={locale} />
+          )}
+        </main>
+        <BackToTop label={tc('backToTop')} />
+      </div>
+    );
+  }
 
   const allIdeas = await fetchIdeas();
   const myIdeas = userId
