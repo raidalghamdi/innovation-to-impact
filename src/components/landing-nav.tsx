@@ -74,6 +74,7 @@ export function LandingNav({ locale }: { locale: string }) {
   }, [open]);
 
   return (
+    <>
     <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-3 border-b border-border bg-card/95 px-4 pt-safe backdrop-blur sm:px-8">
       <Link href="/" className="flex shrink-0 items-center gap-2.5">
         <CoBrand className="h-12" locale={locale} />
@@ -117,6 +118,7 @@ export function LandingNav({ locale }: { locale: string }) {
       >
         <Menu className="h-6 w-6" aria-hidden="true" />
       </button>
+    </header>
 
       {/* Backdrop */}
       <div
@@ -182,6 +184,6 @@ export function LandingNav({ locale }: { locale: string }) {
           </Button>
         </div>
       </aside>
-    </header>
+    </>
   );
 }
