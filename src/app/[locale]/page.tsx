@@ -67,7 +67,6 @@ export default async function LandingPage({
         <nav
           className="hidden items-center gap-1 lg:flex"
           aria-label={t('footer.quickLinks')}
-          style={{ scrollBehavior: 'smooth' }}
         >
           {ANCHOR_NAV.map((n) => (
             <a
@@ -90,7 +89,7 @@ export default async function LandingPage({
         </div>
       </header>
 
-      <main id="main-content" style={{ scrollBehavior: 'smooth' }}>
+      <main id="main-content">
         {/* ===== 1. HERO ===== */}
         <section
           id="hero"
