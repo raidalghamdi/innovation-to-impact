@@ -1,6 +1,7 @@
 import { createHash, randomInt } from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPlatformSetting } from '@/lib/db-roles';
+import { sendOtpMessage } from '@/lib/messaging';
 
 /**
  * OTP core — src/lib/otp.ts
@@ -70,7 +71,49 @@ export async function createOtp(email: string, purpose: OtpPurpose): Promise<{ c
   // stderr so it is retrievable from server logs during development/QA.
   console.error('[DEV OTP]', email, code, `(purpose=${purpose}, expires ${expiresAt})`);
 
+  // Best-effort WhatsApp OTP delivery. Fully gated by platform_settings
+  // (whatsapp_enabled + whatsapp_channels.otp). Never throws — falls back to
+  // the console/email paths above if the recipient has no phone on file or
+  // the provider is disabled.
+  const phone = await lookupRecipientPhone(admin, email);
+  if (phone) {
+    await sendOtpMessage({
+      phoneE164: phone,
+      code,
+      ttlMinutes,
+    });
+  }
+
   return { code, expiresAt };
+}
+
+// Resolve the phone number for an OTP recipient. Checks innovation.employees
+// first (internal users), falls back to user_profiles. Returns null if neither
+// has a phone recorded.
+async function lookupRecipientPhone(
+  admin: NonNullable<ReturnType<typeof createAdminClient>>,
+  email: string
+): Promise<string | null> {
+  try {
+    const normalized = email.toLowerCase();
+    const { data: emp } = await admin
+      .from('employees')
+      .select('phone')
+      .eq('email', normalized)
+      .maybeSingle();
+    const empPhone = (emp as { phone?: string | null } | null)?.phone;
+    if (empPhone) return empPhone;
+
+    const { data: prof } = await admin
+      .from('user_profiles')
+      .select('phone')
+      .eq('email', normalized)
+      .maybeSingle();
+    const profPhone = (prof as { phone?: string | null } | null)?.phone;
+    return profPhone ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export type OtpVerifyResult =

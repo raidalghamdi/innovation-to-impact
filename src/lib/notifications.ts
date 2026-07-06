@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { sendTransactional } from '@/lib/email';
+import { sendNotificationMessage } from '@/lib/messaging';
 import type { Role } from '@/lib/roles';
 
 // Notification kinds. Bilingual copy for each lives in messages/*.json under
@@ -44,14 +45,22 @@ async function resolveClient(client?: Client): Promise<Client | null> {
 async function recipientContact(
   supabase: Client,
   userId: string
-): Promise<{ email: string | null; locale: string }> {
+): Promise<{ email: string | null; phone: string | null; locale: 'ar' | 'en' }> {
   const { data } = await supabase
     .from('user_profiles')
-    .select('email, language_preference')
+    .select('email, phone, language_preference')
     .eq('id', userId)
     .maybeSingle();
-  const row = data as { email?: string | null; language_preference?: string | null } | null;
-  return { email: row?.email ?? null, locale: row?.language_preference === 'ar' ? 'ar' : 'en' };
+  const row = data as {
+    email?: string | null;
+    phone?: string | null;
+    language_preference?: string | null;
+  } | null;
+  return {
+    email: row?.email ?? null,
+    phone: row?.phone ?? null,
+    locale: row?.language_preference === 'ar' ? 'ar' : 'en',
+  };
 }
 
 type Copy = { title_ar: string; title_en: string; body_ar: string; body_en: string };
@@ -100,18 +109,32 @@ export async function createNotification(
       link: opts.link ?? null,
     });
 
-    if (opts.email) {
-      const { email, locale } = await recipientContact(supabase, userId);
-      if (email) {
-        await sendTransactional({
-          to: email,
-          subject_ar: copy.title_ar,
-          subject_en: copy.title_en,
-          body_ar: copy.body_ar,
-          body_en: copy.body_en,
-          locale,
-        });
-      }
+    // Look up email + phone + locale once, reuse for both channels.
+    const contact = await recipientContact(supabase, userId);
+
+    if (opts.email && contact.email) {
+      await sendTransactional({
+        to: contact.email,
+        subject_ar: copy.title_ar,
+        subject_en: copy.title_en,
+        body_ar: copy.body_ar,
+        body_en: copy.body_en,
+        locale: contact.locale,
+      });
+    }
+
+    // WhatsApp delivery is best-effort and fully gated by platform_settings
+    // (whatsapp_enabled + whatsapp_channels.notifications). It never throws.
+    if (contact.phone) {
+      await sendNotificationMessage({
+        phoneE164: contact.phone,
+        titleAr: copy.title_ar,
+        titleEn: copy.title_en,
+        bodyAr: copy.body_ar,
+        bodyEn: copy.body_en,
+        locale: contact.locale,
+        link: opts.link ?? null,
+      });
     }
   } catch (err) {
     // eslint-disable-next-line no-console
