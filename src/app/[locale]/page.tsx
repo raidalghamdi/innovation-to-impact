@@ -73,20 +73,21 @@ export default async function LandingPage({
               {t('landing.hero.stable')}
             </p>
 
+            {/* CTA order (UX note batch 07/26): learn first, then register. */}
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" variant="gold">
-                <Link href="/ideas/new">
-                  <Lightbulb className="h-5 w-5" />
-                  {t('landing.hero.ctaRegister')}
+                <a href="#about">
+                  {t('landing.hero.ctaLearn')}
                   <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-                </Link>
+                </a>
               </Button>
-              <a
-                href="#about"
+              <Link
+                href="/ideas/new"
                 className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-white/40 bg-white/5 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/15"
               >
-                {t('landing.hero.ctaLearn')}
-              </a>
+                <Lightbulb className="h-5 w-5" />
+                {t('landing.hero.ctaRegister')}
+              </Link>
             </div>
 
             <div className="mx-auto mt-10 max-w-xl">

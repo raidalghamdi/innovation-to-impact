@@ -104,7 +104,7 @@
     "recentActivities": "Active events and campaigns",
     "stagesTitle": "The idea journey across nine stages",
     "stagesSubtitle": "From strategic framework to impact measurement",
-    "heroEyebrow": "Innovation Platform",
+    "heroEyebrow": "Competition Program",
     "ctaIHaveIdea": "I have an idea",
     "ctaIHaveIdeaDesc": "Submit it and we'll guide it through the full review process",
     "ctaIHaveChallenge": "I have a challenge",
@@ -148,10 +148,10 @@
     "criteriaPreviewTitle": "How ideas are evaluated",
     "criteriaPreviewDesc": "Ideas are scored on how relevant, original, and feasible they are.",
     "heroPrimaryCta": "Submit your idea",
-    "sectionAbout": "About the Hackathon",
+    "sectionAbout": "About the Program",
     "sectionObjectives": "Objectives",
     "sectionTracks": "Tracks & Challenges",
-    "sectionDetails": "Hackathon Details",
+    "sectionDetails": "Program Details",
     "sectionNumbers": "By the Numbers",
     "sectionTimeline": "Timeline",
     "sectionCriteria": "Evaluation Criteria",
@@ -160,7 +160,7 @@
     "sectionPartners": "Success Partners",
     "sectionFaq": "FAQ",
     "about": {
-      "title": "About the Hackathon",
+      "title": "About the Program",
       "body": "Innovation to Impact brings together employees, entrepreneurs, and government entities to turn innovative ideas into practical solutions with real impact on the sector.",
       "mission": "Our mission: accelerate the journey from idea to execution through one unified, transparent platform."
     },
@@ -175,7 +175,7 @@
       ]
     },
     "details": {
-      "title": "Hackathon Details",
+      "title": "Program Details",
       "rulesTitle": "Rules",
       "rules": [
         "Register individually or as a team of up to 5 members",
@@ -359,7 +359,8 @@
     "ideaTitle": "Title",
     "category": "Category",
     "theme": "Strategic theme",
-    "activity": "Activity",
+    "activity": "Activity (optional)",
+    "activityHelp": "If your idea is tied to a specific program activity, pick it. Otherwise leave the default.",
     "submitter": "Submitter",
     "confidentiality": "Confidentiality",
     "problemStatement": "Problem statement",
@@ -534,7 +535,7 @@
     "conditions": "Participation conditions",
     "terms": {
       "title": "Ownership & IP Terms",
-      "subtitle": "Terms and conditions governing ownership of ideas submitted to the Innovation Platform of the General Authority for Competition.",
+      "subtitle": "Terms and conditions governing ownership of ideas submitted to the Competition Program of the General Authority for Competition.",
       "lastUpdated": "Last updated",
       "date": "29 July 2025",
       "sections": [
@@ -1368,6 +1369,7 @@
     "reviewNote": "Everything look right? Hit submit when you're ready.",
     "attachmentsHint": "Drag & drop files here, or click to browse. PDF, DOCX, PNG, JPG up to 10MB each.",
     "attachmentsLimit": "Up to {count} files, {mb}MB each.",
+    "attachmentsExamples": "Examples: a pitch deck, illustrative images/diagrams, supporting studies or reports, prototypes or mockups.",
     "attachmentsRemove": "Remove attachment",
     "attachmentsRejectType": "unsupported file type",
     "attachmentsRejectSize": "exceeds 10MB",
@@ -1386,8 +1388,8 @@
     "evaluator": "Evaluator",
     "judge": "Judge",
     "admin": "Administrator",
-    "selectRoleTitle": "Choose your role",
-    "selectRoleSubtitle": "You have more than one role on the platform. Pick the one you want to continue with.",
+    "selectRoleTitle": "Choose how you'll use the platform",
+    "selectRoleSubtitle": "Select your role to continue.",
     "code": {
       "innovator": "Innovator",
       "judge": "Judge",

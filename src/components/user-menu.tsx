@@ -3,16 +3,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { ChevronDown, User, Users, Star, Bell, Settings, LogOut } from 'lucide-react';
+import { ChevronDown, User, Users, Star, Bell, Settings, LogOut, LayoutDashboard, Lightbulb, PlusCircle } from 'lucide-react';
 import { signOutAction } from '@/app/[locale]/actions/auth';
 import { useLocale } from 'next-intl';
 
 // Compact right-side dropdown for authenticated non-admin roles (submitter /
 // evaluator / judge) using the Landing-style top nav instead of the sidebar.
+//
+// UX note (batch 07/26): unified across every dashboard page — user sees the
+// same items whether they're on the overview or a sub-page. "Profile" was
+// removed to eliminate the duplicate with "Settings".
 export function UserMenu({ displayName }: { displayName: string }) {
   const t = useTranslations('nav');
   const tc = useTranslations('common');
   const locale = useLocale();
+  const isAr = locale === 'ar';
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -25,11 +30,13 @@ export function UserMenu({ displayName }: { displayName: string }) {
   }, []);
 
   const items = [
-    { href: '/my-ideas', key: 'myIdeas', icon: User },
-    { href: '/team', key: 'team', icon: Users },
-    { href: '/profile/level', key: 'level', icon: Star, labelFallback: 'مستواي' },
-    { href: '/notifications', key: 'notifications', icon: Bell },
-    { href: '/settings', key: 'settings', icon: Settings },
+    { href: '/dashboard', icon: LayoutDashboard, ar: 'لوحة أعمالي', en: 'My Dashboard' },
+    { href: '/my-ideas', icon: Lightbulb, ar: 'أفكاري', en: 'My Ideas' },
+    { href: '/ideas/new', icon: PlusCircle, ar: 'قدّم فكرة', en: 'Submit Idea' },
+    { href: '/team', icon: Users, ar: 'فريقي', en: 'My Team' },
+    { href: '/profile/level', icon: Star, ar: 'مستواي', en: 'My Level' },
+    { href: '/notifications', icon: Bell, ar: 'الإشعارات', en: 'Notifications' },
+    { href: '/settings', icon: Settings, ar: 'الإعدادات', en: 'Settings' },
   ] as const;
 
   return (
@@ -61,7 +68,7 @@ export function UserMenu({ displayName }: { displayName: string }) {
                     className="flex items-center gap-2.5 px-4 py-2 text-sm text-foreground hover:bg-brand-teal-light/40"
                   >
                     <Icon className="h-4 w-4 text-brand-teal" />
-                    <span>{('labelFallback' in item && item.labelFallback) || t(item.key as any)}</span>
+                    <span>{isAr ? item.ar : item.en}</span>
                   </Link>
                 </li>
               );

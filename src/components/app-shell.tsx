@@ -47,7 +47,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isAdmin = role === 'admin';
 
-  // ── Non-admin roles: Landing-style top nav, no sidebar ──────────────────
+  // Landing-page anchors kept reachable from every authenticated sub-page,
+  // matching <LandingNav /> so users get the same primary navigation regardless
+  // of which shell is currently rendering.
+  const ANCHOR_NAV = [
+    { anchor: 'about', key: 'navAbout' },
+    { anchor: 'tracks', key: 'navTracks' },
+    { anchor: 'timeline', key: 'navTimeline' },
+    { anchor: 'criteria', key: 'navCriteria' },
+    { anchor: 'prizes', key: 'navPrizes' },
+    { anchor: 'faq', key: 'navFaq' },
+  ] as const;
+  const anchorHref = (anchor: string) => `/${locale}/#${anchor}`;
+
+  // Non-admin roles: Landing-style top nav + anchor row, no sidebar
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
@@ -57,25 +70,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           {t('common.skipToContent')}
         </a>
-        <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-3 border-b border-border bg-card/95 px-4 backdrop-blur sm:px-8">
-          <Link href="/dashboard" className="flex shrink-0 items-center gap-2.5">
-            <CoBrand className="h-12" locale={locale} />
-          </Link>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="hidden md:block">
-              <HeaderSearch />
+        <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
+          <div className="flex h-20 items-center justify-between gap-3 px-4 sm:px-8">
+            <Link href="/dashboard" className="flex shrink-0 items-center gap-2.5">
+              <CoBrand className="h-12" locale={locale} />
+            </Link>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="hidden md:block">
+                <HeaderSearch />
+              </div>
+              <Button asChild size="sm" variant="gold" className="hidden sm:inline-flex">
+                <Link href="/ideas/new">
+                  <Plus className="h-4 w-4" />
+                  {t('nav.submitIdea')}
+                </Link>
+              </Button>
+              <PointsBadge userId={userId} role={role} />
+              <NotificationBell userId={userId} />
+              <LanguageToggle />
+              {userId && <UserMenu displayName={displayName || t('common.logout')} />}
             </div>
-            <Button asChild size="sm" variant="gold" className="hidden sm:inline-flex">
-              <Link href="/ideas/new">
-                <Plus className="h-4 w-4" />
-                {t('nav.submitIdea')}
-              </Link>
-            </Button>
-            <PointsBadge userId={userId} role={role} />
-            <NotificationBell userId={userId} />
-            <LanguageToggle />
-            {userId && <UserMenu displayName={displayName || t('common.logout')} />}
           </div>
+          {/* Anchor row linking back to landing-page sections. */}
+          <nav
+            aria-label="Program sections"
+            className="scrollbar-none flex items-center gap-4 overflow-x-auto border-t border-border/60 bg-card/60 px-4 py-2 text-sm sm:justify-center sm:gap-6 sm:px-8"
+          >
+            {ANCHOR_NAV.map(({ anchor, key }) => (
+              <a
+                key={anchor}
+                href={anchorHref(anchor)}
+                className="shrink-0 whitespace-nowrap font-medium text-muted-foreground transition hover:text-brand-teal"
+              >
+                {t(`landing.${key}`)}
+              </a>
+            ))}
+          </nav>
         </header>
 
         <HitlBanner />

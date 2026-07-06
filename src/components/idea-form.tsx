@@ -630,6 +630,9 @@ export function IdeaForm({
                       </option>
                     ))}
                   </select>
+                  <p className="rounded-lg bg-brand-teal-light/40 p-2.5 text-xs text-brand-teal">
+                    {tf('activityHelp')}
+                  </p>
                 </div>
               </div>
 
@@ -675,6 +678,9 @@ export function IdeaForm({
                     count: ATTACH_MAX_FILES,
                     mb: ATTACH_MAX_BYTES / (1024 * 1024),
                   })}
+                </span>
+                <span className="mt-1 max-w-md text-[11px] leading-relaxed text-muted-foreground">
+                  {tf('attachmentsExamples')}
                 </span>
                 <Input
                   type="file"

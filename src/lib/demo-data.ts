@@ -107,7 +107,7 @@ export const themes: StrategicTheme[] = [
 ];
 
 export const activities: Activity[] = [
-  { id: 'a1', name_ar: 'هاكاثون المنافسة العادلة 2025', name_en: 'Fair Competition Hackathon 2025', type: 'hackathon', status: 'active', start_date: '2025-03-01', end_date: '2025-03-03', target_audience: 'startups, academics' },
+  { id: 'a1', name_ar: 'فعالية المنافسة العادلة 2025', name_en: 'Fair Competition Event 2025', type: 'hackathon', status: 'active', start_date: '2025-03-01', end_date: '2025-03-03', target_audience: 'startups, academics' },
   { id: 'a2', name_ar: 'برنامج الأفكار المستمر', name_en: 'Continuous Ideas Scheme', type: 'idea_scheme', status: 'active', start_date: '2025-01-01', end_date: null, target_audience: 'employees' },
 ];
 
