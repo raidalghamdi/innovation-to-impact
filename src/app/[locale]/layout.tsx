@@ -2,7 +2,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
-import { Inter, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import { routing } from '@/i18n/routing';
 import type { Metadata } from 'next';
 
@@ -17,9 +18,15 @@ const inter = Inter({
   display: 'swap',
 });
 
-const ibmArabic = IBM_Plex_Sans_Arabic({
-  subsets: ['arabic'],
-  weight: ['400', '500', '600', '700'],
+// Frutiger LT Arabic — Competition Innovation Program brand Arabic typeface.
+// Bound to --font-arabic (replaces IBM Plex Sans Arabic).
+const frutigerArabic = localFont({
+  src: [
+    { path: '../../../public/fonts/FrutigerLTArabic45Light.ttf', weight: '300', style: 'normal' },
+    { path: '../../../public/fonts/FrutigerLTArabic55Roman.ttf', weight: '400', style: 'normal' },
+    { path: '../../../public/fonts/FrutigerLTArabic65Bold.ttf', weight: '700', style: 'normal' },
+    { path: '../../../public/fonts/frutigerltarabic75black.ttf', weight: '900', style: 'normal' },
+  ],
   variable: '--font-arabic',
   display: 'swap',
 });
@@ -120,7 +127,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   // Arabic-first: `--font-body` drives the Tailwind `sans` stack, so AR renders
-  // in IBM Plex Sans Arabic and EN in Inter. Both font variables are still
+  // in Frutiger LT Arabic and EN in Inter. Both font variables are still
   // present on <html> for explicit `font-arabic` usage and glyph fallback.
   const bodyFont = locale === 'ar' ? 'var(--font-arabic)' : 'var(--font-inter)';
 
@@ -128,7 +135,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={dir}
-      className={`${inter.variable} ${ibmArabic.variable}`}
+      className={`${inter.variable} ${frutigerArabic.variable}`}
       style={{ '--font-body': bodyFont } as CSSProperties}
     >
       <body className="font-sans antialiased">

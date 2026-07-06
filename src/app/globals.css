@@ -79,4 +79,20 @@
   .section-title {
     @apply text-lg font-semibold text-brand-teal;
   }
+  /* Fluid hero headline sizing for the animated 3-word rotator. */
+  .hero-headline {
+    font-size: clamp(2.75rem, 9vw, 6rem);
+    line-height: 1.1;
+    font-weight: 900;
+  }
+}
+
+@layer utilities {
+  /* Respect device safe areas for fixed/sticky overlays (drawer, nav). */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
 }

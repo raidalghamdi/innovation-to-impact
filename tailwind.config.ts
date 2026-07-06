@@ -16,19 +16,22 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          // Innovation Program identity (Moon Raker + Swans Down + Humming Bird)
+          // Competition Innovation Program identity
+          // Moon Raker (primary navy) + Swans Down (cyan) + Humming Bird (gold)
           teal: '#1C4854',
-          'teal-dark': '#102E37',
+          'teal-dark': '#0F2D36',
           'teal-light': '#D8EFE5',
-          cyan: '#4ABFCD',
-          'cyan-light': '#CFEDF8',
-          // Darkened from #C8A23A to hit WCAG AA (4.5:1 on white); prior tone
-          // measured 2.42:1 which failed body-text contrast. Same hue family,
-          // brand identity preserved.
-          gold: '#8A6D0F',
+          moon: '#1C4854',
+          'moon-dark': '#0F2D36',
+          cyan: '#3FBAC8',
+          'cyan-alt': '#4ABFCD',
+          'cyan-light': '#7ED5DE',
+          gold: '#E0A82E',
           'gold-light': '#F5EDD6',
           cream: '#F7F5EF',
           ink: '#232529',
+          shark: '#232529',
+          'muted-dark': '#8FA9B4',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

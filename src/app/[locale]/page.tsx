@@ -1,19 +1,15 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
 import { Link } from '@/i18n/routing';
-import { CoBrand } from '@/components/logo';
-import { LanguageToggle } from '@/components/language-toggle';
 import { SiteFooter } from '@/components/site-footer';
 import { Countdown } from '@/components/countdown';
 import { StickyCta } from '@/components/sticky-cta';
 import { SkipToContent } from '@/components/skip-to-content';
 import { Button } from '@/components/ui/button';
-import { StatsBlock } from '@/components/stats-block';
 import { BackToTop } from '@/components/back-to-top';
-import { HeaderSearch } from '@/components/header-search';
 import { LandingNav } from '@/components/landing-nav';
+import { HeroRotator } from '@/components/hero-rotator';
 import { TimelineModern, stages as defaultStages } from '@/components/timeline-modern';
-import { getStats } from '@/lib/demo-data';
 import { fetchThemes } from '@/lib/data';
 import { pickFromRow } from '@/lib/i18n-content';
 import {
@@ -25,6 +21,8 @@ import {
   ChevronDown,
   CheckCircle2,
   ClipboardList,
+  ImageIcon,
+  PlayCircle,
 } from 'lucide-react';
 
 export default async function LandingPage({
@@ -37,14 +35,16 @@ export default async function LandingPage({
   // Touch request headers to force per-request rendering (dynamic countdown).
   headers();
   const t = await getTranslations();
-  const stats = getStats();
   const themes = await fetchThemes();
   const faqItems = (t.raw('faq.items') as { q: string; a: string }[]).slice(0, 8);
   const partners = (t.raw('partners.partners') as { name: string }[]);
   const objectives = t.raw('landing.objectives.items') as string[];
   const rules = t.raw('landing.details.rules') as string[];
-  const criteriaItems = t.raw('landing.criteria.items') as string[];
+  const criteriaItems = t.raw('landing.criteria.items') as { label: string; weight: number }[];
+  const criteriaTotal = criteriaItems.reduce((sum, c) => sum + c.weight, 0);
   const prizeItems = t.raw('landing.prizes.items') as { tier: string; value: string }[];
+  const heroWords = t.raw('landing.hero.words') as string[];
+  const previousGallery = t.raw('landing.previous.gallery') as string[];
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,34 +62,34 @@ export default async function LandingPage({
           <div className="pointer-events-none absolute -end-20 -top-20 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -start-20 h-80 w-80 rounded-full bg-brand-cyan-light/10 blur-3xl" />
 
-          <div className="relative mx-auto max-w-6xl px-4 sm:px-8">
-            <p className="text-xs font-semibold uppercase tracking-wider text-brand-cyan-light">
-              {t('landing.heroEyebrow')}
+          <div className="relative mx-auto max-w-6xl px-4 text-center sm:px-8">
+            <p className="inline-flex items-center gap-2 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 px-4 py-1.5 text-xs font-semibold tracking-wider text-brand-cyan-light sm:text-sm">
+              {t('landing.hero.eyebrow')}
             </p>
-            <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-              {t('landing.heroTitle')}
+            <h1 className="hero-headline mx-auto mt-6 max-w-4xl">
+              <HeroRotator words={heroWords} />
             </h1>
-            <p className="mt-4 max-w-2xl text-base text-white/85 sm:text-lg">
-              {t('landing.heroSubtitle')}
+            <p className="mx-auto mt-6 max-w-2xl text-base text-white/85 sm:text-lg lg:text-xl">
+              {t('landing.hero.stable')}
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" variant="gold">
                 <Link href="/ideas/new">
                   <Lightbulb className="h-5 w-5" />
-                  {t('landing.heroCtaRegister')}
+                  {t('landing.hero.ctaRegister')}
                   <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                 </Link>
               </Button>
               <a
                 href="#about"
-                className="inline-flex items-center gap-2 rounded-md border border-white/40 bg-white/5 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/15"
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-white/40 bg-white/5 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/15"
               >
-                {t('landing.learnMore')}
+                {t('landing.hero.ctaLearn')}
               </a>
             </div>
 
-            <div className="mt-10 max-w-xl">
+            <div className="mx-auto mt-10 max-w-xl">
               <Countdown />
             </div>
           </div>
@@ -97,16 +97,26 @@ export default async function LandingPage({
 
         {/* ===== 2. ABOUT ===== */}
         <section id="about" className="scroll-mt-24 py-16 sm:py-24">
-          <div className="mx-auto max-w-4xl px-4 sm:px-8">
-            <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
-              {t('landing.about.title')}
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              {t('landing.about.body')}
-            </p>
-            <p className="mt-3 rounded-2xl bg-brand-teal-light/40 p-4 text-sm font-medium text-brand-teal">
-              {t('landing.about.mission')}
-            </p>
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 px-4 sm:px-8 lg:grid-cols-2 lg:gap-12">
+            <div>
+              <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+                {t('landing.about.title')}
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                {t('landing.about.body')}
+              </p>
+              <p className="mt-4 rounded-2xl bg-brand-teal-light/40 p-4 text-sm font-medium text-brand-teal">
+                {t('landing.about.mission')}
+              </p>
+            </div>
+            {/* Image slot — replace with a real photo in public/brand/ later. */}
+            <div
+              role="img"
+              aria-label={t('landing.aboutImageAlt')}
+              className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-cyan/70"
+            >
+              <ImageIcon className="h-16 w-16 text-white/40" aria-hidden="true" />
+            </div>
           </div>
         </section>
 
@@ -192,19 +202,6 @@ export default async function LandingPage({
           </div>
         </section>
 
-        {/* ===== 6. NUMBERS ===== */}
-        <section id="numbers" className="scroll-mt-24 py-16 sm:py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
-                {t('landing.statsTitle')}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t('landing.statsSubtitle')}</p>
-            </div>
-            <StatsBlock stats={stats} locale={locale} />
-          </div>
-        </section>
-
         {/* ===== 7. TIMELINE ===== */}
         <section id="timeline" className="scroll-mt-24 border-y border-border bg-brand-teal-light/30 py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-8">
@@ -223,18 +220,39 @@ export default async function LandingPage({
             <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
               {t('landing.criteria.title')}
             </h2>
-            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="mt-8 space-y-3">
               {criteriaItems.map((item, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
+                  className="rounded-2xl border border-border bg-card p-4"
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-bold text-white">
-                    {i + 1}
-                  </span>
-                  <span className="text-sm font-medium text-foreground">{item}</span>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-bold text-white">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm font-medium text-foreground">{item.label}</span>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-brand-cyan/15 px-3 py-1 text-sm font-bold tabular-nums text-brand-teal">
+                      {item.weight}%
+                    </span>
+                  </div>
+                  <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-brand-cyan"
+                      style={{ width: `${item.weight}%` }}
+                    />
+                  </div>
                 </div>
               ))}
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-brand-teal bg-brand-teal-light/40 p-4">
+                <span className="text-sm font-bold text-brand-teal">
+                  {t('landing.criteria.totalLabel')}
+                </span>
+                <span className="rounded-full bg-brand-teal px-3 py-1 text-sm font-bold tabular-nums text-white">
+                  {criteriaTotal}%
+                </span>
+              </div>
             </div>
           </div>
         </section>
@@ -262,13 +280,40 @@ export default async function LandingPage({
 
         {/* ===== 10. PREVIOUS EDITION ===== */}
         <section id="previous" className="scroll-mt-24 py-16 sm:py-24">
-          <div className="mx-auto max-w-4xl px-4 text-center sm:px-8">
-            <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
-              {t('landing.previous.title')}
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm text-muted-foreground sm:text-base">
-              {t('landing.previous.body')}
-            </p>
+          <div className="mx-auto max-w-6xl px-4 sm:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
+                {t('landing.previous.title')}
+              </h2>
+              <p className="mt-4 text-sm text-muted-foreground sm:text-base">
+                {t('landing.previous.body')}
+              </p>
+            </div>
+
+            {/* Gallery */}
+            <h3 className="mt-10 text-lg font-semibold text-brand-teal">
+              {t('landing.previous.galleryTitle')}
+            </h3>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {previousGallery.map((caption, i) => (
+                <figure
+                  key={i}
+                  className="group flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-brand-teal/10 p-4 text-center transition hover:bg-brand-teal/15"
+                >
+                  <ImageIcon className="h-10 w-10 text-brand-teal/50" aria-hidden="true" />
+                  <figcaption className="text-sm font-medium text-brand-teal">{caption}</figcaption>
+                </figure>
+              ))}
+            </div>
+
+            {/* Video */}
+            <h3 className="mt-10 text-lg font-semibold text-brand-teal">
+              {t('landing.previous.videoLabel')}
+            </h3>
+            <div className="mt-4 flex aspect-video w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-teal-dark text-center">
+              <PlayCircle className="h-16 w-16 text-white/60" aria-hidden="true" />
+              <p className="text-sm font-medium text-white/80">{t('landing.previous.videoHint')}</p>
+            </div>
           </div>
         </section>
 

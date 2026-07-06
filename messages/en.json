@@ -95,7 +95,6 @@
     "heroSubtitle": "Submit your idea, get it evaluated by experts, and see it go from concept to something that actually changes how markets work.",
     "ctaSubmit": "Submit an idea",
     "ctaExplore": "Explore ideas",
-    "statsTitle": "Platform activity",
     "statIdeas": "Total ideas",
     "statPipeline": "Ideas in pipeline",
     "statPilots": "In pilot stage",
@@ -117,7 +116,6 @@
     "step3Title": "Turned into something real",
     "step3Desc": "If approved, it becomes a real project with a team, a budget, and a measured outcome.",
     "viewAllStages": "Explore all nine stages",
-    "statsSubtitle": "Last updated a few minutes ago",
     "lastUpdated": "Last updated",
     "minutesAgo": "a few minutes ago",
     "timeframeAll": "All time",
@@ -189,12 +187,14 @@
     },
     "criteria": {
       "title": "Evaluation Criteria",
+      "weightLabel": "Weight",
+      "totalLabel": "Total",
       "items": [
-        "Innovation & distinction",
-        "Feasibility",
-        "Expected impact",
-        "Economic viability",
-        "Alignment with the Authority’s goals"
+        { "label": "Innovation", "weight": 25 },
+        { "label": "Impact", "weight": 25 },
+        { "label": "Feasibility", "weight": 20 },
+        { "label": "Scalability", "weight": 20 },
+        { "label": "Presentation quality", "weight": 10 }
       ]
     },
     "prizes": {
@@ -217,8 +217,30 @@
     "previous": {
       "title": "Previous Edition",
       "body": "The previous edition saw wide participation, with several ideas adopted and actually implemented.",
-      "archiveLabel": "Browse the previous edition archive"
+      "archiveLabel": "Browse the previous edition archive",
+      "galleryTitle": "From the previous edition",
+      "videoLabel": "Previous edition video",
+      "videoHint": "The video will be added soon",
+      "gallery": [
+        "Opening ceremony",
+        "Workshops",
+        "Pitches",
+        "Judging panel",
+        "Winners",
+        "Group photo"
+      ]
     },
+    "hero": {
+      "eyebrow": "Competition Innovation Program",
+      "words": ["Innovate", "Compete", "Impact"],
+      "stable": "Your idea could change how competition works in Saudi Arabia",
+      "ctaRegister": "Register now",
+      "ctaLearn": "Learn about the program"
+    },
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "menuTitle": "Menu",
+    "aboutImageAlt": "Image from the Competition Innovation Program",
     "navAbout": "About",
     "navObjectives": "Objectives",
     "navTracks": "Tracks",
@@ -229,6 +251,16 @@
     "navPartners": "Partners",
     "heroCtaRegister": "Register Now",
     "searchPlaceholder": "Search the platform..."
+  },
+  "trackPage": {
+    "eyebrow": "Participation track",
+    "introTitle": "Overview",
+    "detailsTitle": "Details",
+    "challengesTitle": "Challenges",
+    "cta": "Submit your idea now",
+    "introBody": "This track aims to spark innovative solutions that address real challenges within its scope and help strengthen fair competition in the Kingdom.",
+    "detailsBody": "We are looking for practical, implementable and measurable ideas that are data-driven and mindful of the General Authority for Competition's regulatory framework. Ideas may be submitted individually or as a team, provided they clearly fall under this track.",
+    "eligibilityTitle": "Who can participate"
   },
   "stages": {
     "s0": "Strategic Framework",

@@ -7,75 +7,88 @@ export type TimelineStage = {
   id: string;
   titleAr: string;
   titleEn: string;
-  dateRange: string;
+  dateAr: string;
+  dateEn: string;
   descriptionAr: string;
   descriptionEn: string;
-  status: 'upcoming' | 'current' | 'complete';
+  tone: 'cyan' | 'gold';
 };
 
-// Default hackathon phases — realistic placeholder dates, editable later via CMS.
+// Competition Innovation Program hackathon timeline — 7 stops.
+// The first four (registration → workshops) are cyan; the final three
+// (hackathon → winners) are gold, matching the cyan→gold spine gradient.
 export const stages: TimelineStage[] = [
   {
-    id: 'registration',
-    titleAr: 'التسجيل',
-    titleEn: 'Registration',
-    dateRange: '١ - ١٥ سبتمبر ٢٠٢٦',
-    descriptionAr: 'فتح باب التسجيل للأفراد والفرق الراغبة في المشاركة في الهاكاثون.',
-    descriptionEn: 'Registration opens for individuals and teams wishing to participate.',
-    status: 'complete',
+    id: 'registration-open',
+    titleAr: 'فتح باب التسجيل',
+    titleEn: 'Registration opens',
+    dateAr: '١ أغسطس ٢٠٢٦',
+    dateEn: '1 August 2026',
+    descriptionAr: 'سجّل فرديًا أو ضمن فريق، واختر مسارك.',
+    descriptionEn: 'Register individually or as a team, and choose your track.',
+    tone: 'cyan',
   },
   {
-    id: 'idea-submission',
-    titleAr: 'تقديم الأفكار',
-    titleEn: 'Idea Submission',
-    dateRange: '١٦ سبتمبر - ٥ أكتوبر ٢٠٢٦',
-    descriptionAr: 'تقديم الأفكار المبتكرة عبر المنصة ضمن المسارات المعتمدة.',
-    descriptionEn: 'Submit innovative ideas through the platform under approved tracks.',
-    status: 'current',
+    id: 'registration-close',
+    titleAr: 'إغلاق التسجيل',
+    titleEn: 'Registration closes',
+    dateAr: '١٥ سبتمبر ٢٠٢٦',
+    dateEn: '15 September 2026',
+    descriptionAr: 'آخر موعد لاستقبال طلبات المشاركة.',
+    descriptionEn: 'Final deadline to receive participation requests.',
+    tone: 'cyan',
   },
   {
-    id: 'initial-evaluation',
-    titleAr: 'التقييم الأولي',
-    titleEn: 'Initial Evaluation',
-    dateRange: '٦ - ٢٠ أكتوبر ٢٠٢٦',
-    descriptionAr: 'مراجعة اللجنة الفنية للأفكار المقدّمة وفق معايير التقييم المعتمدة.',
-    descriptionEn: 'The technical committee reviews submitted ideas against approved criteria.',
-    status: 'upcoming',
+    id: 'teams-announced',
+    titleAr: 'إعلان الفرق المقبولة',
+    titleEn: 'Accepted teams announced',
+    dateAr: '٢٠ سبتمبر ٢٠٢٦',
+    dateEn: '20 September 2026',
+    descriptionAr: 'فرز الطلبات واختيار الفرق.',
+    descriptionEn: 'Applications are screened and teams selected.',
+    tone: 'cyan',
   },
   {
-    id: 'pitching',
-    titleAr: 'عرض الأفكار',
-    titleEn: 'Pitching',
-    dateRange: '٢٥ - ٢٧ أكتوبر ٢٠٢٦',
-    descriptionAr: 'عرض الأفكار المتأهلة أمام لجنة التحكيم في جلسات مباشرة.',
-    descriptionEn: 'Shortlisted ideas are pitched live in front of the judging panel.',
-    status: 'upcoming',
+    id: 'workshops',
+    titleAr: 'ورش التأهيل',
+    titleEn: 'Qualification workshops',
+    dateAr: '٢٥ سبت — ٨ أكت',
+    dateEn: '25 Sep — 8 Oct',
+    descriptionAr: 'ورش افتراضية في التفكير التصميمي.',
+    descriptionEn: 'Virtual workshops in design thinking.',
+    tone: 'cyan',
   },
   {
-    id: 'final-decision',
-    titleAr: 'القرار النهائي',
-    titleEn: 'Final Decision',
-    dateRange: '٢٨ - ٣٠ أكتوبر ٢٠٢٦',
-    descriptionAr: 'إعلان الأفكار الفائزة واختيار المشاريع المرشحة للتنفيذ.',
-    descriptionEn: 'Winning ideas are announced and projects selected for implementation.',
-    status: 'upcoming',
+    id: 'hackathon',
+    titleAr: 'أيام الهاكاثون · ٤٨ ساعة',
+    titleEn: 'Hackathon days · 48 hours',
+    dateAr: '١٢ — ١٣ أكتوبر',
+    dateEn: '12 — 13 October',
+    descriptionAr: 'ماراثون الابتكار الحضوري.',
+    descriptionEn: 'The on-site innovation marathon.',
+    tone: 'gold',
   },
   {
-    id: 'implementation',
-    titleAr: 'التنفيذ',
-    titleEn: 'Implementation',
-    dateRange: 'نوفمبر ٢٠٢٦ - وما بعده',
-    descriptionAr: 'بدء تنفيذ المشاريع الفائزة ومتابعة الأثر الفعلي على أرض الواقع.',
-    descriptionEn: 'Winning projects move into execution with real-world impact tracking.',
-    status: 'upcoming',
+    id: 'judging',
+    titleAr: 'التحكيم',
+    titleEn: 'Judging',
+    dateAr: '١٤ أكتوبر — صباحًا',
+    dateEn: '14 October — morning',
+    descriptionAr: 'عرض الحلول أمام لجنة التحكيم.',
+    descriptionEn: 'Solutions are presented to the judging panel.',
+    tone: 'gold',
+  },
+  {
+    id: 'winners',
+    titleAr: 'إعلان الفائزين',
+    titleEn: 'Winners announced',
+    dateAr: '١٤ أكتوبر — مساءً',
+    dateEn: '14 October — evening',
+    descriptionAr: 'حفل الختام والتتويج.',
+    descriptionEn: 'The closing and awards ceremony.',
+    tone: 'gold',
   },
 ];
-
-const STATUS_LABEL: Record<TimelineStage['status'], { ar: string; en: string }> = {
-  upcoming: { ar: 'قادم', en: 'Upcoming' },
-  current: { ar: 'جارٍ الآن', en: 'In progress' },
-  complete: { ar: 'مكتمل', en: 'Complete' },
-};
 
 export function TimelineModern({
   stages: stageList = stages,
@@ -107,84 +120,70 @@ export function TimelineModern({
   }, [stageList]);
 
   return (
-    <div ref={containerRef} className="relative mx-auto max-w-4xl">
-      {/* Vertical spine */}
+    <div ref={containerRef} className="relative mx-auto max-w-5xl">
+      {/* Vertical spine — cyan→gold gradient.
+          Mobile: near the inline-start edge. Desktop: centered. */}
       <div
         aria-hidden="true"
-        className="absolute start-1/2 top-0 hidden h-full w-0.5 -translate-x-1/2 bg-border sm:block md:start-1/2"
+        className="absolute inset-y-0 start-6 w-[3px] -translate-x-1/2 rounded-full rtl:translate-x-1/2 md:start-1/2"
+        style={{
+          background:
+            'linear-gradient(180deg, #3FBAC8 0%, #3FBAC8 57%, #E0A82E 57%, #E0A82E 100%)',
+        }}
       />
-      <div className="space-y-8">
+
+      <div className="space-y-6 md:space-y-4">
         {stageList.map((stage, idx) => {
-          const isLeft = idx % 2 === 0;
+          const isEnd = idx % 2 === 1; // desktop: alternate sides
           const title = isAr ? stage.titleAr : stage.titleEn;
+          const date = isAr ? stage.dateAr : stage.dateEn;
           const desc = isAr ? stage.descriptionAr : stage.descriptionEn;
-          const statusLabel = isAr ? STATUS_LABEL[stage.status].ar : STATUS_LABEL[stage.status].en;
+          const gold = stage.tone === 'gold';
 
           return (
             <div
               key={stage.id}
               data-timeline-item
-              className={cn(
-                'timeline-item relative flex flex-col gap-4 opacity-0 translate-y-4 transition-all duration-700 ease-out sm:flex-row sm:items-center',
-                isLeft ? 'sm:flex-row' : 'sm:flex-row-reverse'
-              )}
+              className="timeline-item relative translate-y-4 opacity-0 transition-all duration-700 ease-out md:flex md:min-h-[120px] md:items-center"
             >
-              {/* Dot */}
-              <div
+              {/* Node */}
+              <span
+                aria-hidden="true"
                 className={cn(
-                  'absolute start-1/2 top-2 z-10 hidden h-4 w-4 -translate-x-1/2 rounded-full border-4 border-background sm:block',
-                  stage.status === 'current'
-                    ? 'bg-brand-teal ring-4 ring-brand-teal/25'
-                    : stage.status === 'complete'
-                      ? 'bg-brand-teal/70'
-                      : 'bg-muted-foreground/40'
+                  'absolute start-6 top-6 z-10 h-4 w-4 -translate-x-1/2 rounded-full rtl:translate-x-1/2 md:start-1/2 md:top-1/2 md:h-5 md:w-5 md:-translate-y-1/2',
+                  gold
+                    ? 'bg-brand-gold shadow-[0_0_0_4px_#F7F5EF,0_0_16px_rgba(224,168,46,0.7)]'
+                    : 'bg-brand-cyan shadow-[0_0_0_4px_#F7F5EF,0_0_16px_rgba(63,186,200,0.6)]'
                 )}
               />
 
               {/* Card */}
-              <div className={cn('sm:w-1/2', isLeft ? 'sm:pe-10' : 'sm:ps-10')}>
+              <div
+                className={cn(
+                  'ps-14 md:w-1/2 md:ps-0',
+                  isEnd ? 'md:ms-auto md:ps-12' : 'md:pe-12'
+                )}
+              >
                 <div
                   className={cn(
-                    'rounded-2xl border p-5 shadow-sm transition',
-                    stage.status === 'current'
-                      ? 'border-brand-teal bg-brand-teal-light/30'
-                      : 'border-border bg-card'
+                    'rounded-2xl border bg-card p-5 shadow-sm transition',
+                    gold ? 'border-brand-gold/40' : 'border-brand-cyan/30'
                   )}
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                        stage.status === 'current'
-                          ? 'bg-brand-teal text-white'
-                          : stage.status === 'complete'
-                            ? 'bg-brand-teal/20 text-brand-teal'
-                            : 'bg-muted text-muted-foreground'
-                      )}
-                    >
-                      {idx + 1}
-                    </span>
-                    <h3 className="text-base font-semibold text-brand-teal">{title}</h3>
-                  </div>
-                  <p className="mt-1 text-xs font-medium text-muted-foreground">{stage.dateRange}</p>
-                  <p className="mt-2 text-sm text-muted-foreground">{desc}</p>
                   <span
                     className={cn(
-                      'mt-3 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold',
-                      stage.status === 'current'
-                        ? 'bg-brand-teal text-white'
-                        : stage.status === 'complete'
-                          ? 'bg-brand-teal-light text-brand-teal'
-                          : 'bg-muted text-muted-foreground'
+                      'block text-sm font-bold',
+                      gold ? 'text-brand-gold' : 'text-brand-cyan'
                     )}
                   >
-                    {statusLabel}
+                    {date}
                   </span>
+                  <h3 className="mt-1 text-base font-semibold text-brand-teal sm:text-lg">
+                    {title}
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{desc}</p>
                 </div>
               </div>
-
-              {/* Spacer for the other half on desktop */}
-              <div className="hidden sm:block sm:w-1/2" />
             </div>
           );
         })}

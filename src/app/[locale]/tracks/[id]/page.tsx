@@ -1,10 +1,14 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { PublicShell } from '@/components/public-shell';
+import { Button } from '@/components/ui/button';
 import { fetchThemes, fetchIdeas, fetchCompliance } from '@/lib/data';
 import { pickFromRow } from '@/lib/i18n-content';
+import { getTrackChallenges } from '@/lib/tracks';
 import { Link } from '@/i18n/routing';
-import { Target, Lightbulb } from 'lucide-react';
+import { Target, Lightbulb, ArrowRight, CheckCircle2 } from 'lucide-react';
+
+const ACCENTS = ['cyan', 'gold', 'teal'] as const;
 
 export default async function TrackDetailPage({
   params,
@@ -20,24 +24,72 @@ export default async function TrackDetailPage({
     fetchCompliance(),
   ]);
 
-  const theme = themes.find((th) => th.id === id);
+  const themeIndex = themes.findIndex((th) => th.id === id);
+  const theme = themeIndex >= 0 ? themes[themeIndex] : undefined;
   if (!theme) notFound();
 
+  const accent = ACCENTS[(themeIndex < 0 ? 0 : themeIndex) % ACCENTS.length];
+  const accentText =
+    accent === 'gold' ? 'text-brand-gold' : accent === 'teal' ? 'text-brand-teal' : 'text-brand-cyan';
+  const accentBar =
+    accent === 'gold' ? 'bg-brand-gold' : accent === 'teal' ? 'bg-brand-teal' : 'bg-brand-cyan';
+
   const trackIdeas = ideas.filter((i: any) => i.strategic_theme_id === id).slice(0, 6);
+  const challenges = getTrackChallenges(id, locale);
+  const trackName = pickFromRow(theme, 'name', locale);
 
   return (
     <PublicShell locale={locale}>
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal">
-          <Target className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-brand-teal sm:text-2xl">
-            {pickFromRow(theme, 'name', locale)}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{theme.description}</p>
-        </div>
+      {/* Track hero */}
+      <div className="rounded-3xl border border-border bg-gradient-to-br from-brand-teal to-brand-teal-dark p-6 text-white sm:p-8">
+        <p className={`inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold ${accentText}`}>
+          <Target className="h-3.5 w-3.5" aria-hidden="true" />
+          {t('trackPage.eyebrow')}
+        </p>
+        <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{trackName}</h1>
+        <p className="mt-2 max-w-2xl text-sm text-white/85 sm:text-base">{theme.description}</p>
+        <span className={`mt-4 block h-1 w-16 rounded-full ${accentBar}`} aria-hidden="true" />
       </div>
+
+      {/* نبذة — Overview */}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-brand-teal">{t('trackPage.introTitle')}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{t('trackPage.introBody')}</p>
+      </section>
+
+      {/* تفاصيل — Details */}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-brand-teal">{t('trackPage.detailsTitle')}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{t('trackPage.detailsBody')}</p>
+      </section>
+
+      {/* التحديات — Challenges */}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-brand-teal">{t('trackPage.challengesTitle')}</h2>
+        <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {challenges.map((c, i) => (
+            <li
+              key={i}
+              className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4"
+            >
+              <CheckCircle2 className={`mt-0.5 h-5 w-5 shrink-0 ${accentText}`} aria-hidden="true" />
+              <span className="text-sm text-foreground">{c}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* CTA */}
+      <section className="mt-8 flex flex-col items-start gap-4 rounded-3xl border border-brand-teal/30 bg-brand-teal-light/40 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-base font-semibold text-brand-teal">{trackName}</p>
+        <Button asChild size="lg" variant="gold">
+          <Link href={`/ideas/new?track=${id}` as any}>
+            <Lightbulb className="h-5 w-5" />
+            {t('trackPage.cta')}
+            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+          </Link>
+        </Button>
+      </section>
 
       {/* Related ideas under this track */}
       {trackIdeas.length > 0 && (
