@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyOtp } from '@/lib/otp';
+import { getPlatformSetting } from '@/lib/db-roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,15 +13,25 @@ export const dynamic = 'force-dynamic';
 // via @supabase/ssr route-handler client). On first login for an imported
 // employee, mirrors innovation.employee_roles -> innovation.user_roles and
 // stamps first_login_at + linked_user_id (see brief §10.2 step 8).
+//
+// When innovation.platform_settings.otp_required = false, `code` is optional
+// and OTP verification is skipped. The setting is re-read here (source of
+// truth) so a client cannot bypass OTP by lying about being skipped.
 export async function POST(req: NextRequest) {
   const { email, password, code } = await req.json().catch(() => ({}));
-  if (!email || !password || !code) {
+  if (!email || !password) {
     return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
   }
 
-  const result = await verifyOtp(email, 'login', code);
-  if (!result.ok) {
-    return NextResponse.json({ error: result.reason }, { status: 401 });
+  const otpRequired = await getPlatformSetting<boolean>('otp_required', true);
+  if (otpRequired) {
+    if (!code) {
+      return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
+    }
+    const result = await verifyOtp(email, 'login', code);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.reason }, { status: 401 });
+    }
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

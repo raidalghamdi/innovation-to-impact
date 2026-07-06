@@ -48,6 +48,30 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         setError(data?.error === 'invalid_credentials' ? t('invalidCredentials') : t('loginFailed'));
         return;
       }
+
+      // OTP disabled server-side (admin toggle) — POST straight to
+      // login-verify without a code. The server re-reads the setting, so
+      // this cannot be spoofed by the client.
+      if (data.otpSkipped) {
+        const verifyRes = await fetch('/api/auth/login-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const verifyData = await verifyRes.json();
+        if (!verifyRes.ok) {
+          setError(t('loginFailed'));
+          return;
+        }
+        if (verifyData.needsRoleSelection) {
+          router.push(('/select-role') as any);
+        } else {
+          router.push(('/dashboard') as any);
+        }
+        router.refresh();
+        return;
+      }
+
       // Password is kept only in sessionStorage for the brief hop to the
       // verify step (never written to the URL/query string) — login-verify
       // needs it to establish the real Supabase session after OTP success.

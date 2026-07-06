@@ -38,6 +38,20 @@ export async function POST(req: NextRequest) {
   const internalDomain = await getPlatformSetting<string>('internal_email_domain', 'gac.gov.sa');
   const isInternal = email.toLowerCase().endsWith(`@${internalDomain}`);
 
+  // Admin can disable OTP entirely (demo / testing shortcut). When disabled,
+  // login-start does not create a code and the client is instructed to POST
+  // straight to /api/auth/login-verify (which re-reads the setting server-
+  // side, so the client cannot bypass by lying).
+  const otpRequired = await getPlatformSetting<boolean>('otp_required', true);
+  if (!otpRequired) {
+    return NextResponse.json({
+      ok: true,
+      email,
+      isInternal,
+      otpSkipped: true,
+    });
+  }
+
   const otp = await createOtp(email, 'login');
   if (!otp) {
     return NextResponse.json({ error: 'otp_failed' }, { status: 500 });

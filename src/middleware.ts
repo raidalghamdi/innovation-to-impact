@@ -85,7 +85,44 @@ export async function middleware(request: NextRequest) {
       pathnameWithoutLocale === '/admin/analytics' ||
       pathnameWithoutLocale.startsWith('/admin/analytics/');
     const analyticsAllowed = isAnalyticsRoute && (role === 'admin' || role === 'judge');
-    if (!analyticsAllowed && !canAccess(role, pathnameWithoutLocale)) {
+    const isAdminRoute =
+      pathnameWithoutLocale === '/admin' || pathnameWithoutLocale.startsWith('/admin/');
+    let hasDbAdminRole = false;
+    // src/middleware.ts — Batch B multi-role fix: legacy `resolveRoleSync`
+    // only reads user_profiles.role via JWT metadata/email, so DB-only
+    // admins (assigned solely through innovation.user_roles, e.g. via the
+    // new /admin/users role editor) were being redirected away from /admin/*
+    // before the page component's isCurrentUserAdmin() check could even run.
+    // This does ONE extra query, scoped to /admin/* only, against the
+    // `innovation` schema (schema config untouched elsewhere), to check for
+    // a DB-driven `admin` role. Additive only — legacy admins still pass via
+    // resolveRoleSync above with zero extra queries on non-admin routes.
+    if (isAdminRoute && role !== 'admin' && user.id) {
+      try {
+        const innovationClient = createServerClient(supabaseUrl, supabaseKey, {
+          db: { schema: 'innovation' },
+          cookies: {
+            getAll() {
+              return request.cookies.getAll();
+            },
+            setAll() {
+              // no-op: this client is read-only for a role check
+            },
+          },
+        });
+        const { data: roleRows } = await innovationClient
+          .from('v_user_roles')
+          .select('role_code')
+          .eq('user_id', user.id)
+          .eq('role_active', true)
+          .eq('role_code', 'admin')
+          .limit(1);
+        hasDbAdminRole = !!roleRows && roleRows.length > 0;
+      } catch {
+        hasDbAdminRole = false;
+      }
+    }
+    if (!analyticsAllowed && !hasDbAdminRole && !canAccess(role, pathnameWithoutLocale)) {
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}${ROLE_HOME[role]}`;
       url.search = '';
