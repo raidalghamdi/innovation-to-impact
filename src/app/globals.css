@@ -87,21 +87,22 @@
     @apply text-lg font-semibold text-brand-teal;
   }
   /* Fluid hero headline sizing for the animated 3-word rotator.
-     Arabic glyphs have tall diacritics (dots above ب/ت/ن) and descenders
-     (ج/ح/ع/ي tails) that get clipped when line-height is too tight or
-     when a transformed `bg-clip-text` span is used. We add generous
-     line-height + vertical padding so nothing is cropped on mobile. */
+     Arabic glyphs have tall stacked diacritics (أ + shadda + kasra combos
+     like أِّ in "أثِّر") and descenders (ج/ح/ع/ي tails). With a tight
+     line-height plus `bg-clip-text` and transformed animation spans, the
+     line-box clips these marks. Give it plenty of vertical breathing room. */
   .hero-headline {
     font-size: clamp(2.75rem, 9vw, 6rem);
-    line-height: 1.35;
+    line-height: 1.8;
     font-weight: 900;
-    padding-block: 0.15em;
+    padding-block: 0.35em;
+    overflow: visible;
   }
   .hero-headline > span,
   .hero-headline > span > span {
-    /* Ensure the animated rotator span itself doesn't clip descenders. */
-    padding-block: 0.1em;
+    /* The bg-clip-text span itself must let ascenders/descenders escape. */
     line-height: inherit;
+    overflow: visible;
   }
 }
 
