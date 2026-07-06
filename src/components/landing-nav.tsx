@@ -133,7 +133,7 @@ export function LandingNav({ locale }: { locale: string }) {
         role="dialog"
         aria-modal="true"
         aria-label={t('landing.menuTitle')}
-        className={`fixed inset-y-0 end-0 z-50 flex h-full w-[85%] max-w-sm flex-col bg-card shadow-2xl transition-transform duration-300 ease-out pt-safe pb-safe lg:hidden ${
+        className={`fixed inset-y-0 end-0 z-50 flex h-screen w-[85%] max-w-sm flex-col bg-card shadow-2xl transition-transform duration-300 ease-out pt-safe pb-safe lg:hidden ${
           open ? 'translate-x-0' : 'ltr:translate-x-full rtl:-translate-x-full'
         }`}
       >
