@@ -92,10 +92,15 @@ export function GacLogo({
 // - white=true  → fully-white variants of both marks (for dark surfaces: hero, footer)
 // - white=false → natural colored variants (for light headers, cards)
 //
-// Both marks are now cropped to content in the source files with similar
-// horizontal aspect ratios (Program 2.79:1, GAC 3.24:1). Sharing the same
-// `h-*` class produces visually balanced logos where neither dwarfs the
-// other — no scale hacks needed.
+// Visual balancing:
+// Even after cropping both source files to content, the two marks have
+// different aspect ratios (Program 2.79:1, GAC 3.24:1). Applying the same
+// `h-*` class makes GAC render ~16% wider than the Program mark — visually
+// unbalanced (GAC appears "bigger"). To match perceived size, we scale GAC
+// down so its rendered WIDTH matches the Program mark's width:
+//   GAC height factor = 2.79 / 3.24 ≈ 0.86
+// Implemented with a plain CSS transform + origin so layout math stays with
+// the height-based `className`, and neither PNG needs regenerating.
 export function CoBrand({
   className = 'h-12',
   white = false,
@@ -110,7 +115,8 @@ export function CoBrand({
     <span className="inline-flex items-center gap-3">
       <Logo className={className} white={white} locale={locale} showWordmark={false} />
       <span className={`h-8 w-px ${dividerColor}`} aria-hidden="true" />
-      <GacLogo className={className} white={white} />
+      {/* Scale GAC ~14% down so its width visually matches the Program mark. */}
+      <GacLogo className={`${className} scale-[0.86] origin-center`} white={white} />
     </span>
   );
 }

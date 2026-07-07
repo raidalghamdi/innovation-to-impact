@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from '@/i18n/routing';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2 } from 'lucide-react';
-import { signIpTerms } from './actions';
+import { signIpTermsAndRedirect } from './actions';
 
 export function SignIpTermsButton({
   ideaId,
@@ -20,12 +20,14 @@ export function SignIpTermsButton({
   alreadySignedLabel: string;
 }) {
   const router = useRouter();
-  const [signed, setSigned] = useState(alreadySigned);
+  const params = useParams<{ locale: string }>();
+  const locale = params?.locale ?? 'ar';
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Already signed on a prior visit — offer a link forward to the confirmation.
-  if (signed && alreadySigned) {
+  // Already signed on a prior visit — offer a link forward to the
+  // confirmation. Use a full-URL push so middleware sees fresh cookies.
+  if (alreadySigned) {
     return (
       <div className="flex flex-col items-center gap-3">
         <div className="flex items-center gap-2 rounded-md bg-brand-teal/10 px-4 py-2.5 text-sm font-medium text-brand-teal">
@@ -34,20 +36,10 @@ export function SignIpTermsButton({
         </div>
         <Button
           size="lg"
-          onClick={() => router.push(`/ideas/${ideaId}/submitted` as any)}
+          onClick={() => router.push(`/${locale}/ideas/${ideaId}/submitted`)}
         >
           {signedConfirmLabel}
         </Button>
-      </div>
-    );
-  }
-
-  // Just signed in this session — show a brief confirmation while redirecting.
-  if (signed) {
-    return (
-      <div className="flex items-center gap-2 rounded-md bg-brand-teal/10 px-4 py-2.5 text-sm font-medium text-brand-teal">
-        <CheckCircle2 className="h-4 w-4" />
-        {signedConfirmLabel}
       </div>
     );
   }
@@ -60,14 +52,12 @@ export function SignIpTermsButton({
         onClick={() =>
           startTransition(async () => {
             setError(null);
-            const res = await signIpTerms(ideaId);
-            if (res.ok) {
-              setSigned(true);
-              // After successful signature, take the user to the
-              // "idea received" confirmation page so they see a clear
-              // acknowledgement instead of just an inline success pill.
-              router.push(`/ideas/${ideaId}/submitted` as any);
-            } else {
+            // Server action does the redirect itself — the redirect
+            // response carries any refreshed Supabase auth cookies, so the
+            // middleware on the confirmation page sees a valid session.
+            const res = await signIpTermsAndRedirect(ideaId, locale);
+            // We only reach this line on error — successful redirect throws.
+            if (res && !res.ok) {
               setError(res.error ?? 'error');
             }
           })

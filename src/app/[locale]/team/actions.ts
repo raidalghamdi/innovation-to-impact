@@ -27,6 +27,20 @@ export async function createTeam(formData: FormData): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: 'unauthenticated' };
 
+  // Guard: a user is only expected to belong to a single team. If they already
+  // have a membership, treat re-submission as a no-op success — without this,
+  // clicking "create" again would spawn duplicate teams (each team gets its
+  // own leader row via a DB trigger).
+  const { data: existing } = await supabase
+    .from('team_members')
+    .select('team_id')
+    .eq('user_id', user.id)
+    .limit(1);
+  if (existing && existing.length > 0) {
+    revalidatePath('/[locale]/team', 'page');
+    return { ok: true };
+  }
+
   const { error } = await supabase.from('teams').insert({
     name_ar: nameAr,
     name_en: nameEn,

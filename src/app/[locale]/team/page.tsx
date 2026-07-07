@@ -6,7 +6,7 @@ import { Link } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { pickFromRow } from '@/lib/i18n-content';
-import { Users, Lightbulb } from 'lucide-react';
+import { Users, Lightbulb, CheckCircle2, AlertCircle } from 'lucide-react';
 import {
   createTeam,
   inviteMember,
@@ -16,16 +16,22 @@ import {
 } from './actions';
 
 // <form action={...}> requires a void-returning action; our server actions
-// return ActionResult (used by client components elsewhere), so these thin
-// wrappers adapt them for plain uncontrolled forms. Errors still surface via
-// server-side console logging inside each action.
+// return ActionResult, so these thin wrappers adapt them for plain uncontrolled
+// forms AND redirect back to /team with a status flag so the page can surface
+// success/failure feedback to the user.
+import { redirect } from 'next/navigation';
+
 async function createTeamForm(formData: FormData): Promise<void> {
   'use server';
-  await createTeam(formData);
+  const locale = String(formData.get('__locale') ?? 'ar');
+  const res = await createTeam(formData);
+  redirect(`/${locale}/team?status=${res.ok ? 'ok' : 'error'}&msg=created`);
 }
 async function inviteMemberForm(teamId: string, formData: FormData): Promise<void> {
   'use server';
-  await inviteMember(teamId, formData);
+  const locale = String(formData.get('__locale') ?? 'ar');
+  const res = await inviteMember(teamId, formData);
+  redirect(`/${locale}/team?status=${res.ok ? 'ok' : 'error'}&msg=invited`);
 }
 async function revokeInvitationForm(invitationId: string): Promise<void> {
   'use server';
@@ -42,10 +48,13 @@ async function leaveTeamForm(teamId: string): Promise<void> {
 
 export default async function TeamPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<{ status?: string; msg?: string }>;
 }) {
   const { locale } = await params;
+  const sp = (await searchParams) ?? {};
   setRequestLocale(locale);
   const t = await getTranslations('team');
   const user = await getCurrentUser();
@@ -58,12 +67,17 @@ export default async function TeamPage({
   let isLeader = false;
 
   if (supabase && user) {
-    // Find team via membership (covers both leader and regular members).
-    const { data: membership } = await supabase
+    // Find team via membership. A user may (rarely) be in multiple teams from
+    // legacy data — always pick the most recent so the page still renders
+    // instead of falling back to the "create team" form.
+    const { data: memberships } = await supabase
       .from('team_members')
-      .select('team_id, role, teams(*)')
+      .select('team_id, role, joined_at, teams(*)')
       .eq('user_id', user.id)
-      .maybeSingle();
+      .order('joined_at', { ascending: false })
+      .limit(1);
+
+    const membership = memberships?.[0] ?? null;
 
     if (membership?.team_id) {
       team = (membership as any).teams ?? null;
@@ -88,11 +102,25 @@ export default async function TeamPage({
     <AppShell>
       <PageHeader title={t('title')} />
 
+      {sp.status === 'ok' && (
+        <div className="mt-4 flex items-center gap-2 rounded-md bg-brand-teal/10 px-4 py-3 text-sm font-medium text-brand-teal">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>{sp.msg === 'invited' ? t('invited') : t('created')}</span>
+        </div>
+      )}
+      {sp.status === 'error' && (
+        <div className="mt-4 flex items-center gap-2 rounded-md bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+          <AlertCircle className="h-4 w-4" />
+          <span>{t('genericError')}</span>
+        </div>
+      )}
+
       {!team && (
         <Card className="mt-6">
           <CardContent className="p-6">
             <h2 className="text-lg font-semibold text-brand-teal">{t('createTitle')}</h2>
             <form action={createTeamForm} className="mt-4 space-y-4">
+              <input type="hidden" name="__locale" value={locale} />
               <div>
                 <label className="text-sm font-medium text-foreground" htmlFor="name_ar">
                   {t('nameArLabel')}
@@ -208,6 +236,7 @@ export default async function TeamPage({
 
                 <h3 className="mt-6 text-base font-semibold text-brand-teal">{t('inviteTitle')}</h3>
                 <form action={inviteMemberForm.bind(null, team.id)} className="mt-3 flex gap-2">
+                  <input type="hidden" name="__locale" value={locale} />
                   <input
                     type="email"
                     name="email"
