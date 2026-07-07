@@ -44,7 +44,8 @@
     "tracks": "المسارات",
     "usersManagement": "المستخدمون",
     "rolesCatalog": "كتالوج الأدوار",
-    "backup": "النسخ الاحتياطي"
+    "backup": "النسخ الاحتياطي",
+    "startEvaluation": "ابدأ التقييم"
   },
   "common": {
     "search": "بحث",
@@ -474,7 +475,56 @@
       "dueLabel": "الاستحقاق",
       "overdue": "متأخرة"
     },
-    "evidenceTitle": "الأدلة الداعمة"
+    "evidenceTitle": "الأدلة الداعمة",
+    "kpi": {
+      "assigned": "الأفكار المسندة",
+      "completed": "تم تقييمها",
+      "remaining": "المتبقية",
+      "progress": "نسبة الإنجاز",
+      "nextDue": "أقرب موعد"
+    },
+    "statusSubmitted": "تم التقييم",
+    "statusInProgress": "قيد التقييم",
+    "statusNotStarted": "لم يبدأ",
+    "statusNeedsReview": "يحتاج مراجعة",
+    "startEvaluation": "ابدأ التقييم",
+    "queueHeading": "الأفكار ({count})",
+    "untitled": "بدون عنوان",
+    "openFullIdea": "فتح صفحة الفكرة الكاملة",
+    "innovationScore": "درجة الابتكار",
+    "filters": {
+      "title": "الفلترة",
+      "status": "الحالة",
+      "track": "المسار",
+      "due": "التاريخ",
+      "search": "بحث",
+      "searchPlaceholder": "ابحث بالعنوان أو الرقم…",
+      "allStatuses": "كل الحالات",
+      "allTracks": "كل المسارات",
+      "allDates": "كل التواريخ",
+      "dueToday": "خلال اليوم",
+      "dueWeek": "خلال أسبوع",
+      "overdue": "متأخرة"
+    },
+    "meta": {
+      "track": "المسار",
+      "team": "الفريق",
+      "attachments": "المرفقات",
+      "video": "الفيديو",
+      "videoYes": "مرفق",
+      "videoNo": "لا يوجد",
+      "problem": "المشكلة",
+      "solution": "الحل المقترح",
+      "benefits": "الفوائد المتوقعة"
+    },
+    "notif": {
+      "pending": "لديك {count} فكرة بانتظار التقييم",
+      "nextDue": "أقرب موعد بعد {days} يوم ({date})",
+      "overdue": "لديك أفكار متأخرة منذ {days} يوم",
+      "overdueBadge": "{count} متأخرة",
+      "allDone": "اكتمل تقييم جميع الأفكار المسندة إليك. عمل رائع!",
+      "autosaved": "تم حفظ التقييم تلقائياً"
+    }
   },
   "committee": {
     "title": "قرارات اللجنة",

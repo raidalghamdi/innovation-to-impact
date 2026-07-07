@@ -644,6 +644,231 @@ export async function fetchEvaluatorOptions(): Promise<EvaluatorOption[]> {
 
 // Evaluator's pending queue, ordered by soonest due first. Empty when
 // Supabase is unconfigured and no matching demo rows exist for the user.
+// ---------------------------------------------------------------------------
+// Evaluator dashboard aggregate
+//
+// Returns everything the /evaluation page needs in a single call so the page
+// can render KPIs, the queue, and per-idea metadata without N extra roundtrips.
+// Shape kept flat so the client component doesn't need extra typing gymnastics.
+// ---------------------------------------------------------------------------
+export type EvaluatorQueueItem = {
+  assignment_id: string;
+  idea_id: string;
+  idea_code: string | null;
+  title_ar: string | null;
+  title_en: string | null;
+  problem_statement: string | null;
+  proposed_solution: string | null;
+  expected_benefits: string | null;
+  theme_id: string | null;
+  theme_ar: string | null;
+  theme_en: string | null;
+  team_id: string | null;
+  team_ar: string | null;
+  team_en: string | null;
+  submitted_at: string | null;
+  due_at: string | null;
+  assignment_status: string;
+  eval_status: 'not_started' | 'in_progress' | 'submitted' | 'needs_review';
+  eval_id: string | null;
+  total_score: number | null;
+  innovation_score: number | null;
+  submitted_evaluation_at: string | null;
+  attachments_count: number;
+  has_video: boolean;
+};
+
+export type EvaluatorDashboard = {
+  totalAssigned: number;
+  completed: number;
+  inProgress: number;
+  notStarted: number;
+  needsReview: number;
+  completionPct: number;
+  nextDueAt: string | null;
+  overdueCount: number;
+  queue: EvaluatorQueueItem[];
+};
+
+export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<EvaluatorDashboard> {
+  // Pull assignments (both pending + completed) so we can show progress. Then
+  // enrich each row with idea + theme + team + evaluation state.
+  let assignments: Assignment[] = [];
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('assignments')
+        .select(ASSIGNMENT_SELECT)
+        .eq('evaluator_id', evaluatorId)
+        .in('status', ['pending', 'completed'])
+        .order('due_at', { ascending: true });
+      logSupabaseError('fetchEvaluatorDashboard.assignments', error);
+      assignments = (data as Assignment[]) ?? [];
+
+      const ideaIds = Array.from(new Set(assignments.map((a) => a.idea_id)));
+
+      // Idea details (rich fields for the card)
+      const ideaById = new Map<string, any>();
+      if (ideaIds.length) {
+        const { data: ideas } = await supabase
+          .from('ideas')
+          .select('id, code, title_ar, title_en, problem_statement, proposed_solution, expected_benefits, strategic_theme_id, team_id, submitted_at, attachments')
+          .in('id', ideaIds);
+        for (const i of (ideas as any[]) ?? []) ideaById.set(i.id, i);
+      }
+
+      // Theme names
+      const themeIds = Array.from(new Set([...ideaById.values()].map((i: any) => i.strategic_theme_id).filter(Boolean)));
+      const themeById = new Map<string, { title_ar: string; title_en: string }>();
+      if (themeIds.length) {
+        const { data: themes } = await supabase
+          .from('themes')
+          .select('id, title_ar, title_en')
+          .in('id', themeIds);
+        for (const t of (themes as any[]) ?? []) themeById.set(t.id, t);
+      }
+
+      // Team names
+      const teamIds = Array.from(new Set([...ideaById.values()].map((i: any) => i.team_id).filter(Boolean)));
+      const teamById = new Map<string, { name_ar: string | null; name_en: string | null }>();
+      if (teamIds.length) {
+        const { data: teams } = await supabase
+          .from('teams')
+          .select('id, name_ar, name_en')
+          .in('id', teamIds);
+        for (const tm of (teams as any[]) ?? []) teamById.set(tm.id, tm);
+      }
+
+      // Evaluations by this evaluator for these ideas
+      const evalByIdea = new Map<string, any>();
+      if (ideaIds.length) {
+        const { data: evals } = await supabase
+          .from('evaluations')
+          .select('id, idea_id, criteria_scores, total_score, submitted_at, recommendation')
+          .eq('evaluator_id', evaluatorId)
+          .in('idea_id', ideaIds);
+        for (const e of (evals as any[]) ?? []) evalByIdea.set(e.idea_id, e);
+      }
+
+      // Video presence
+      const videoIdeaIds = new Set<string>();
+      if (ideaIds.length) {
+        const { data: vids } = await supabase
+          .from('video_assets')
+          .select('idea_id')
+          .in('idea_id', ideaIds);
+        for (const v of (vids as any[]) ?? []) if (v.idea_id) videoIdeaIds.add(v.idea_id);
+      }
+
+      const queue: EvaluatorQueueItem[] = assignments.map((a) => {
+        const idea = ideaById.get(a.idea_id) ?? {};
+        const theme = idea.strategic_theme_id ? themeById.get(idea.strategic_theme_id) : null;
+        const team = idea.team_id ? teamById.get(idea.team_id) : null;
+        const ev = evalByIdea.get(a.idea_id);
+        const innovationScore = ev?.criteria_scores?.innovation ?? ev?.criteria_scores?.innovation_score ?? null;
+        let evalStatus: EvaluatorQueueItem['eval_status'] = 'not_started';
+        if (ev?.submitted_at) evalStatus = 'submitted';
+        else if (ev?.criteria_scores && Object.keys(ev.criteria_scores).length > 0) evalStatus = 'in_progress';
+        if (a.status === 'pending' && a.due_at && new Date(a.due_at).getTime() < Date.now() && evalStatus !== 'submitted') {
+          evalStatus = 'needs_review';
+        }
+        return {
+          assignment_id: a.id,
+          idea_id: a.idea_id,
+          idea_code: idea.code ?? null,
+          title_ar: idea.title_ar ?? null,
+          title_en: idea.title_en ?? null,
+          problem_statement: idea.problem_statement ?? null,
+          proposed_solution: idea.proposed_solution ?? null,
+          expected_benefits: idea.expected_benefits ?? null,
+          theme_id: idea.strategic_theme_id ?? null,
+          theme_ar: theme?.title_ar ?? null,
+          theme_en: theme?.title_en ?? null,
+          team_id: idea.team_id ?? null,
+          team_ar: team?.name_ar ?? null,
+          team_en: team?.name_en ?? null,
+          submitted_at: idea.submitted_at ?? null,
+          due_at: a.due_at,
+          assignment_status: a.status,
+          eval_status: evalStatus,
+          eval_id: ev?.id ?? null,
+          total_score: ev?.total_score ?? null,
+          innovation_score: innovationScore != null ? Number(innovationScore) : null,
+          submitted_evaluation_at: ev?.submitted_at ?? null,
+          attachments_count: Array.isArray(idea.attachments) ? idea.attachments.length : 0,
+          has_video: videoIdeaIds.has(a.idea_id),
+        };
+      });
+
+      const completed = queue.filter((q) => q.eval_status === 'submitted').length;
+      const inProgress = queue.filter((q) => q.eval_status === 'in_progress').length;
+      const notStarted = queue.filter((q) => q.eval_status === 'not_started').length;
+      const needsReview = queue.filter((q) => q.eval_status === 'needs_review').length;
+      const pendingDueDates = queue
+        .filter((q) => q.eval_status !== 'submitted' && q.due_at)
+        .map((q) => q.due_at as string)
+        .sort();
+      const overdueCount = pendingDueDates.filter((d) => new Date(d).getTime() < Date.now()).length;
+
+      return {
+        totalAssigned: queue.length,
+        completed,
+        inProgress,
+        notStarted,
+        needsReview,
+        completionPct: queue.length === 0 ? 0 : Math.round((completed / queue.length) * 100),
+        nextDueAt: pendingDueDates[0] ?? null,
+        overdueCount,
+        queue,
+      };
+    }
+  }
+
+  // Demo fallback
+  const rows = DEMO_ASSIGNMENTS.filter((a) => a.evaluator_id === evaluatorId);
+  const enriched = enrichFromDemo(rows);
+  const queue: EvaluatorQueueItem[] = enriched.map((a) => ({
+    assignment_id: a.id,
+    idea_id: a.idea_id,
+    idea_code: a.idea_code,
+    title_ar: a.idea_title_ar,
+    title_en: a.idea_title_en,
+    problem_statement: null,
+    proposed_solution: null,
+    expected_benefits: null,
+    theme_id: null,
+    theme_ar: null,
+    theme_en: null,
+    team_id: null,
+    team_ar: null,
+    team_en: null,
+    submitted_at: null,
+    due_at: a.due_at,
+    assignment_status: a.status,
+    eval_status: a.status === 'completed' ? 'submitted' : (a.due_at && new Date(a.due_at).getTime() < Date.now() ? 'needs_review' : 'not_started'),
+    eval_id: null,
+    total_score: null,
+    innovation_score: null,
+    submitted_evaluation_at: null,
+    attachments_count: 0,
+    has_video: false,
+  }));
+  const completed = queue.filter((q) => q.eval_status === 'submitted').length;
+  const pendingDueDates = queue.filter((q) => q.eval_status !== 'submitted' && q.due_at).map((q) => q.due_at as string).sort();
+  return {
+    totalAssigned: queue.length,
+    completed,
+    inProgress: queue.filter((q) => q.eval_status === 'in_progress').length,
+    notStarted: queue.filter((q) => q.eval_status === 'not_started').length,
+    needsReview: queue.filter((q) => q.eval_status === 'needs_review').length,
+    completionPct: queue.length === 0 ? 0 : Math.round((completed / queue.length) * 100),
+    nextDueAt: pendingDueDates[0] ?? null,
+    overdueCount: pendingDueDates.filter((d) => new Date(d).getTime() < Date.now()).length,
+    queue,
+  };
+}
+
 export async function fetchMyQueue(evaluatorId: string): Promise<AssignmentRow[]> {
   if (isSupabaseConfigured()) {
     const supabase = await createClient();

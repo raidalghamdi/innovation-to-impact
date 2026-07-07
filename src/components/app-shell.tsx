@@ -145,12 +145,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="hidden 2xl:block">
               <HeaderSearch />
             </div>
-            <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
-              <Link href="/ideas/new">
-                <Plus className="h-4 w-4" />
-                <span className="ms-1 hidden xl:inline">{t('nav.submitIdea')}</span>
-              </Link>
-            </Button>
+            {/* Role-scoped primary action: evaluators/judges get "Start
+                evaluation" instead of "Submit idea" — because a reviewer's
+                primary action is opening their queue, not creating an idea. */}
+            {(role === 'evaluator' || role === 'judge') ? (
+              <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
+                <Link href={role === 'judge' ? '/committee' : '/evaluation'}>
+                  <Plus className="h-4 w-4" />
+                  <span className="ms-1 hidden xl:inline">{t('nav.startEvaluation')}</span>
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
+                <Link href="/ideas/new">
+                  <Plus className="h-4 w-4" />
+                  <span className="ms-1 hidden xl:inline">{t('nav.submitIdea')}</span>
+                </Link>
+              </Button>
+            )}
             <PointsBadge userId={userId} role={role} />
             <NotificationBell userId={userId} />
             <LanguageToggle />

@@ -44,7 +44,8 @@
     "tracks": "Tracks",
     "usersManagement": "Users",
     "rolesCatalog": "Roles Catalog",
-    "backup": "Backup"
+    "backup": "Backup",
+    "startEvaluation": "Start evaluation"
   },
   "common": {
     "search": "Search",
@@ -474,6 +475,55 @@
     "myQueue": {
       "dueLabel": "Due",
       "overdue": "Overdue"
+    },
+    "kpi": {
+      "assigned": "Assigned ideas",
+      "completed": "Evaluated",
+      "remaining": "Remaining",
+      "progress": "Progress",
+      "nextDue": "Next due"
+    },
+    "statusSubmitted": "Submitted",
+    "statusInProgress": "In progress",
+    "statusNotStarted": "Not started",
+    "statusNeedsReview": "Needs review",
+    "startEvaluation": "Start evaluation",
+    "queueHeading": "Ideas ({count})",
+    "untitled": "Untitled",
+    "openFullIdea": "Open full idea page",
+    "innovationScore": "Innovation score",
+    "filters": {
+      "title": "Filter",
+      "status": "Status",
+      "track": "Track",
+      "due": "Date",
+      "search": "Search",
+      "searchPlaceholder": "Search by title or code…",
+      "allStatuses": "All statuses",
+      "allTracks": "All tracks",
+      "allDates": "All dates",
+      "dueToday": "Due today",
+      "dueWeek": "Due this week",
+      "overdue": "Overdue"
+    },
+    "meta": {
+      "track": "Track",
+      "team": "Team",
+      "attachments": "Attachments",
+      "video": "Video",
+      "videoYes": "Attached",
+      "videoNo": "None",
+      "problem": "Problem",
+      "solution": "Proposed solution",
+      "benefits": "Expected benefits"
+    },
+    "notif": {
+      "pending": "You have {count} ideas awaiting evaluation",
+      "nextDue": "Next due in {days} days ({date})",
+      "overdue": "You have ideas overdue by {days} days",
+      "overdueBadge": "{count} overdue",
+      "allDone": "All assigned evaluations complete. Great work!",
+      "autosaved": "Evaluation autosaved"
     }
   },
   "committee": {
