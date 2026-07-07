@@ -117,36 +117,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           {t('common.skipToContent')}
         </a>
-        <header className="sticky top-0 z-30 flex h-24 items-center justify-between gap-3 border-b border-border bg-card/95 px-4 pt-safe backdrop-blur sm:h-28 sm:px-8">
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 pt-safe backdrop-blur sm:h-24 sm:gap-3 sm:px-6 xl:h-28 xl:px-8">
           <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={t('nav.home')}>
-            <CoBrand className="h-14 sm:h-16" locale={locale} />
+            {/* Matches LandingNav sizing exactly (see logo.tsx sizing notes). */}
+            <CoBrand className="h-10 sm:h-12 xl:h-14 2xl:h-16" locale={locale} />
           </Link>
 
           {/* Desktop anchor nav (≥xl) — same links as LandingNav */}
           <nav
-            className="hidden items-center gap-1 xl:flex"
+            className="hidden items-center gap-0.5 xl:flex 2xl:gap-1"
             aria-label="Program sections"
           >
             {ANCHOR_NAV.map(({ anchor, key }) => (
               <a
                 key={anchor}
                 href={anchorHref(anchor)}
-                className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
+                className="rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal 2xl:px-3"
               >
                 {t(`landing.${key}`)}
               </a>
             ))}
           </nav>
 
-          {/* Actions (right on LTR, left on RTL) */}
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <div className="hidden lg:block">
+          {/* Actions. Search hidden until 2xl to keep parity with LandingNav
+              and avoid the same overflow issue that clipped the language button. */}
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 xl:gap-2">
+            <div className="hidden 2xl:block">
               <HeaderSearch />
             </div>
             <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
               <Link href="/ideas/new">
                 <Plus className="h-4 w-4" />
-                <span className="ms-1 hidden lg:inline">{t('nav.submitIdea')}</span>
+                <span className="ms-1 hidden xl:inline">{t('nav.submitIdea')}</span>
               </Link>
             </Button>
             <PointsBadge userId={userId} role={role} />
