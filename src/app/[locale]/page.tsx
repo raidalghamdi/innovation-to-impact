@@ -92,18 +92,13 @@ export default async function LandingPage({
   const rules = t.raw('landing.details.rules') as string[];
   const criteriaItems = t.raw('landing.criteria.items') as { label: string; description?: string; weight: number }[];
   const criteriaTotal = criteriaItems.reduce((sum, c) => sum + c.weight, 0);
-  const criteriaMaxWeight = Math.max(...criteriaItems.map((c) => c.weight), 1);
-  // Palette — kept identical to the pre-existing icon-badge/segment colors
-  // so the badges in the list continue to color-match their bar.
+  // Fixed brand-aligned palette — each criterion gets a stable identity color.
   const CRIT_COLORS = ['#01696F', '#20808D', '#D19900', '#A84B2F', '#7A7974'];
   const CRIT_ICONS: LucideIcon[] = [Sparkles, Rocket, Wrench, Expand, Presentation];
   const critSegments = criteriaItems.map((item, i) => ({
     ...item,
     color: CRIT_COLORS[i % CRIT_COLORS.length],
     Icon: CRIT_ICONS[i % CRIT_ICONS.length],
-    // Bar height scales to the largest criterion so the ranking of
-    // importance reads at a glance without pie-chart math.
-    barPct: Math.round((item.weight / criteriaMaxWeight) * 100),
   }));
   const prizeItems = t.raw('landing.prizes.items') as { tier: string; value: string }[];
   const heroWords = t.raw('landing.hero.words') as string[];
@@ -143,8 +138,6 @@ export default async function LandingPage({
             <p className="inline-flex items-center gap-2 rounded-full border border-brand-cyan/40 bg-brand-teal-dark/50 px-4 py-1.5 text-xs font-semibold tracking-wider text-brand-cyan-light backdrop-blur-sm sm:text-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
               {t('landing.hero.eyebrow')}
-              <span className="hidden text-white/50 sm:inline">—</span>
-              <span className="hidden text-white/60 sm:inline">{t('landing.hero.partner')}</span>
             </p>
 
             <h1 className="hero-headline mx-auto max-w-2xl [text-shadow:0_2px_16px_rgba(0,0,0,0.35)]">
@@ -337,114 +330,76 @@ export default async function LandingPage({
               </p>
             </div>
 
-            <div className="mt-12 grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,_1fr)_minmax(0,_1.15fr)] lg:gap-14">
-              {/* Weighted bar chart — elegant vertical bars, one per criterion.
-                  Height is proportional to weight (relative to the heaviest),
-                  which reads as a ranking at a glance. Segment colors mirror
-                  the badges in the list so the eye connects them.
-                  Full-width on mobile, side-panel on desktop — fully responsive. */}
-              <figure className="relative mx-auto w-full max-w-md" aria-label={t('landing.criteria.title')}>
-                <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm sm:p-6">
-                  {/* Bars row */}
-                  <div
-                    className="flex h-52 items-end justify-between gap-2 sm:h-64 sm:gap-3"
-                    role="list"
+            {/* Full-width list — the weights are fixed policy (25/25/20/20/10),
+                not live data. A chart implies dynamism the values don't have,
+                so we drop the side panel and let the list breathe across the
+                full column. A single "100% — full score" badge below anchors
+                the total without pretending to be a visualization. */}
+            <ol className="mt-12 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+              {critSegments.map((s, i) => {
+                const Icon = s.Icon;
+                return (
+                  <li
+                    key={i}
+                    className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition hover:border-white/25 hover:bg-white/[0.08] sm:p-6"
                   >
-                    {critSegments.map((s, i) => (
+                    {/* Left color bar tied to the criterion identity */}
+                    <span
+                      className="absolute inset-y-0 start-0 w-1"
+                      style={{ backgroundColor: s.color }}
+                      aria-hidden="true"
+                    />
+                    <div className="flex items-start gap-4">
                       <div
-                        key={i}
-                        role="listitem"
-                        className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2"
-                      >
-                        {/* Percentage label above bar */}
-                        <span className="text-xs font-bold tabular-nums text-white sm:text-sm">
-                          {s.weight}%
-                        </span>
-                        {/* Bar */}
-                        <div
-                          className="w-full origin-bottom animate-[criteria-draw_1s_ease-out_both] overflow-hidden rounded-t-lg ring-1 ring-inset ring-white/10 transition-[filter] group-hover:brightness-110"
-                          style={{
-                            height: `${s.barPct}%`,
-                            background: `linear-gradient(180deg, ${s.color} 0%, ${s.color}CC 100%)`,
-                            animationDelay: `${i * 0.12}s`,
-                            boxShadow: `0 -1px 0 ${s.color}66 inset, 0 12px 24px -12px ${s.color}88`,
-                          }}
-                          aria-hidden="true"
-                        />
-                        {/* Index chip under bar */}
-                        <span
-                          className="flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-semibold tabular-nums text-white ring-1 ring-inset ring-white/10"
-                          style={{ backgroundColor: `${s.color}33` }}
-                        >
-                          {i + 1}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Baseline */}
-                  <div className="mt-1 h-px w-full bg-gradient-to-r from-transparent via-white/25 to-transparent" aria-hidden="true" />
-                  {/* Total footer */}
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-[11px] uppercase tracking-widest text-white/50 sm:text-xs">
-                      {t('landing.criteria.centerLabel')}
-                    </span>
-                    <span className="text-2xl font-bold tabular-nums text-white sm:text-3xl">
-                      {criteriaTotal}
-                      <span className="text-brand-gold">%</span>
-                    </span>
-                  </div>
-                </div>
-              </figure>
-
-              {/* Criteria list */}
-              <ol className="space-y-3">
-                {critSegments.map((s, i) => {
-                  const Icon = s.Icon;
-                  return (
-                    <li
-                      key={i}
-                      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition hover:border-white/25 hover:bg-white/10 sm:p-5"
-                    >
-                      {/* Left color bar tied to the segment */}
-                      <span
-                        className="absolute inset-y-0 start-0 w-1"
-                        style={{ backgroundColor: s.color }}
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-white/10"
+                        style={{ backgroundColor: `${s.color}22`, color: s.color }}
                         aria-hidden="true"
-                      />
-                      <div className="flex items-start gap-4">
-                        <div
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-white/10"
-                          style={{ backgroundColor: `${s.color}22`, color: s.color }}
-                          aria-hidden="true"
-                        >
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-3">
-                            <h3 className="truncate text-base font-semibold text-white sm:text-lg">
-                              <span className="me-2 text-xs font-medium text-white/40 tabular-nums">
-                                {String(i + 1).padStart(2, '0')}
-                              </span>
-                              {s.label}
-                            </h3>
-                            <span
-                              className="shrink-0 rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums text-white"
-                              style={{ backgroundColor: s.color }}
-                            >
-                              {s.weight}%
-                            </span>
-                          </div>
-                          {s.description && (
-                            <p className="mt-1 text-xs text-white/70 sm:text-sm">
-                              {s.description}
-                            </p>
-                          )}
-                        </div>
+                      >
+                        <Icon className="h-6 w-6" />
                       </div>
-                    </li>
-                  );
-                })}
-              </ol>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className="truncate text-base font-semibold text-white sm:text-lg">
+                            <span className="me-2 text-xs font-medium text-white/40 tabular-nums">
+                              {String(i + 1).padStart(2, '0')}
+                            </span>
+                            {s.label}
+                          </h3>
+                          <span
+                            className="shrink-0 rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums text-white"
+                            style={{ backgroundColor: s.color }}
+                          >
+                            {s.weight}%
+                          </span>
+                        </div>
+                        {s.description && (
+                          <p className="mt-2 text-sm leading-relaxed text-white/75">
+                            {s.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+
+            {/* Full-score anchor — replaces the chart. Reads as a seal: the
+                five criteria sum to 100%, nothing more. */}
+            <div className="mt-10 flex justify-center">
+              <div className="inline-flex items-center gap-4 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3 backdrop-blur-sm">
+                <span
+                  className="h-2 w-2 rounded-full bg-brand-gold"
+                  aria-hidden="true"
+                />
+                <span className="text-sm font-medium uppercase tracking-widest text-white/60">
+                  {t('landing.criteria.centerLabel')}
+                </span>
+                <span className="text-2xl font-bold tabular-nums text-white sm:text-3xl">
+                  {criteriaTotal}
+                  <span className="text-brand-gold">%</span>
+                </span>
+              </div>
             </div>
           </div>
         </section>
