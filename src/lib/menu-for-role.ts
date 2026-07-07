@@ -18,6 +18,8 @@ import {
   Star,
   LayoutDashboard,
   Settings as SettingsIcon,
+  Users as UsersIcon,
+  Mail,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -88,6 +90,8 @@ const JUDGE_ITEMS: MenuItem[] = [
 
 const ADMIN_ITEMS: MenuItem[] = [
   { href: '/admin/users', labelAr: 'إدارة المستخدمين', labelEn: 'User Management', icon: UserCog },
+  { href: '/admin/roster', labelAr: 'الأدوار والدعوات', labelEn: 'Roster & Invitations', icon: UsersIcon },
+  { href: '/admin/invitation-templates', labelAr: 'قوالب الدعوات', labelEn: 'Invitation Templates', icon: Mail },
   { href: '/admin/roles', labelAr: 'كتالوج الأدوار', labelEn: 'Roles Catalog', icon: Shapes },
   { href: '/admin/employees/import', labelAr: 'استيراد الموظفين', labelEn: 'Employees Import', icon: Upload },
   { href: '/admin/analytics', labelAr: 'تحليلات المشرف', labelEn: 'Analytics', icon: FileBarChart },
