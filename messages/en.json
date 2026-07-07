@@ -190,27 +190,35 @@
     },
     "criteria": {
       "title": "Evaluation Criteria",
+      "eyebrow": "How ideas are scored",
+      "lead": "Every submission is measured against five weighted criteria — balancing boldness of the idea with how well it can actually ship and shift the market.",
       "weightLabel": "Weight",
       "totalLabel": "Total",
+      "centerLabel": "perfect score",
       "items": [
         {
           "label": "Innovation",
+          "description": "How novel and differentiated the idea is versus what already exists.",
           "weight": 25
         },
         {
           "label": "Impact",
+          "description": "Expected value to competition, consumers, and the wider economy.",
           "weight": 25
         },
         {
           "label": "Feasibility",
+          "description": "Clarity of the plan, realism of the resources and the timeline.",
           "weight": 20
         },
         {
           "label": "Scalability",
+          "description": "Ability to expand geographically or across sectors without rebuilding.",
           "weight": 20
         },
         {
           "label": "Presentation quality",
+          "description": "Sharpness of the summary, strength of the evidence, and pitch quality.",
           "weight": 10
         }
       ]

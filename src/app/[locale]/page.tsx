@@ -24,7 +24,56 @@ import {
   ClipboardList,
   ImageIcon,
   PlayCircle,
+  Globe,
+  Store,
+  Scale,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  Leaf,
+  Gavel,
+  Cpu,
+  Handshake,
+  BarChart3,
+  Rocket,
+  Wrench,
+  Expand,
+  Presentation,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+// Map a strategic theme to a meaningful icon. We resolve by:
+//   1. Known seed IDs (stable across environments — fastest, exact),
+//   2. Keyword match on the Arabic/English name (covers new themes that
+//      admins might add via the CMS without needing a code change),
+//   3. Fallback to Target.
+function pickThemeIcon(theme: { id?: string; name_ar?: string | null; name_en?: string | null }): LucideIcon {
+  const idTail = (theme.id ?? '').slice(-4).toLowerCase();
+  const byId: Record<string, LucideIcon> = {
+    '0001': Globe,        // Digital-markets competition
+    '0002': Store,        // SMEs empowerment
+    '0003': Scale,        // Regulatory efficiency & transparency
+  };
+  if (byId[idTail]) return byId[idTail];
+
+  const hay = `${theme.name_ar ?? ''} ${theme.name_en ?? ''}`.toLowerCase();
+  const contains = (...words: string[]) => words.some((w) => hay.includes(w));
+
+  if (contains('digital', 'رقم', 'e-commerce', 'platform', 'منص')) return Globe;
+  if (contains('sme', 'منش', 'small', 'صغير', 'startup', 'رياد')) return Store;
+  if (contains('regulator', 'تنظيم', 'transpar', 'شفاف', 'compliance', 'التزام')) return Scale;
+  if (contains('protect', 'حماية', 'consumer', 'مستهلك')) return ShieldCheck;
+  if (contains('innovat', 'ابتكار', 'creativ', 'إبداع')) return Sparkles;
+  if (contains('collab', 'تعاون', 'partner', 'شراك')) return Handshake;
+  if (contains('data', 'بيانات', 'analytic', 'تحليل')) return BarChart3;
+  if (contains('ai', 'artificial', 'ذكاء', 'tech', 'تقن', 'technology')) return Cpu;
+  if (contains('sustain', 'استدام', 'green', 'أخضر', 'environment', 'بيئ')) return Leaf;
+  if (contains('law', 'قانون', 'enforce', 'إنفاذ')) return Gavel;
+  if (contains('empower', 'تمكين', 'growth', 'نمو', 'accelerat')) return Rocket;
+  if (contains('citizen', 'مواطن', 'community', 'مجتمع', 'people', 'أفراد')) return Users;
+
+  return Target;
+}
 
 export default async function LandingPage({
   params,
@@ -41,8 +90,32 @@ export default async function LandingPage({
   const partners = (t.raw('partners.partners') as { name: string }[]);
   const objectives = t.raw('landing.objectives.items') as string[];
   const rules = t.raw('landing.details.rules') as string[];
-  const criteriaItems = t.raw('landing.criteria.items') as { label: string; weight: number }[];
+  const criteriaItems = t.raw('landing.criteria.items') as { label: string; description?: string; weight: number }[];
   const criteriaTotal = criteriaItems.reduce((sum, c) => sum + c.weight, 0);
+
+  // Donut chart geometry — shared radius so all segments live on one ring.
+  // We render the ring in a 200×200 viewBox; r=80 gives 502.65 circumference.
+  const CRIT_R = 80;
+  const CRIT_C = 2 * Math.PI * CRIT_R;
+  // Palette — draws from the chart color sequence but stays inside the brand.
+  // Ordered by descending visual weight to match the descending criteria weights.
+  const CRIT_COLORS = ['#01696F', '#20808D', '#D19900', '#A84B2F', '#7A7974'];
+  const CRIT_ICONS = [Sparkles, Rocket, Wrench, Expand, Presentation];
+
+  // Compute per-segment dash offset so the ring reads clockwise from 12 o'clock.
+  let critAccum = 0;
+  const critSegments = criteriaItems.map((item, i) => {
+    const startPct = critAccum / criteriaTotal;
+    critAccum += item.weight;
+    const lengthPct = item.weight / criteriaTotal;
+    return {
+      ...item,
+      color: CRIT_COLORS[i % CRIT_COLORS.length],
+      Icon: CRIT_ICONS[i % CRIT_ICONS.length],
+      dashArray: `${CRIT_C * lengthPct} ${CRIT_C * (1 - lengthPct)}`,
+      dashOffset: -CRIT_C * startPct,
+    };
+  });
   const prizeItems = t.raw('landing.prizes.items') as { tier: string; value: string }[];
   const heroWords = t.raw('landing.hero.words') as string[];
   const previousGallery = t.raw('landing.previous.gallery') as string[];
@@ -176,14 +249,16 @@ export default async function LandingPage({
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {themes.slice(0, 6).map((theme) => (
+              {themes.slice(0, 6).map((theme) => {
+                const Icon = pickThemeIcon(theme);
+                return (
                 <Link
                   key={theme.id}
                   href={`/tracks/${theme.id}` as any}
                   className="group flex h-full flex-col rounded-3xl border border-border bg-card p-6 transition hover:border-brand-teal/40 hover:shadow-md"
                 >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal">
-                    <Target className="h-5 w-5" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-teal-light text-brand-teal transition group-hover:bg-brand-teal group-hover:text-white">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <h3 className="mt-4 text-base font-semibold text-brand-teal">
                     {pickFromRow(theme, 'name', locale)}
@@ -192,7 +267,8 @@ export default async function LandingPage({
                     {theme.description}
                   </p>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
@@ -244,45 +320,130 @@ export default async function LandingPage({
           </div>
         </section>
 
-        {/* ===== 8. CRITERIA ===== */}
-        <section id="criteria" className="scroll-mt-24 py-16 sm:py-24">
-          <div className="mx-auto max-w-4xl px-4 sm:px-8">
-            <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
-              {t('landing.criteria.title')}
-            </h2>
-            <div className="mt-8 space-y-3">
-              {criteriaItems.map((item, i) => (
-                <div
-                  key={i}
-                  className="rounded-2xl border border-border bg-card p-4"
+        {/* ===== 8. CRITERIA (redesigned July 2026) ===== */}
+        {/* Full-bleed dark section with a live donut chart on one side and
+            a rich list of icon‑badged criteria on the other. Segments in the
+            donut match the badges by color so the eye connects them
+            immediately. All animation is CSS — respects reduced-motion via
+            the global stylesheet. */}
+        <section
+          id="criteria"
+          className="relative scroll-mt-24 overflow-hidden bg-gradient-to-br from-brand-teal-dark via-[#0c3a3f] to-[#0a1e21] py-20 text-white sm:py-28"
+        >
+          {/* Ambient glows */}
+          <div className="pointer-events-none absolute -top-24 end-1/4 h-72 w-72 rounded-full bg-brand-cyan/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 start-1/4 h-72 w-72 rounded-full bg-brand-gold/15 blur-3xl" />
+
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="inline-flex items-center gap-2 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-brand-cyan-light sm:text-xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
+                {t('landing.criteria.eyebrow')}
+              </p>
+              <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl">
+                {t('landing.criteria.title')}
+              </h2>
+              <p className="mt-3 text-sm text-white/70 sm:text-base">
+                {t('landing.criteria.lead')}
+              </p>
+            </div>
+
+            <div className="mt-12 grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,_1fr)_minmax(0,_1.15fr)] lg:gap-14">
+              {/* Donut chart */}
+              <div className="relative mx-auto aspect-square w-full max-w-sm">
+                <svg
+                  viewBox="0 0 200 200"
+                  className="h-full w-full -rotate-90"
+                  aria-hidden="true"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-bold text-white">
-                        {i + 1}
-                      </span>
-                      <span className="text-sm font-medium text-foreground">{item.label}</span>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-brand-cyan/15 px-3 py-1 text-sm font-bold tabular-nums text-brand-teal">
-                      {item.weight}%
-                    </span>
-                  </div>
-                  <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-brand-cyan"
-                      style={{ width: `${item.weight}%` }}
+                  {/* Track */}
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r={CRIT_R}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="18"
+                  />
+                  {/* Segments */}
+                  {critSegments.map((s, i) => (
+                    <circle
+                      key={i}
+                      cx="100"
+                      cy="100"
+                      r={CRIT_R}
+                      fill="none"
+                      stroke={s.color}
+                      strokeWidth="18"
+                      strokeLinecap="butt"
+                      strokeDasharray={s.dashArray}
+                      strokeDashoffset={s.dashOffset}
+                      className="origin-center animate-[criteria-draw_1.2s_ease-out_both]"
+                      style={{ animationDelay: `${i * 0.12}s` }}
                     />
-                  </div>
+                  ))}
+                </svg>
+                {/* Center content — total score */}
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
+                  <span className="text-5xl font-bold tabular-nums text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] sm:text-6xl">
+                    {criteriaTotal}
+                    <span className="text-brand-gold">%</span>
+                  </span>
+                  <span className="text-[11px] uppercase tracking-widest text-white/60 sm:text-xs">
+                    {t('landing.criteria.centerLabel')}
+                  </span>
                 </div>
-              ))}
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-brand-teal bg-brand-teal-light/40 p-4">
-                <span className="text-sm font-bold text-brand-teal">
-                  {t('landing.criteria.totalLabel')}
-                </span>
-                <span className="rounded-full bg-brand-teal px-3 py-1 text-sm font-bold tabular-nums text-white">
-                  {criteriaTotal}%
-                </span>
               </div>
+
+              {/* Criteria list */}
+              <ol className="space-y-3">
+                {critSegments.map((s, i) => {
+                  const Icon = s.Icon;
+                  return (
+                    <li
+                      key={i}
+                      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition hover:border-white/25 hover:bg-white/10 sm:p-5"
+                    >
+                      {/* Left color bar tied to the segment */}
+                      <span
+                        className="absolute inset-y-0 start-0 w-1"
+                        style={{ backgroundColor: s.color }}
+                        aria-hidden="true"
+                      />
+                      <div className="flex items-start gap-4">
+                        <div
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-white/10"
+                          style={{ backgroundColor: `${s.color}22`, color: s.color }}
+                          aria-hidden="true"
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <h3 className="truncate text-base font-semibold text-white sm:text-lg">
+                              <span className="me-2 text-xs font-medium text-white/40 tabular-nums">
+                                {String(i + 1).padStart(2, '0')}
+                              </span>
+                              {s.label}
+                            </h3>
+                            <span
+                              className="shrink-0 rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums text-white"
+                              style={{ backgroundColor: s.color }}
+                            >
+                              {s.weight}%
+                            </span>
+                          </div>
+                          {s.description && (
+                            <p className="mt-1 text-xs text-white/70 sm:text-sm">
+                              {s.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
             </div>
           </div>
         </section>

@@ -115,3 +115,23 @@
     padding-top: env(safe-area-inset-top);
   }
 }
+
+/* Donut chart segment reveal for the Evaluation Criteria section.
+   The final dash-offset is set inline on each <circle> so we only animate
+   the ring's *drawing length* (stroke-dasharray) from 0 up to its target.
+   `stroke-dashoffset` stays untouched, which preserves per-segment starting
+   positions and prevents them from stacking at 12 o'clock. */
+@keyframes criteria-draw {
+  from {
+    stroke-dasharray: 0 999;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[criteria-draw_1\.2s_ease-out_both\] {
+    animation: none !important;
+  }
+}
