@@ -6,7 +6,8 @@ import { useTranslations } from 'next-intl';
 import { Lightbulb } from 'lucide-react';
 
 // Appears fixed at the bottom once the user scrolls past the hero.
-export function StickyCta() {
+// Hidden for admins — admins manage the pipeline, they don't submit ideas.
+export function StickyCta({ role }: { role?: string | null } = {}) {
   const t = useTranslations('landing');
   const [show, setShow] = useState(false);
 
@@ -19,6 +20,8 @@ export function StickyCta() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Admins never see the "Submit Idea" sticky bar on the landing page.
+  if (role === 'admin') return null;
   if (!show) return null;
 
   return (

@@ -226,14 +226,30 @@ export default async function LandingPage({
                 {t('landing.about.mission')}
               </p>
             </div>
-            {/* Image slot — replace with a real photo in public/brand/ later. */}
-            <div
-              role="img"
-              aria-label={t('landing.aboutImageAlt')}
-              className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-cyan/70"
-            >
-              <ImageIcon className="h-16 w-16 text-white/40" aria-hidden="true" />
-            </div>
+            {/* Image slot — renders the uploaded image (via /admin/cms → Media →
+                landing.about.image) or a subtle gradient placeholder. */}
+            {mediaBySlot.get('landing.about.image') ? (
+              (() => {
+                const img = mediaBySlot.get('landing.about.image')!;
+                return (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={img.url}
+                    alt={pick(img.alt_ar, img.alt_en, locale) ?? t('landing.aboutImageAlt')}
+                    className="aspect-[4/3] w-full rounded-3xl border border-border object-cover"
+                    loading="lazy"
+                  />
+                );
+              })()
+            ) : (
+              <div
+                role="img"
+                aria-label={t('landing.aboutImageAlt')}
+                className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-cyan/70"
+              >
+                <ImageIcon className="h-16 w-16 text-white/40" aria-hidden="true" />
+              </div>
+            )}
           </div>
         </section>
 
@@ -524,15 +540,29 @@ export default async function LandingPage({
                 {t('landing.sectionPartners')}
               </h2>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-                {partners.map((p, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground"
-                  >
-                    <Building2 className="h-4 w-4 text-brand-teal" />
-                    {partnerNameOverride(i) || p.name}
-                  </div>
-                ))}
+                {partners.map((p, i) => {
+                  const logo = mediaBySlot.get(`landing.partners.logo${i + 1}`);
+                  const label = partnerNameOverride(i) || p.name;
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground"
+                    >
+                      {logo ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={logo.url}
+                          alt={pick(logo.alt_ar, logo.alt_en, locale) ?? label}
+                          className="h-7 w-auto max-w-[96px] object-contain"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <Building2 className="h-4 w-4 text-brand-teal" />
+                      )}
+                      <span>{label}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -582,7 +612,7 @@ export default async function LandingPage({
 
       <SiteFooter locale={locale} />
       <BackToTop label={t('common.backToTop')} />
-      <StickyCta />
+      <StickyCta role={currentUser?.role} />
     </div>
   );
 }

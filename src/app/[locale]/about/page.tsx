@@ -16,6 +16,8 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { loadCms, getText, isSectionEnabled } from '@/lib/cms';
+import { loadMediaAsset } from '@/lib/media-assets';
+import { pick } from '@/lib/i18n-content';
 
 export default async function AboutPage({
   params,
@@ -27,6 +29,8 @@ export default async function AboutPage({
   const t = await getTranslations('about');
   const tp = await getTranslations('partners');
   const cms = await loadCms('about');
+  // Optional hero banner uploaded via /admin/cms → Media → about.header.image.
+  const headerImage = await loadMediaAsset('about.header.image');
 
   const participants = t.raw('participants.items') as { title: string; body: string }[];
   const partners = tp.raw('partners') as { name: string }[];
@@ -37,6 +41,16 @@ export default async function AboutPage({
       {/* 1. Hero */}
       {isSectionEnabled(cms, 'intro') && (
         <section className="relative overflow-hidden rounded-3xl border border-brand-teal/15 bg-gradient-to-br from-brand-teal-light via-white to-brand-cyan/20 px-6 py-14 sm:px-12 sm:py-20">
+          {/* Optional uploaded banner — sits behind the gradient as a subtle wash. */}
+          {headerImage && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={headerImage.url}
+              alt={pick(headerImage.alt_ar, headerImage.alt_en, locale) ?? ''}
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25 mix-blend-multiply"
+              loading="eager"
+            />
+          )}
           <div className="pointer-events-none absolute -top-16 end-[-40px] hidden h-48 w-48 rounded-full bg-brand-cyan/25 blur-3xl sm:block" />
           <div className="pointer-events-none absolute -bottom-20 start-[-30px] hidden h-56 w-56 rounded-full bg-brand-teal/15 blur-3xl sm:block" />
           <div className="relative max-w-3xl">

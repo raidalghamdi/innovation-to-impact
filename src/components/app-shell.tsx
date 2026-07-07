@@ -110,11 +110,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           {t('common.skipToContent')}
         </a>
-        <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
-          <div className="flex h-24 items-center justify-between gap-3 px-4 sm:h-28 sm:px-8">
+        <header className="sticky top-0 z-30 w-full overflow-hidden border-b border-border bg-card/95 backdrop-blur">
+          <div className="flex h-20 items-center justify-between gap-2 px-3 sm:h-28 sm:gap-3 sm:px-8">
             {/* Logo links to the public homepage. */}
-            <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={t('nav.home')}>
-              <CoBrand className="h-14 sm:h-16" locale={locale} />
+            <Link href="/" className="flex min-w-0 shrink items-center gap-2.5" aria-label={t('nav.home')}>
+              <CoBrand className="h-10 sm:h-16" locale={locale} />
             </Link>
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="hidden md:block">
@@ -151,8 +151,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <HitlBanner />
 
-        <main id="main-content" className="flex-1 overflow-x-hidden">
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+        <main id="main-content" className="w-full flex-1 overflow-x-hidden">
+          <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-6 sm:px-6 lg:px-8">{children}</div>
         </main>
 
         <SiteFooter locale={locale} />
@@ -170,13 +170,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {t('common.skipToContent')}
       </a>
       {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card">
-        <div className="flex h-24 items-center justify-between px-4 sm:h-28">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 w-full overflow-hidden border-b border-border bg-card">
+        <div className="flex h-20 items-center justify-between gap-2 px-3 sm:h-28 sm:px-4">
+          <div className="flex min-w-0 shrink items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="shrink-0 lg:hidden"
               onClick={() => setOpen((o) => !o)}
               aria-label={open ? t('common.closeMenu') : t('common.openMenu')}
               aria-expanded={open}
@@ -186,8 +186,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
             {/* Logo links to the public homepage so admins can jump back to the
                 landing page from anywhere in the console. */}
-            <Link href="/" className="flex items-center gap-2.5" aria-label={t('nav.home')}>
-              <CoBrand className="h-14 sm:h-16" locale={locale} />
+            <Link href="/" className="flex min-w-0 shrink items-center gap-2.5" aria-label={t('nav.home')}>
+              <CoBrand className="h-10 sm:h-16" locale={locale} />
             </Link>
           </div>
           <div className="flex items-center gap-2">
@@ -269,8 +269,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main content */}
-        <main id="main-content" className="flex-1 overflow-x-hidden">
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <main id="main-content" className="w-full min-w-0 flex-1 overflow-x-hidden">
+          <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-6 sm:px-6 lg:px-8">
             {isAdminSubPage && (
               <AdminBackNav locale={locale} sectionLabels={ADMIN_SECTION_LABELS} />
             )}

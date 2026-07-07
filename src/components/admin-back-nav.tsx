@@ -46,19 +46,19 @@ export function AdminBackNav({ locale, sectionLabels }: Props) {
   return (
     <nav
       aria-label={isAr ? 'مسار التنقّل' : 'Breadcrumb'}
-      className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3"
+      className="mb-6 flex w-full min-w-0 max-w-full flex-wrap items-center justify-between gap-2 border-b border-border pb-3"
     >
       <Link
         href={'/admin' as any}
-        className="inline-flex items-center gap-2 rounded-lg border border-brand-teal/30 bg-brand-teal-light/40 px-3 py-2 text-sm font-medium text-brand-teal transition hover:border-brand-teal hover:bg-brand-teal-light"
+        className="inline-flex min-w-0 max-w-full items-center gap-2 truncate rounded-lg border border-brand-teal/30 bg-brand-teal-light/40 px-3 py-2 text-sm font-medium text-brand-teal transition hover:border-brand-teal hover:bg-brand-teal-light"
       >
-        <BackArrow className="h-4 w-4" aria-hidden="true" />
-        <span>{isAr ? 'العودة للوحة الإدارة' : 'Back to Admin Hub'}</span>
+        <BackArrow className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <span className="truncate">{isAr ? 'العودة للوحة الإدارة' : 'Back to Admin Hub'}</span>
       </Link>
       {currentLabel && (
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <LayoutDashboard className="h-3.5 w-3.5" aria-hidden="true" />
-          <span className="font-medium text-foreground">{currentLabel}</span>
+        <div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+          <LayoutDashboard className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate font-medium text-foreground">{currentLabel}</span>
         </div>
       )}
     </nav>

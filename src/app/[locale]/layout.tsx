@@ -138,7 +138,7 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${frutigerArabic.variable}`}
       style={{ '--font-body': bodyFont } as CSSProperties}
     >
-      <body className="font-sans antialiased">
+      <body className="overflow-x-hidden font-sans antialiased">
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>
