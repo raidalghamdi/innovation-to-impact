@@ -93,7 +93,7 @@ export function LandingNav({
     <>
     <header className="sticky top-0 z-30 flex h-24 items-center justify-between gap-3 border-b border-border bg-card/95 px-4 pt-safe backdrop-blur sm:h-28 sm:px-8">
       <Link href="/" className="flex shrink-0 items-center gap-2.5">
-        <CoBrand className="h-14 sm:h-16" locale={locale} />
+        <CoBrand className="h-12 sm:h-14 xl:h-16" locale={locale} />
       </Link>
 
       {/* Desktop nav (≥lg) */}
@@ -105,16 +105,18 @@ export function LandingNav({
           <a
             key={n.anchor}
             href={buildHref(n.anchor)}
-            className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
+            className="rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal xl:px-3"
           >
             {t(`landing.${n.key}`)}
           </a>
         ))}
       </nav>
 
-      {/* Desktop actions (≥lg) */}
-      <div className="hidden items-center gap-2 lg:flex">
-        <div className="hidden md:block">
+      {/* Desktop actions (≥lg). HeaderSearch appears only at xl+ so the row
+          never overflows on the ~1280px viewport where the logo, anchor nav
+          and actions would otherwise fight for space. */}
+      <div className="hidden shrink-0 items-center gap-2 lg:flex">
+        <div className="hidden xl:block">
           <HeaderSearch />
         </div>
         {!hideLoginCta && (

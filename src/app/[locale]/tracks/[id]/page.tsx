@@ -46,7 +46,9 @@ export default async function TrackDetailPage({
         { label: trackName },
       ]}
     >
-      {/* Track hero */}
+      {/* Track hero — primary CTA (Submit Idea) lives here at the top so it's
+         the first action a visitor can take. UX note batch 07/26: previously
+         the CTA sat mid-page which forced users to scroll before deciding. */}
       <div className="rounded-3xl border border-border bg-gradient-to-br from-brand-teal to-brand-teal-dark p-6 text-white sm:p-8">
         <p className={`inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold ${accentText}`}>
           <Target className="h-3.5 w-3.5" aria-hidden="true" />
@@ -55,6 +57,15 @@ export default async function TrackDetailPage({
         <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{trackName}</h1>
         <p className="mt-2 max-w-2xl text-sm text-white/85 sm:text-base">{theme.description}</p>
         <span className={`mt-4 block h-1 w-16 rounded-full ${accentBar}`} aria-hidden="true" />
+        <div className="mt-6">
+          <Button asChild size="lg" variant="gold">
+            <Link href={`/ideas/new?track=${id}` as any}>
+              <Lightbulb className="h-5 w-5" />
+              {t('trackPage.cta')}
+              <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* نبذة — Overview */}
@@ -83,18 +94,6 @@ export default async function TrackDetailPage({
             </li>
           ))}
         </ul>
-      </section>
-
-      {/* CTA */}
-      <section className="mt-8 flex flex-col items-start gap-4 rounded-3xl border border-brand-teal/30 bg-brand-teal-light/40 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-base font-semibold text-brand-teal">{trackName}</p>
-        <Button asChild size="lg" variant="gold">
-          <Link href={`/ideas/new?track=${id}` as any}>
-            <Lightbulb className="h-5 w-5" />
-            {t('trackPage.cta')}
-            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-          </Link>
-        </Button>
       </section>
 
       {/* Related ideas under this track */}

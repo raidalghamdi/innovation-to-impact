@@ -100,7 +100,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ] as const;
   const anchorHref = (anchor: string) => `/${locale}/#${anchor}`;
 
-  // Non-admin roles: Landing-style top nav + anchor row, no sidebar
+  // Non-admin roles: unified single-row Nav Bar that matches LandingNav layout
+  // exactly (logo → anchor links → actions). This keeps the header identical
+  // pre- and post-login so users don't perceive the top bar jumping between pages.
+  //
+  // UX note (batch 07/26): eliminated the double-row header. User actions
+  // (search, submit-idea, points, bell, language, avatar) all live in the same
+  // row as the anchor nav. `overflow-visible` is critical — the avatar dropdown
+  // and any other absolute-positioned popovers must render outside the header.
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
@@ -110,43 +117,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           {t('common.skipToContent')}
         </a>
-        <header className="sticky top-0 z-30 w-full overflow-hidden border-b border-border bg-card/95 backdrop-blur">
-          <div className="flex h-20 items-center justify-between gap-2 px-3 sm:h-28 sm:gap-3 sm:px-8">
-            {/* Logo links to the public homepage. */}
-            <Link href="/" className="flex min-w-0 shrink items-center gap-2.5" aria-label={t('nav.home')}>
-              <CoBrand className="h-10 sm:h-16" locale={locale} />
-            </Link>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="hidden md:block">
-                <HeaderSearch />
-              </div>
-              <Button asChild size="sm" variant="gold" className="hidden sm:inline-flex">
-                <Link href="/ideas/new">
-                  <Plus className="h-4 w-4" />
-                  {t('nav.submitIdea')}
-                </Link>
-              </Button>
-              <PointsBadge userId={userId} role={role} />
-              <NotificationBell userId={userId} />
-              <LanguageToggle />
-              {userId && <UserMenu displayName={displayName || t('common.logout')} />}
-            </div>
-          </div>
-          {/* Anchor row linking back to landing-page sections. */}
+        <header className="sticky top-0 z-30 flex h-24 items-center justify-between gap-3 border-b border-border bg-card/95 px-4 pt-safe backdrop-blur sm:h-28 sm:px-8">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={t('nav.home')}>
+            <CoBrand className="h-14 sm:h-16" locale={locale} />
+          </Link>
+
+          {/* Desktop anchor nav (≥xl) — same links as LandingNav */}
           <nav
+            className="hidden items-center gap-1 xl:flex"
             aria-label="Program sections"
-            className="scrollbar-none flex items-center gap-4 overflow-x-auto border-t border-border/60 bg-card/60 px-4 py-2 text-sm sm:justify-center sm:gap-6 sm:px-8"
           >
             {ANCHOR_NAV.map(({ anchor, key }) => (
               <a
                 key={anchor}
                 href={anchorHref(anchor)}
-                className="shrink-0 whitespace-nowrap font-medium text-muted-foreground transition hover:text-brand-teal"
+                className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
               >
                 {t(`landing.${key}`)}
               </a>
             ))}
           </nav>
+
+          {/* Actions (right on LTR, left on RTL) */}
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="hidden lg:block">
+              <HeaderSearch />
+            </div>
+            <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
+              <Link href="/ideas/new">
+                <Plus className="h-4 w-4" />
+                <span className="ms-1 hidden lg:inline">{t('nav.submitIdea')}</span>
+              </Link>
+            </Button>
+            <PointsBadge userId={userId} role={role} />
+            <NotificationBell userId={userId} />
+            <LanguageToggle />
+            {userId && <UserMenu displayName={displayName || t('common.logout')} />}
+          </div>
         </header>
 
         <HitlBanner />
@@ -170,7 +177,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {t('common.skipToContent')}
       </a>
       {/* Top bar */}
-      <header className="sticky top-0 z-30 w-full overflow-hidden border-b border-border bg-card">
+      <header className="sticky top-0 z-30 w-full border-b border-border bg-card">
         <div className="flex h-20 items-center justify-between gap-2 px-3 sm:h-28 sm:px-4">
           <div className="flex min-w-0 shrink items-center gap-2">
             <Button

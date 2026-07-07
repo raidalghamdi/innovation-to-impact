@@ -187,23 +187,27 @@ export default async function LandingPage({
               {t('landing.hero.stable')}
             </p>
 
-            {/* CTA order (UX note batch 07/26): learn first, then register. */}
+            {/* CTA hierarchy (UX note batch 07/26):
+                Primary = "Register/My Dashboard" (gold, filled) — the action we
+                actually want users to take.
+                Secondary = "Learn about the program" (transparent outline) —
+                exploration option for those not ready to commit. */}
             <div className="flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" variant="gold">
-                <a href="#about">
-                  {t('landing.hero.ctaLearn')}
-                  <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-                </a>
+                <Link href={(currentUser ? ROLE_HOME[currentUser.role] : '/ideas/new') as any}>
+                  <Lightbulb className="h-5 w-5" />
+                  {currentUser
+                    ? (locale === 'ar' ? 'لوحتي' : 'My dashboard')
+                    : t('landing.hero.ctaRegister')}
+                </Link>
               </Button>
-              <Link
-                href={(currentUser ? ROLE_HOME[currentUser.role] : '/ideas/new') as any}
+              <a
+                href="#about"
                 className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-white/40 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
               >
-                <Lightbulb className="h-5 w-5" />
-                {currentUser
-                  ? (locale === 'ar' ? 'لوحتي' : 'My dashboard')
-                  : t('landing.hero.ctaRegister')}
-              </Link>
+                {t('landing.hero.ctaLearn')}
+                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+              </a>
             </div>
 
             <div className="mx-auto max-w-xl pt-2">
