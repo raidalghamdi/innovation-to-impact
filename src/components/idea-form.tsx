@@ -389,9 +389,18 @@ export function IdeaForm({
     if (newIdeaId) {
       // Each team member signs the IP terms independently after submission —
       // route through /ip-sign rather than straight to the confirmation page.
-      router.push(`/ideas/${newIdeaId}/ip-sign` as any);
+      //
+      // Use a full-page navigation (window.location.assign) rather than
+      // router.push here. The idea insert above may have triggered a Supabase
+      // JWT refresh in the browser client. Those refreshed cookies live on
+      // document.cookie but Next's client router keeps its in-memory RSC
+      // payload — meaning the middleware on the next protected route can
+      // occasionally see stale auth state and bounce the user to /login
+      // right after they submit. A hard navigation forces a full round-trip
+      // so middleware reads the fresh cookies from the request.
+      window.location.assign(`/${locale}/ideas/${newIdeaId}/ip-sign`);
     } else {
-      router.push('/my-ideas');
+      window.location.assign(`/${locale}/my-ideas`);
     }
   }
 

@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2 } from 'lucide-react';
-import { signIpTermsAndRedirect } from './actions';
+import { signIpTerms } from './actions';
 
 export function SignIpTermsButton({
   ideaId,
@@ -52,14 +52,17 @@ export function SignIpTermsButton({
         onClick={() =>
           startTransition(async () => {
             setError(null);
-            // Server action does the redirect itself — the redirect
-            // response carries any refreshed Supabase auth cookies, so the
-            // middleware on the confirmation page sees a valid session.
-            const res = await signIpTermsAndRedirect(ideaId, locale);
-            // We only reach this line on error — successful redirect throws.
-            if (res && !res.ok) {
+            const res = await signIpTerms(ideaId);
+            if (!res.ok) {
               setError(res.error ?? 'error');
+              return;
             }
+            // Hard navigation ensures middleware sees the freshest
+            // Supabase auth cookies after the server action wrote them
+            // — avoids the middleware occasionally bouncing us to /login
+            // right after signing (see the idea-form.tsx comment for why
+            // client-side router.push is unsafe post-mutation).
+            window.location.assign(`/${locale}/ideas/${ideaId}/submitted`);
           })
         }
       >

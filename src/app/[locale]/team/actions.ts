@@ -27,16 +27,28 @@ export async function createTeam(formData: FormData): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: 'unauthenticated' };
 
-  // Guard: a user is only expected to belong to a single team. If they already
-  // have a membership, treat re-submission as a no-op success — without this,
-  // clicking "create" again would spawn duplicate teams (each team gets its
-  // own leader row via a DB trigger).
-  const { data: existing } = await supabase
-    .from('team_members')
-    .select('team_id')
-    .eq('user_id', user.id)
-    .limit(1);
-  if (existing && existing.length > 0) {
+  // Guard: a user is only expected to lead / belong to a single team. Check
+  // BOTH team_members and teams.leader_id — the previous membership-only
+  // check could false-negative if the team_members INSERT trigger hadn't
+  // materialized the leader row before the user re-submitted (network hiccup,
+  // stale session refresh, etc.), spawning duplicate 'competition' teams for
+  // the same person.
+  const [{ data: existingMembership }, { data: existingLead }] = await Promise.all([
+    supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', user.id)
+      .limit(1),
+    supabase
+      .from('teams')
+      .select('id')
+      .eq('leader_id', user.id)
+      .limit(1),
+  ]);
+  if (
+    (existingMembership && existingMembership.length > 0) ||
+    (existingLead && existingLead.length > 0)
+  ) {
     revalidatePath('/[locale]/team', 'page');
     return { ok: true };
   }
