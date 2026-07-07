@@ -39,7 +39,13 @@ export default async function TrackDetailPage({
   const trackName = pickFromRow(theme, 'name', locale);
 
   return (
-    <PublicShell locale={locale}>
+    <PublicShell
+      locale={locale}
+      breadcrumbs={[
+        { label: t('landing.navTracks'), href: '/tracks' },
+        { label: trackName },
+      ]}
+    >
       {/* Track hero */}
       <div className="rounded-3xl border border-border bg-gradient-to-br from-brand-teal to-brand-teal-dark p-6 text-white sm:p-8">
         <p className={`inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold ${accentText}`}>

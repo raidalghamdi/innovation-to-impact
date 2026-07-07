@@ -17,7 +17,10 @@ export default async function TracksPage({
   const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
 
   return (
-    <PublicShell locale={locale}>
+    <PublicShell
+      locale={locale}
+      breadcrumbs={[{ label: t('sectionTracks') }]}
+    >
       <h1 className="text-2xl font-bold text-brand-teal sm:text-3xl">{t('sectionTracks')}</h1>
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {themes.map((theme) => (

@@ -1,5 +1,5 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from '@/i18n/routing';
@@ -38,6 +38,12 @@ export default async function IpSignPage({
         .maybeSingle();
       alreadySigned = Boolean(data);
     }
+  }
+
+  // If this user has already signed for this idea, don't ask them to sign
+  // again — send them straight to the "idea received" confirmation page.
+  if (alreadySigned) {
+    redirect(`/${locale}/ideas/${id}/submitted`);
   }
 
   const title = isAr ? idea.title_ar : idea.title_en || idea.title_ar;
