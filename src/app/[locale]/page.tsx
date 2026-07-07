@@ -96,7 +96,6 @@ export default async function LandingPage({
   const objectives = t.raw('landing.objectives.items') as string[];
   const rules = t.raw('landing.details.rules') as string[];
   const criteriaItems = t.raw('landing.criteria.items') as { label: string; description?: string; weight: number }[];
-  const criteriaTotal = criteriaItems.reduce((sum, c) => sum + c.weight, 0);
   // Fixed brand-aligned palette — each criterion gets a stable identity color.
   const CRIT_COLORS = ['#01696F', '#20808D', '#D19900', '#A84B2F', '#7A7974'];
   const CRIT_ICONS: LucideIcon[] = [Sparkles, Rocket, Wrench, Expand, Presentation];
@@ -347,8 +346,7 @@ export default async function LandingPage({
             {/* Full-width list — the weights are fixed policy (25/25/20/20/10),
                 not live data. A chart implies dynamism the values don't have,
                 so we drop the side panel and let the list breathe across the
-                full column. A single "100% — full score" badge below anchors
-                the total without pretending to be a visualization. */}
+                full column. */}
             <ol className="mt-12 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
               {critSegments.map((s, i) => {
                 const Icon = s.Icon;
@@ -397,24 +395,6 @@ export default async function LandingPage({
                 );
               })}
             </ol>
-
-            {/* Full-score anchor — replaces the chart. Reads as a seal: the
-                five criteria sum to 100%, nothing more. */}
-            <div className="mt-10 flex justify-center">
-              <div className="inline-flex items-center gap-4 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3 backdrop-blur-sm">
-                <span
-                  className="h-2 w-2 rounded-full bg-brand-gold"
-                  aria-hidden="true"
-                />
-                <span className="text-sm font-medium uppercase tracking-widest text-white/60">
-                  {t('landing.criteria.centerLabel')}
-                </span>
-                <span className="text-2xl font-bold tabular-nums text-white sm:text-3xl">
-                  {criteriaTotal}
-                  <span className="text-brand-gold">%</span>
-                </span>
-              </div>
-            </div>
           </div>
         </section>
 

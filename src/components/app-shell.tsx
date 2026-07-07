@@ -14,15 +14,37 @@ import { HeaderSearch } from '@/components/header-search';
 import { UserMenu } from '@/components/user-menu';
 import { RoleUserMenu } from '@/components/role-user-menu';
 import { SiteFooter } from '@/components/site-footer';
+import { AdminBackNav } from '@/components/admin-back-nav';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { resolveRoleSync, type Role } from '@/lib/roles';
 import { Menu, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Labels for the admin BackNav — kept here (not on the server layout) so the
+// client BackNav can render on Vercel where request-path headers are unreliable.
+const ADMIN_SECTION_LABELS: Record<string, { ar: string; en: string }> = {
+  users: { ar: 'المستخدمون', en: 'Users' },
+  roles: { ar: 'كتالوج الأدوار', en: 'Roles Catalog' },
+  employees: { ar: 'استيراد الموظفين', en: 'Employees Import' },
+  import: { ar: 'استيراد', en: 'Import' },
+  settings: { ar: 'إعدادات المنصة', en: 'Platform Settings' },
+  audit: { ar: 'سجلات التدقيق', en: 'Audit Logs' },
+  analytics: { ar: 'التحليلات', en: 'Analytics' },
+  backup: { ar: 'النسخ الاحتياطي', en: 'Backup' },
+  escalations: { ar: 'التصعيدات', en: 'Escalations' },
+  'change-requests': { ar: 'طلبات التعديل', en: 'Change Requests' },
+  assignments: { ar: 'التعيينات', en: 'Assignments' },
+  cms: { ar: 'محرر المحتوى', en: 'Content Editor' },
+  phases: { ar: 'جدول المراحل', en: 'Phase Schedule' },
+};
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations();
   const locale = useLocale();
+  const pathname = usePathname() ?? '';
+  const isAdminSubPage = /^\/(ar|en)?\/admin\/[^/]+/.test(pathname);
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<Role>('submitter');
   const [userId, setUserId] = useState<string | null>(null);
@@ -35,8 +57,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       const user = data.user;
       if (!user) return;
       setUserId(user.id);
-      // Client: no DB access here, use the sync resolver (metadata → email).
-      setRole(resolveRoleSync(user));
+      // Prefer the i2i_active_role cookie (canonical role source, set by
+      // login-verify + role-switcher after DB lookup). Fall back to the sync
+      // resolver only when the cookie is missing (first paint, edge cases).
+      let resolvedRole: Role = resolveRoleSync(user);
+      if (typeof document !== 'undefined') {
+        const cookieRole = document.cookie
+          .split('; ')
+          .find((c) => c.startsWith('i2i_active_role='))
+          ?.split('=')[1];
+        // The DB uses aliases (innovator/committee/supervisor). Map them back
+        // to canonical Role enum values before storing.
+        if (cookieRole) {
+          const key = decodeURIComponent(cookieRole).toLowerCase();
+          if (key === 'admin') resolvedRole = 'admin';
+          else if (key === 'judge' || key === 'committee') resolvedRole = 'judge';
+          else if (key === 'evaluator' || key === 'supervisor') resolvedRole = 'evaluator';
+          else if (key === 'submitter' || key === 'innovator') resolvedRole = 'submitter';
+        }
+      }
+      setRole(resolvedRole);
       setDisplayName(
         (user.user_metadata?.full_name as string) ??
           (user.email ? user.email.split('@')[0] : '') ??
@@ -71,9 +111,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {t('common.skipToContent')}
         </a>
         <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
-          <div className="flex h-20 items-center justify-between gap-3 px-4 sm:px-8">
+          <div className="flex h-24 items-center justify-between gap-3 px-4 sm:h-28 sm:px-8">
             <Link href="/dashboard" className="flex shrink-0 items-center gap-2.5">
-              <CoBrand className="h-12" locale={locale} />
+              <CoBrand className="h-14 sm:h-16" locale={locale} />
             </Link>
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="hidden md:block">
@@ -129,7 +169,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {t('common.skipToContent')}
       </a>
       {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-card px-4">
+      <header className="sticky top-0 z-30 flex h-24 items-center justify-between border-b border-border bg-card px-4 sm:h-28">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -142,8 +182,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           </Button>
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <CoBrand className="h-12" locale={locale} />
+          <Link href="/admin" className="flex items-center gap-2.5">
+            <CoBrand className="h-14 sm:h-16" locale={locale} />
           </Link>
         </div>
         <div className="flex items-center gap-2">
@@ -210,6 +250,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Main content */}
         <main id="main-content" className="flex-1 overflow-x-hidden">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            {isAdminSubPage && (
+              <AdminBackNav locale={locale} sectionLabels={ADMIN_SECTION_LABELS} />
+            )}
             {children}
           </div>
         </main>
