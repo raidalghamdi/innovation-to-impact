@@ -59,7 +59,6 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
     items: [
       { href: '/notifications', key: 'notifications', icon: Bell },
       { href: '/ip-terms', key: 'ipTerms', icon: FileText },
-      { href: '/analytics', key: 'analytics', icon: BarChart3, roles: ['admin'] },
       { href: '/admin/analytics', key: 'adminAnalytics', icon: BarChart3, roles: ['admin'] },
       { href: '/admin', key: 'admin', icon: Cog, roles: ['admin'] },
       { href: '/admin/users', key: 'usersManagement', icon: UserCog, roles: ['admin'] },
