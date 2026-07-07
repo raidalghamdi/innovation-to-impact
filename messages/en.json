@@ -43,7 +43,8 @@
     "team": "My Team",
     "tracks": "Tracks",
     "usersManagement": "Users",
-    "rolesCatalog": "Roles Catalog"
+    "rolesCatalog": "Roles Catalog",
+    "backup": "Backup"
   },
   "common": {
     "search": "Search",
@@ -254,7 +255,12 @@
         "Compete",
         "Impact"
       ],
-      "stable": "Your idea could change how competition works in Saudi Arabia",
+      "stable": "Your idea could change how competition works in Saudi Arabia — present it before experts and specialists, and compete for valuable prizes.",
+      "partner": "In partnership with Digital Saudi",
+      "sloganInnovate": "Innovate",
+      "sloganCompete": "Compete",
+      "sloganImpact": "Impact",
+      "visualCaption": "Competition network — ideas connecting",
       "ctaRegister": "Register now",
       "ctaLearn": "Learn about the program"
     },

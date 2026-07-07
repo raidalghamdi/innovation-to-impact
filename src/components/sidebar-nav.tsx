@@ -24,6 +24,7 @@ import {
   History,
   UserCog,
   Shapes,
+  Database,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -64,6 +65,7 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
       { href: '/admin/users', key: 'usersManagement', icon: UserCog, roles: ['admin'] },
       { href: '/admin/roles', key: 'rolesCatalog', icon: Shapes, roles: ['admin'] },
       { href: '/admin/audit', key: 'audit', icon: History, roles: ['admin'] },
+      { href: '/admin/backup', key: 'backup', icon: Database, roles: ['admin'] },
       { href: '/settings', key: 'settings', icon: Settings },
     ],
   },

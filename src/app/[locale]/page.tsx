@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { BackToTop } from '@/components/back-to-top';
 import { LandingNav } from '@/components/landing-nav';
 import { HeroRotator } from '@/components/hero-rotator';
+import { HeroNetwork } from '@/components/hero-network';
 import { TimelineModern, stages as defaultStages } from '@/components/timeline-modern';
 import { fetchThemes } from '@/lib/data';
 import { pickFromRow } from '@/lib/i18n-content';
@@ -54,44 +55,84 @@ export default async function LandingPage({
       <LandingNav locale={locale} />
 
       <main id="main-content">
-        {/* ===== 1. HERO ===== */}
+        {/* ===== 1. HERO — Concept ب (Competition Network) ===== */}
+        {/* July 2026 redesign: Split Layout with a live node-graph on one side
+            and headline + CTAs on the other. On mobile the graph stacks below
+            the CTAs so the primary action stays in the first fold. */}
         <section
           id="hero"
-          className="relative scroll-mt-24 overflow-hidden border-b border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-teal-dark py-16 text-white sm:py-24"
+          className="relative scroll-mt-24 overflow-hidden border-b border-border bg-gradient-to-br from-brand-teal-dark via-brand-teal-dark to-[#0a1e21] py-12 text-white sm:py-20"
         >
           <div className="pointer-events-none absolute end-0 top-0 h-64 w-64 rounded-full bg-brand-cyan/10 blur-3xl sm:h-80 sm:w-80" />
-          <div className="pointer-events-none absolute bottom-0 start-0 h-64 w-64 rounded-full bg-brand-cyan-light/10 blur-3xl sm:h-80 sm:w-80" />
+          <div className="pointer-events-none absolute bottom-0 start-0 h-64 w-64 rounded-full bg-brand-gold/10 blur-3xl sm:h-80 sm:w-80" />
 
-          <div className="relative mx-auto max-w-6xl px-4 text-center sm:px-8">
-            <p className="inline-flex items-center gap-2 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 px-4 py-1.5 text-xs font-semibold tracking-wider text-brand-cyan-light sm:text-sm">
-              {t('landing.hero.eyebrow')}
-            </p>
-            <h1 className="hero-headline mx-auto mt-6 max-w-4xl">
-              <HeroRotator words={heroWords} />
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-base text-white/85 sm:text-lg lg:text-xl">
-              {t('landing.hero.stable')}
-            </p>
+          <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 sm:px-8 lg:grid-cols-2 lg:gap-12">
+            {/* Text column */}
+            <div className="space-y-6 text-center lg:text-start">
+              <p className="inline-flex items-center gap-2 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 px-4 py-1.5 text-xs font-semibold tracking-wider text-brand-cyan-light sm:text-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
+                {t('landing.hero.eyebrow')}
+                <span className="hidden text-white/50 sm:inline">—</span>
+                <span className="hidden text-white/60 sm:inline">{t('landing.hero.partner')}</span>
+              </p>
 
-            {/* CTA order (UX note batch 07/26): learn first, then register. */}
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Button asChild size="lg" variant="gold">
-                <a href="#about">
-                  {t('landing.hero.ctaLearn')}
-                  <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-                </a>
-              </Button>
-              <Link
-                href="/ideas/new"
-                className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-white/40 bg-white/5 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/15"
-              >
-                <Lightbulb className="h-5 w-5" />
-                {t('landing.hero.ctaRegister')}
-              </Link>
+              <h1 className="hero-headline max-w-2xl">
+                <HeroRotator words={heroWords} />
+              </h1>
+
+              {/* Innovate · Compete · Impact — slogan pill row */}
+              <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-base font-semibold text-white/90 sm:text-lg lg:justify-start">
+                <span>{t('landing.hero.sloganInnovate')}</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-cyan" aria-hidden="true" />
+                <span className="text-brand-cyan-light">{t('landing.hero.sloganCompete')}</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
+                <span className="text-brand-gold">{t('landing.hero.sloganImpact')}</span>
+              </p>
+
+              <p className="max-w-xl text-base text-white/80 sm:text-lg">
+                {t('landing.hero.stable')}
+              </p>
+
+              {/* CTA order (UX note batch 07/26): learn first, then register.
+                  On lg+ we align to the start (RTL-aware); on mobile we center. */}
+              <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
+                <Button asChild size="lg" variant="gold">
+                  <a href="#about">
+                    {t('landing.hero.ctaLearn')}
+                    <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                  </a>
+                </Button>
+                <Link
+                  href="/ideas/new"
+                  className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-white/40 bg-white/5 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/15"
+                >
+                  <Lightbulb className="h-5 w-5" />
+                  {t('landing.hero.ctaRegister')}
+                </Link>
+              </div>
+
+              <div className="max-w-xl">
+                <Countdown />
+              </div>
             </div>
 
-            <div className="mx-auto mt-10 max-w-xl">
-              <Countdown />
+            {/* Visual column — Competition Network canvas.
+                Kept absolutely-positioned by CSS aspect ratio so it never pushes
+                the text column, and clipped inside a soft rounded frame.
+                Stacks BELOW text on mobile (natural DOM order) to match the
+                approved concept ب layout; sits on the end side on lg+. */}
+            <div className="relative lg:order-last">
+              <div className="relative mx-auto aspect-square w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-brand-teal-dark/60 shadow-2xl lg:max-w-none">
+                <HeroNetwork className="absolute inset-0 h-full w-full" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-teal-dark/70 via-transparent to-transparent" />
+                <div className="pointer-events-none absolute bottom-4 start-4 end-4 flex items-center justify-between gap-2 text-[10px] uppercase tracking-widest text-white/50">
+                  <span>{t('landing.hero.visualCaption')}</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-cyan-light" aria-hidden="true" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
