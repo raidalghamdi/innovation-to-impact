@@ -11,6 +11,7 @@ import { Logo } from '@/components/logo';
 import { SkipToContent } from '@/components/skip-to-content';
 import { AlertCircle, ArrowLeft, Info } from 'lucide-react';
 import { PASSWORD_POLICY, validatePassword, type PolicyIssue } from '@/lib/password-policy';
+import { homeForRoleCode } from '@/lib/roles';
 
 // src/components/auth-form.tsx:1
 // Unified email-first auth flow (Phase 11.1). One entry point handles all
@@ -100,7 +101,10 @@ export function AuthForm({ mode: _mode }: { mode?: 'login' | 'signup' }) {
         setError(t('loginFailed'));
         return;
       }
-      router.push(verifyData.needsRoleSelection ? ('/select-role' as any) : ('/dashboard' as any));
+      const target = verifyData.needsRoleSelection
+        ? '/select-role'
+        : homeForRoleCode(verifyData.activeRole);
+      router.push(target as any);
       router.refresh();
       return;
     }

@@ -98,7 +98,7 @@ export function CoBrand({
   return (
     <span className="inline-flex items-center gap-3">
       <Logo className={className} white={white} locale={locale} showWordmark={false} />
-      <span className={`h-8 w-px ${dividerColor}`} aria-hidden="true" />
+      <span className={`h-10 w-px ${dividerColor}`} aria-hidden="true" />
       <GacLogo className={className} white={white} />
     </span>
   );

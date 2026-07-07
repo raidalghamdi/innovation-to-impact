@@ -126,48 +126,31 @@ export default async function AdminLayout({
     ],
   };
 
+  // Current page label = the last item in the trail (deepest breadcrumb).
+  const currentLabel = trail.length > 0 ? trail[trail.length - 1].label : '';
+
   return (
     <>
       {!isHubIndex && (
         <nav
           aria-label={isAr ? 'مسار التنقّل' : 'Breadcrumb'}
-          className="mb-4 flex flex-wrap items-center justify-between gap-3"
+          className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3"
         >
-          <ol className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-            <li>
-              <Link
-                href={'/admin' as any}
-                className="flex items-center gap-1.5 rounded-md px-2 py-1 font-medium text-brand-teal transition hover:bg-brand-teal-light/40"
-              >
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                <span>{isAr ? 'لوحة الإدارة' : 'Admin Hub'}</span>
-              </Link>
-            </li>
-            {trail.map((c, i) => (
-              <li key={i} className="flex items-center gap-1.5">
-                <span aria-hidden="true">/</span>
-                {c.href ? (
-                  <Link href={c.href as any} className="hover:text-brand-teal">
-                    {c.label}
-                  </Link>
-                ) : (
-                  <span
-                    className="font-medium text-foreground"
-                    aria-current="page"
-                  >
-                    {c.label}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ol>
+          {/* Single, prominent back button. No breadcrumb duplication. */}
           <Link
             href={'/admin' as any}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-brand-teal transition hover:bg-brand-teal-light/40"
+            className="inline-flex items-center gap-2 rounded-lg border border-brand-teal/30 bg-brand-teal-light/40 px-3 py-2 text-sm font-medium text-brand-teal transition hover:border-brand-teal hover:bg-brand-teal-light"
           >
             <BackArrow className="h-4 w-4" aria-hidden="true" />
             <span>{isAr ? 'العودة للوحة الإدارة' : 'Back to Admin Hub'}</span>
           </Link>
+          {/* Current page label — read-only, no link (avoids duplicating Back). */}
+          {currentLabel && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <LayoutDashboard className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="font-medium text-foreground">{currentLabel}</span>
+            </div>
+          )}
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

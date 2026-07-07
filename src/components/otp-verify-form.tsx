@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Logo } from '@/components/logo';
 import { AlertCircle, KeyRound } from 'lucide-react';
+import { homeForRoleCode } from '@/lib/roles';
 
 // src/components/otp-verify-form.tsx:1
 // Shared OTP entry UI for both post-login verification (mode="login") and
@@ -60,7 +61,7 @@ function OtpVerifyInner({ mode }: { mode: 'login' | 'reset' }) {
         if (data.needsRoleSelection) {
           router.push(('/select-role') as any);
         } else {
-          router.push(('/dashboard') as any);
+          router.push(homeForRoleCode(data.activeRole) as any);
         }
         router.refresh();
       } else {

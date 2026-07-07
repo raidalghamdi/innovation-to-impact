@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload, Trash2, Plus, Check, ImageIcon, Film } from 'lucide-react';
+import { createClient as createSupabaseBrowserClient } from '@supabase/supabase-js';
 
 type Asset = {
   id: string;
@@ -65,21 +66,92 @@ export function MediaEditor({ locale }: { locale: string }) {
     page: string,
     file: File,
   ) => {
+    // Client-side pre-flight checks so we surface a helpful message BEFORE
+    // uploading 100MB and getting a generic server error.
+    const MAX_BYTES = 100 * 1024 * 1024; // 100MB (Supabase bucket limit)
+    if (file.size > MAX_BYTES) {
+      alert(
+        isAr
+          ? `حجم الملف (${(file.size / 1024 / 1024).toFixed(1)}م.ب) أكبر من الحد المسموح 100م.ب. اضغط الفيديو أولاً (مثل HandBrake).`
+          : `File (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the 100MB limit. Compress the video first (e.g. HandBrake).`,
+      );
+      return;
+    }
+    if (kind === 'video' && !file.type.match(/^video\/(mp4|webm)$/)) {
+      const proceed = confirm(
+        isAr
+          ? `نوع الملف ليس MP4 أو WebM (${file.type || 'غير معروف'}). قد يفشل الرفع. الاستمرار؟`
+          : `File is not MP4 or WebM (${file.type || 'unknown'}). Upload may fail. Continue?`,
+      );
+      if (!proceed) return;
+    }
     setBusy((prev) => ({ ...prev, [slotKey]: true }));
     try {
-      const form = new FormData();
-      form.append('file', file);
-      form.append('slot_key', slotKey);
-      form.append('kind', kind);
-      form.append('page', page);
-      const res = await fetch('/api/admin/media', { method: 'PUT', body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'upload_failed');
+      // Vercel enforces ~4.5MB request body limit on API routes. Any file
+      // larger than ~4MB — including nearly every hero video — must go
+      // directly to Supabase Storage using a signed upload URL, then we
+      // register the resulting public URL via the metadata endpoint.
+      const VERCEL_BODY_LIMIT = 4 * 1024 * 1024; // 4MB, leaves headroom
+      const useDirectUpload = file.size > VERCEL_BODY_LIMIT;
+
+      if (useDirectUpload) {
+        const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+        const signRes = await fetch('/api/admin/media/sign-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slot_key: slotKey, ext }),
+        });
+        const signData = await signRes.json().catch(() => ({}));
+        if (!signRes.ok) throw new Error(signData.error || `sign_failed (HTTP ${signRes.status})`);
+
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        if (!supabaseUrl || !anonKey) throw new Error('supabase_env_missing');
+        const sb = createSupabaseBrowserClient(supabaseUrl, anonKey);
+        const { error: upErr } = await sb.storage
+          .from('landing-media')
+          .uploadToSignedUrl(signData.path, signData.token, file, {
+            contentType: file.type || undefined,
+            upsert: true,
+          });
+        if (upErr) throw new Error(upErr.message || 'direct_upload_failed');
+
+        // Register the public URL in media_assets via the JSON metadata path.
+        const regRes = await fetch('/api/admin/media', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slot_key: slotKey,
+            kind,
+            url: signData.publicUrl,
+            page,
+          }),
+        });
+        const regData = await regRes.json().catch(() => ({}));
+        if (!regRes.ok) throw new Error(regData.error || `register_failed (HTTP ${regRes.status})`);
+      } else {
+        // Small files: keep the simple single-request multipart path.
+        const form = new FormData();
+        form.append('file', file);
+        form.append('slot_key', slotKey);
+        form.append('kind', kind);
+        form.append('page', page);
+        const res = await fetch('/api/admin/media', { method: 'PUT', body: form });
+        let data: any = {};
+        try {
+          data = await res.json();
+        } catch {
+          data = { error: `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}` };
+        }
+        if (!res.ok) throw new Error(data.error || `upload_failed (HTTP ${res.status})`);
+      }
+
       setFlash((prev) => ({ ...prev, [slotKey]: true }));
       setTimeout(() => setFlash((prev) => ({ ...prev, [slotKey]: false })), 2000);
       await load();
     } catch (err) {
-      alert(isAr ? 'فشل الرفع: ' : 'Upload failed: ' + (err instanceof Error ? err.message : ''));
+      const msg = err instanceof Error && err.message ? err.message : 'unknown_error';
+      alert((isAr ? 'فشل الرفع: ' : 'Upload failed: ') + msg);
     } finally {
       setBusy((prev) => ({ ...prev, [slotKey]: false }));
     }
@@ -96,7 +168,8 @@ export function MediaEditor({ locale }: { locale: string }) {
       if (!res.ok) throw new Error(data.error || 'delete_failed');
       await load();
     } catch (err) {
-      alert(isAr ? 'فشل الحذف: ' : 'Delete failed: ' + (err instanceof Error ? err.message : ''));
+      const msg = err instanceof Error && err.message ? err.message : 'unknown_error';
+      alert((isAr ? 'فشل الحذف: ' : 'Delete failed: ') + msg);
     } finally {
       setBusy((prev) => ({ ...prev, [slotKey]: false }));
     }

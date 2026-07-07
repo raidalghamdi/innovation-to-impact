@@ -91,9 +91,9 @@ export function LandingNav({
 
   return (
     <>
-    <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-3 border-b border-border bg-card/95 px-4 pt-safe backdrop-blur sm:px-8">
+    <header className="sticky top-0 z-30 flex h-24 items-center justify-between gap-3 border-b border-border bg-card/95 px-4 pt-safe backdrop-blur sm:h-28 sm:px-8">
       <Link href="/" className="flex shrink-0 items-center gap-2.5">
-        <CoBrand className="h-12" locale={locale} />
+        <CoBrand className="h-14 sm:h-16" locale={locale} />
       </Link>
 
       {/* Desktop nav (≥lg) */}
@@ -170,7 +170,7 @@ export function LandingNav({
         }`}
       >
         <div className="flex h-20 shrink-0 items-center justify-between border-b border-border px-4">
-          <CoBrand className="h-10" locale={locale} />
+          <CoBrand className="h-12 sm:h-14" locale={locale} />
           <button
             type="button"
             onClick={() => setOpen(false)}

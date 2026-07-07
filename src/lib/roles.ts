@@ -9,6 +9,18 @@ export const ROLE_HOME: Record<Role, string> = {
   admin: '/admin',
 };
 
+// Resolve the correct landing route from a DB role_code that may use aliases
+// returned by innovation.v_user_roles (innovator, committee, supervisor) as
+// well as the canonical Role enum values. Falls back to /my-ideas.
+export function homeForRoleCode(roleCode: string | null | undefined): string {
+  const key = (roleCode ?? '').toLowerCase();
+  if (key === 'admin') return '/admin';
+  if (key === 'judge' || key === 'committee') return '/committee';
+  if (key === 'evaluator' || key === 'supervisor') return '/evaluation';
+  if (key === 'submitter' || key === 'innovator') return '/my-ideas';
+  return '/my-ideas';
+}
+
 // Route prefixes each role is NOT allowed to access (locale prefix stripped).
 // Note: /admin/analytics is intentionally allowed for both admin and judge
 // — see analytics page role check. /admin (non-analytics) remains admin-only.

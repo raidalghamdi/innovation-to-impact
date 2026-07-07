@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { getRoleIcon } from '@/lib/role-icons';
 import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { homeForRoleCode } from '@/lib/roles';
 
 type RoleOption = { code: string; name_ar: string; name_en: string };
 
@@ -23,7 +24,7 @@ export function RoleSelectClient({ locale, roles }: { locale: string; roles: Rol
         body: JSON.stringify({ role: code }),
       });
       if (res.ok) {
-        router.push(('/dashboard') as any);
+        router.push(homeForRoleCode(code) as any);
         router.refresh();
       }
     } finally {
