@@ -67,23 +67,31 @@ export function MediaEditor({ locale }: { locale: string }) {
     file: File,
   ) => {
     // Client-side pre-flight checks so we surface a helpful message BEFORE
-    // uploading 100MB and getting a generic server error.
-    const MAX_BYTES = 100 * 1024 * 1024; // 100MB (Supabase bucket limit)
+    // uploading a large file and getting a generic server error.
+    const MAX_BYTES = 500 * 1024 * 1024; // 500MB (Supabase bucket limit)
     if (file.size > MAX_BYTES) {
       alert(
         isAr
-          ? `حجم الملف (${(file.size / 1024 / 1024).toFixed(1)}م.ب) أكبر من الحد المسموح 100م.ب. اضغط الفيديو أولاً (مثل HandBrake).`
-          : `File (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the 100MB limit. Compress the video first (e.g. HandBrake).`,
+          ? `حجم الملف (${(file.size / 1024 / 1024).toFixed(1)}م.ب) أكبر من الحد المسموح 500م.ب. اضغط الفيديو أولاً (مثل HandBrake).`
+          : `File (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the 500MB limit. Compress the video first (e.g. HandBrake).`,
       );
       return;
     }
-    if (kind === 'video' && !file.type.match(/^video\/(mp4|webm)$/)) {
-      const proceed = confirm(
+    // Supabase bucket accepts these MIME types — keep in sync with the
+    // storage.buckets.allowed_mime_types on 'landing-media'.
+    const ALLOWED_VIDEO = /^video\/(mp4|webm|quicktime|x-msvideo|x-matroska|ogg|mpeg|3gpp|3gpp2)$/;
+    const ALLOWED_IMAGE = /^image\/(jpeg|png|webp|gif|svg\+xml|avif|heic|heif)$/;
+    const allowed = kind === 'video' ? ALLOWED_VIDEO : ALLOWED_IMAGE;
+    if (file.type && !allowed.test(file.type)) {
+      const supportedList = kind === 'video'
+        ? 'MP4, WebM, MOV, AVI, MKV, OGG, MPEG, 3GP'
+        : 'JPG, PNG, WebP, GIF, SVG, AVIF, HEIC';
+      alert(
         isAr
-          ? `نوع الملف ليس MP4 أو WebM (${file.type || 'غير معروف'}). قد يفشل الرفع. الاستمرار؟`
-          : `File is not MP4 or WebM (${file.type || 'unknown'}). Upload may fail. Continue?`,
+          ? `نوع الملف غير مدعوم (${file.type}). الأنواع المدعومة: ${supportedList}.`
+          : `Unsupported file type (${file.type}). Supported: ${supportedList}.`,
       );
-      if (!proceed) return;
+      return;
     }
     setBusy((prev) => ({ ...prev, [slotKey]: true }));
     try {
@@ -235,8 +243,8 @@ export function MediaEditor({ locale }: { locale: string }) {
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         {isAr
-          ? 'ارفع صوراً (JPG/PNG/WebP/SVG) أو فيديو (MP4/WebM). الحجم الأقصى 100 ميجابايت لكل ملف.'
-          : 'Upload images (JPG/PNG/WebP/SVG) or video (MP4/WebM). Max 100 MB per file.'}
+          ? 'ارفع صوراً (JPG/PNG/WebP/GIF/SVG/AVIF/HEIC) أو فيديو (MP4/WebM/MOV/AVI/MKV/OGG/MPEG/3GP). الحجم الأقصى 500 ميجابايت لكل ملف.'
+          : 'Upload images (JPG/PNG/WebP/GIF/SVG/AVIF/HEIC) or video (MP4/WebM/MOV/AVI/MKV/OGG/MPEG/3GP). Max 500 MB per file.'}
       </p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

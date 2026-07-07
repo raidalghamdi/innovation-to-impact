@@ -112,7 +112,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </a>
         <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
           <div className="flex h-24 items-center justify-between gap-3 px-4 sm:h-28 sm:px-8">
-            <Link href="/dashboard" className="flex shrink-0 items-center gap-2.5">
+            {/* Logo links to the public homepage. */}
+            <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={t('nav.home')}>
               <CoBrand className="h-14 sm:h-16" locale={locale} />
             </Link>
             <div className="flex items-center gap-1 sm:gap-2">
@@ -169,39 +170,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {t('common.skipToContent')}
       </a>
       {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-24 items-center justify-between border-b border-border bg-card px-4 sm:h-28">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setOpen((o) => !o)}
-            aria-label={open ? t('common.closeMenu') : t('common.openMenu')}
-            aria-expanded={open}
-            aria-controls="mobile-nav"
-          >
-            {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
-          </Button>
-          <Link href="/admin" className="flex items-center gap-2.5">
-            <CoBrand className="h-14 sm:h-16" locale={locale} />
-          </Link>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="hidden md:block">
-            <GlobalSearch />
+      <header className="sticky top-0 z-30 border-b border-border bg-card">
+        <div className="flex h-24 items-center justify-between px-4 sm:h-28">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setOpen((o) => !o)}
+              aria-label={open ? t('common.closeMenu') : t('common.openMenu')}
+              aria-expanded={open}
+              aria-controls="mobile-nav"
+            >
+              {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
+            </Button>
+            {/* Logo links to the public homepage so admins can jump back to the
+                landing page from anywhere in the console. */}
+            <Link href="/" className="flex items-center gap-2.5" aria-label={t('nav.home')}>
+              <CoBrand className="h-14 sm:h-16" locale={locale} />
+            </Link>
           </div>
-          {/* Admin shell: no "Submit Idea" CTA — admins manage the pipeline,
-              they don't submit ideas from their own console. */}
-          <PointsBadge userId={userId} role={role} />
-          <NotificationBell userId={userId} />
-          <LanguageToggle />
-          {userId && (
-            <RoleUserMenu
-              displayName={displayName || t('common.logout')}
-              activeRole={role}
-            />
-          )}
+          <div className="flex items-center gap-2">
+            <div className="hidden md:block">
+              <GlobalSearch />
+            </div>
+            {/* Admin shell: no "Submit Idea" CTA — admins manage the pipeline,
+                they don't submit ideas from their own console. */}
+            <PointsBadge userId={userId} role={role} />
+            <NotificationBell userId={userId} />
+            <LanguageToggle />
+            {userId && (
+              <RoleUserMenu
+                displayName={displayName || t('common.logout')}
+                activeRole={role}
+              />
+            )}
+          </div>
         </div>
+        {/* Anchor row — same landing-page sections available in the public shell.
+            Admins keep the primary program navigation reachable everywhere. */}
+        <nav
+          aria-label="Program sections"
+          className="scrollbar-none flex items-center gap-4 overflow-x-auto border-t border-border/60 bg-card/60 px-4 py-2 text-sm sm:justify-center sm:gap-6 sm:px-8"
+        >
+          {ANCHOR_NAV.map(({ anchor, key }) => (
+            <a
+              key={anchor}
+              href={anchorHref(anchor)}
+              className="shrink-0 whitespace-nowrap font-medium text-muted-foreground transition hover:text-brand-teal"
+            >
+              {t(`landing.${key}`)}
+            </a>
+          ))}
+        </nav>
       </header>
 
       <HitlBanner />
