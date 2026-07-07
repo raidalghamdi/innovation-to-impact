@@ -12,9 +12,11 @@ import { HeroRotator } from '@/components/hero-rotator';
 import { HeroNetwork } from '@/components/hero-network';
 import { TimelineModern, stages as defaultStages } from '@/components/timeline-modern';
 import { fetchThemes } from '@/lib/data';
-import { pickFromRow } from '@/lib/i18n-content';
+import { pickFromRow, pick } from '@/lib/i18n-content';
 import { getCurrentUser } from '@/lib/user';
 import { ROLE_HOME } from '@/lib/roles';
+import { loadCms, getText } from '@/lib/cms';
+import { loadAllMediaAssets } from '@/lib/media-assets';
 import {
   Lightbulb,
   ArrowRight,
@@ -107,6 +109,23 @@ export default async function LandingPage({
   const prizeItems = t.raw('landing.prizes.items') as { tier: string; value: string }[];
   const heroWords = t.raw('landing.hero.words') as string[];
   const previousGallery = t.raw('landing.previous.gallery') as string[];
+
+  // ---- Landing CMS overrides ---------------------------------------------
+  // Partner names and the "Previous edition" section are editable via /admin/cms.
+  // When no admin override exists, we fall back to messages/{ar,en}.json.
+  const landingCms = await loadCms('landing');
+  const partnerNameOverride = (i: number): string => {
+    // cms_blocks key is 1-based: partner_1_name .. partner_8_name.
+    const jsonFallback = partners[i]?.name ?? '';
+    return getText(landingCms, 'partners', `partner_${i + 1}_name`, locale, jsonFallback);
+  };
+  // Media assets for the "Previous edition" gallery + video.
+  const landingMedia = await loadAllMediaAssets('landing');
+  const mediaBySlot = new Map(landingMedia.map((m) => [m.slot_key, m]));
+  const previousImages = Array.from({ length: previousGallery.length }, (_, i) =>
+    mediaBySlot.get(`landing.previous.image${i + 1}`) ?? null,
+  );
+  const previousVideo = mediaBySlot.get('landing.previous.video') ?? null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -424,37 +443,76 @@ export default async function LandingPage({
           <div className="mx-auto max-w-6xl px-4 sm:px-8">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-2xl font-bold text-brand-teal sm:text-3xl">
-                {t('landing.previous.title')}
+                {getText(landingCms, 'previous', 'title', locale, t('landing.previous.title'))}
               </h2>
               <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-                {t('landing.previous.body')}
+                {getText(landingCms, 'previous', 'body', locale, t('landing.previous.body'))}
               </p>
             </div>
 
             {/* Gallery */}
             <h3 className="mt-10 text-lg font-semibold text-brand-teal">
-              {t('landing.previous.galleryTitle')}
+              {getText(landingCms, 'previous', 'gallery_title', locale, t('landing.previous.galleryTitle'))}
             </h3>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {previousGallery.map((caption, i) => (
-                <figure
-                  key={i}
-                  className="group flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-brand-teal/10 p-4 text-center transition hover:bg-brand-teal/15"
-                >
-                  <ImageIcon className="h-10 w-10 text-brand-teal/50" aria-hidden="true" />
-                  <figcaption className="text-sm font-medium text-brand-teal">{caption}</figcaption>
-                </figure>
-              ))}
+              {previousGallery.map((caption, i) => {
+                const image = previousImages[i];
+                const alt = image ? (pick(image.alt_ar, image.alt_en, locale) ?? caption) : caption;
+                if (image) {
+                  return (
+                    <figure
+                      key={i}
+                      className="group relative flex aspect-[4/3] flex-col overflow-hidden rounded-2xl border border-border bg-brand-teal/5"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={image.url}
+                        alt={alt}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition group-hover:scale-105"
+                      />
+                      <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3 text-sm font-medium text-white">
+                        {caption}
+                      </figcaption>
+                    </figure>
+                  );
+                }
+                return (
+                  <figure
+                    key={i}
+                    className="group flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-brand-teal/10 p-4 text-center transition hover:bg-brand-teal/15"
+                  >
+                    <ImageIcon className="h-10 w-10 text-brand-teal/50" aria-hidden="true" />
+                    <figcaption className="text-sm font-medium text-brand-teal">{caption}</figcaption>
+                  </figure>
+                );
+              })}
             </div>
 
             {/* Video */}
             <h3 className="mt-10 text-lg font-semibold text-brand-teal">
-              {t('landing.previous.videoLabel')}
+              {getText(landingCms, 'previous', 'video_label', locale, t('landing.previous.videoLabel'))}
             </h3>
-            <div className="mt-4 flex aspect-video w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-teal-dark text-center">
-              <PlayCircle className="h-16 w-16 text-white/60" aria-hidden="true" />
-              <p className="text-sm font-medium text-white/80">{t('landing.previous.videoHint')}</p>
-            </div>
+            {previousVideo ? (
+              <div className="mt-4 overflow-hidden rounded-3xl border border-border bg-black">
+                <video
+                  className="aspect-video w-full"
+                  controls
+                  preload="metadata"
+                  poster={previousVideo.poster_url ?? undefined}
+                  src={previousVideo.url}
+                >
+                  {getText(landingCms, 'previous', 'video_hint', locale, t('landing.previous.videoHint'))}
+                </video>
+              </div>
+            ) : (
+              <div className="mt-4 flex aspect-video w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand-teal via-brand-teal to-brand-teal-dark text-center">
+                <PlayCircle className="h-16 w-16 text-white/60" aria-hidden="true" />
+                <p className="text-sm font-medium text-white/80">
+                  {getText(landingCms, 'previous', 'video_hint', locale, t('landing.previous.videoHint'))}
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -472,7 +530,7 @@ export default async function LandingPage({
                     className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground"
                   >
                     <Building2 className="h-4 w-4 text-brand-teal" />
-                    {p.name}
+                    {partnerNameOverride(i) || p.name}
                   </div>
                 ))}
               </div>

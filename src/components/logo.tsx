@@ -15,10 +15,12 @@ import { useTranslations } from 'next-intl';
 // the active locale (Arabic on /ar/*, English on /en/*).
 
 // Intrinsic image dimensions (used for next/image aspect-ratio hint).
-// The SVG logos render as ~1:1 marks; PNG GAC logos are 646x439.
+// The SVG logos render as ~1:1 marks; GAC PNGs were originally 646x439 with
+// ~60% transparent whitespace baked in — we cropped them to their content
+// (615x190) so they fill the header bar without a visual white frame.
 const PROGRAM_MARK_DIM = { width: 64, height: 64 };
 const WORDMARK_AR_DIM = { width: 220, height: 64 };
-const GAC_LOGO_DIM = { width: 646, height: 439 };
+const GAC_LOGO_DIM = { width: 615, height: 190 };
 
 export function Logo({
   className = 'h-8',
@@ -85,6 +87,12 @@ export function GacLogo({
 // CoBrand pairs the Program mark + a vertical divider + the GAC parent mark.
 // - white=true  → fully-white variants of both marks (for dark surfaces: hero, footer)
 // - white=false → natural colored variants (for light headers, cards)
+//
+// The GAC logo is much wider than tall (~3.2:1) after the source-image crop.
+// The Program mark is roughly 1:1. To keep both visually balanced in the
+// header, we let the GAC logo sit at ~85% of the shared height so it doesn't
+// dominate the row (`scale-[0.85]` + a slightly larger gap keeps the divider
+// spacing readable while preserving the aspect ratio).
 export function CoBrand({
   className = 'h-12',
   white = false,
@@ -98,8 +106,8 @@ export function CoBrand({
   return (
     <span className="inline-flex items-center gap-3">
       <Logo className={className} white={white} locale={locale} showWordmark={false} />
-      <span className={`h-10 w-px ${dividerColor}`} aria-hidden="true" />
-      <GacLogo className={className} white={white} />
+      <span className={`h-8 w-px ${dividerColor}`} aria-hidden="true" />
+      <GacLogo className={`${className} scale-[0.92]`} white={white} />
     </span>
   );
 }

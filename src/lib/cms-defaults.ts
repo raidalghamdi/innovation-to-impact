@@ -47,6 +47,23 @@ const MAP: Record<string, string> = {
   // ─── Partners ──────────────────────────────────────────────
   'partners::intro::title': 'partners.title',
   'partners::intro::subtitle': 'partners.subtitle',
+  // Landing-page partner names — sourced from partners.partners[i].name.
+  // The number after the underscore is 1-based; the JSON array is 0-based.
+  'landing::partners::partner_1_name': 'partners.partners.0.name',
+  'landing::partners::partner_2_name': 'partners.partners.1.name',
+  'landing::partners::partner_3_name': 'partners.partners.2.name',
+  'landing::partners::partner_4_name': 'partners.partners.3.name',
+  'landing::partners::partner_5_name': 'partners.partners.4.name',
+  'landing::partners::partner_6_name': 'partners.partners.5.name',
+  'landing::partners::partner_7_name': 'partners.partners.6.name',
+  'landing::partners::partner_8_name': 'partners.partners.7.name',
+
+  // ─── Landing · Previous edition ────────────────────────────
+  'landing::previous::title': 'landing.previous.title',
+  'landing::previous::body': 'landing.previous.body',
+  'landing::previous::gallery_title': 'landing.previous.galleryTitle',
+  'landing::previous::video_label': 'landing.previous.videoLabel',
+  'landing::previous::video_hint': 'landing.previous.videoHint',
 
   // ─── Roadmap ───────────────────────────────────────────────
   'roadmap::intro::title': 'roadmap.title',
@@ -65,7 +82,13 @@ function readPath(obj: unknown, path: string): string {
   const parts = path.split('.');
   let cur: unknown = obj;
   for (const p of parts) {
-    if (cur && typeof cur === 'object' && p in (cur as Record<string, unknown>)) {
+    if (cur == null) return '';
+    // Numeric segment → array index (supports partners.partners.0.name).
+    if (Array.isArray(cur) && /^\d+$/.test(p)) {
+      cur = cur[Number(p)];
+      continue;
+    }
+    if (typeof cur === 'object' && p in (cur as Record<string, unknown>)) {
       cur = (cur as Record<string, unknown>)[p];
     } else {
       return '';
