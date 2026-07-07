@@ -13,6 +13,8 @@ import { HeroNetwork } from '@/components/hero-network';
 import { TimelineModern, stages as defaultStages } from '@/components/timeline-modern';
 import { fetchThemes } from '@/lib/data';
 import { pickFromRow } from '@/lib/i18n-content';
+import { getCurrentUser } from '@/lib/user';
+import { ROLE_HOME } from '@/lib/roles';
 import {
   Lightbulb,
   ArrowRight,
@@ -86,6 +88,9 @@ export default async function LandingPage({
   headers();
   const t = await getTranslations();
   const themes = await fetchThemes();
+  // Detect logged-in user so the landing nav can render the role menu instead
+  // of the generic "Login" CTA (fixes the "looks-logged-out" regression).
+  const currentUser = await getCurrentUser();
   const faqItems = (t.raw('faq.items') as { q: string; a: string }[]).slice(0, 8);
   const partners = (t.raw('partners.partners') as { name: string }[]);
   const objectives = t.raw('landing.objectives.items') as string[];
@@ -109,7 +114,14 @@ export default async function LandingPage({
       <SkipToContent />
 
       {/* Unified public Nav Bar (shared across all pre-login pages) */}
-      <LandingNav locale={locale} />
+      <LandingNav
+        locale={locale}
+        user={
+          currentUser
+            ? { displayName: currentUser.fullName || currentUser.email || 'User', role: currentUser.role }
+            : null
+        }
+      />
 
       <main id="main-content">
         {/* ===== 1. HERO — Concept ب (Competition Network) ===== */}
@@ -166,11 +178,13 @@ export default async function LandingPage({
                 </a>
               </Button>
               <Link
-                href="/ideas/new"
+                href={(currentUser ? ROLE_HOME[currentUser.role] : '/ideas/new') as any}
                 className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-white/40 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
               >
                 <Lightbulb className="h-5 w-5" />
-                {t('landing.hero.ctaRegister')}
+                {currentUser
+                  ? (locale === 'ar' ? 'لوحتي' : 'My dashboard')
+                  : t('landing.hero.ctaRegister')}
               </Link>
             </div>
 

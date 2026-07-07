@@ -26,7 +26,15 @@ import { CoBrand } from '@/components/logo';
 import { LanguageToggle } from '@/components/language-toggle';
 import { HeaderSearch } from '@/components/header-search';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { RoleUserMenu } from '@/components/role-user-menu';
+import { ROLE_HOME } from '@/lib/roles';
+import type { Role } from '@/lib/roles';
+import { Menu, X, LayoutDashboard } from 'lucide-react';
+
+export type LandingNavUser = {
+  displayName: string;
+  role: Role;
+} | null;
 
 const ANCHOR_NAV = [
   { anchor: 'about', key: 'navAbout' },
@@ -37,7 +45,15 @@ const ANCHOR_NAV = [
   { anchor: 'faq', key: 'navFaq' },
 ] as const;
 
-export function LandingNav({ locale, hideLoginCta = false }: { locale: string; hideLoginCta?: boolean }) {
+export function LandingNav({
+  locale,
+  hideLoginCta = false,
+  user = null,
+}: {
+  locale: string;
+  hideLoginCta?: boolean;
+  user?: LandingNavUser;
+}) {
   const t = useTranslations();
   const pathname = usePathname() ?? '/';
   const [open, setOpen] = useState(false);
@@ -102,9 +118,21 @@ export function LandingNav({ locale, hideLoginCta = false }: { locale: string; h
           <HeaderSearch />
         </div>
         {!hideLoginCta && (
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/login">{t('nav.login')}</Link>
-          </Button>
+          user ? (
+            <>
+              <Button asChild variant="ghost" size="sm">
+                <Link href={ROLE_HOME[user.role] as any}>
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
+                </Link>
+              </Button>
+              <RoleUserMenu displayName={user.displayName} activeRole={user.role} />
+            </>
+          ) : (
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/login">{t('nav.login')}</Link>
+            </Button>
+          )
         )}
         <LanguageToggle />
       </div>
@@ -179,12 +207,27 @@ export function LandingNav({ locale, hideLoginCta = false }: { locale: string; h
         </nav>
 
         {!hideLoginCta && (
-          <div className="shrink-0 border-t border-border p-4">
-            <Button asChild variant="gold" size="lg" className="w-full">
-              <Link href="/login" onClick={() => setOpen(false)}>
-                {t('nav.login')}
-              </Link>
-            </Button>
+          <div className="shrink-0 space-y-2 border-t border-border p-4">
+            {user ? (
+              <>
+                <div className="mb-1 text-center text-xs text-muted-foreground">
+                  {locale === 'ar' ? 'مرحباً، ' : 'Welcome, '}
+                  <span className="font-semibold text-foreground">{user.displayName}</span>
+                </div>
+                <Button asChild variant="gold" size="lg" className="w-full">
+                  <Link href={ROLE_HOME[user.role] as any} onClick={() => setOpen(false)}>
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <Button asChild variant="gold" size="lg" className="w-full">
+                <Link href="/login" onClick={() => setOpen(false)}>
+                  {t('nav.login')}
+                </Link>
+              </Button>
+            )}
           </div>
         )}
       </aside>
