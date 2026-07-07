@@ -98,6 +98,14 @@ export async function POST(req: NextRequest) {
       imported++;
     }
 
+    // NOTE: This import only writes to innovation.employees (not auth.users
+    // and not innovation.user_profiles). The employee's auth.users account
+    // is created lazily on their first sign-in via the unified /login flow.
+    // If we ever add a code path that pre-creates auth.users rows for
+    // imported employees, that path MUST also insert a matching
+    // innovation.user_profiles row with must_change_password = true so the
+    // user is routed through /activate to choose their own password.
+
     // Replace employee_roles: delete existing, insert Yes columns.
     await admin.from('employee_roles').delete().eq('employee_id', employeeId);
     const roleInserts: { employee_id: string; role_id: string; is_primary: boolean }[] = [];

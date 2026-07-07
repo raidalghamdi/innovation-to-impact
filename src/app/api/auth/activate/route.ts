@@ -81,6 +81,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'activation_failed' }, { status: 500 });
   }
 
+  // Clear the must_change_password flag so subsequent logins go through the
+  // normal login flow instead of being routed back to /activate. Best-effort
+  // — a failure here doesn't invalidate the activation itself.
+  try {
+    await admin
+      .from('user_profiles')
+      .update({ must_change_password: false })
+      .eq('id', userId);
+  } catch {
+    /* non-fatal */
+  }
+
   // Now behave like login-start: issue an OTP (or skip if disabled), and
   // the client proceeds to /login/verify to complete the sign-in.
   const internalDomain = await getPlatformSetting<string>('internal_email_domain', 'gac.gov.sa');
