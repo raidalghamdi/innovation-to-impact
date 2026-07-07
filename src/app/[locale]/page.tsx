@@ -92,30 +92,19 @@ export default async function LandingPage({
   const rules = t.raw('landing.details.rules') as string[];
   const criteriaItems = t.raw('landing.criteria.items') as { label: string; description?: string; weight: number }[];
   const criteriaTotal = criteriaItems.reduce((sum, c) => sum + c.weight, 0);
-
-  // Donut chart geometry — shared radius so all segments live on one ring.
-  // We render the ring in a 200×200 viewBox; r=80 gives 502.65 circumference.
-  const CRIT_R = 80;
-  const CRIT_C = 2 * Math.PI * CRIT_R;
-  // Palette — draws from the chart color sequence but stays inside the brand.
-  // Ordered by descending visual weight to match the descending criteria weights.
+  const criteriaMaxWeight = Math.max(...criteriaItems.map((c) => c.weight), 1);
+  // Palette — kept identical to the pre-existing icon-badge/segment colors
+  // so the badges in the list continue to color-match their bar.
   const CRIT_COLORS = ['#01696F', '#20808D', '#D19900', '#A84B2F', '#7A7974'];
-  const CRIT_ICONS = [Sparkles, Rocket, Wrench, Expand, Presentation];
-
-  // Compute per-segment dash offset so the ring reads clockwise from 12 o'clock.
-  let critAccum = 0;
-  const critSegments = criteriaItems.map((item, i) => {
-    const startPct = critAccum / criteriaTotal;
-    critAccum += item.weight;
-    const lengthPct = item.weight / criteriaTotal;
-    return {
-      ...item,
-      color: CRIT_COLORS[i % CRIT_COLORS.length],
-      Icon: CRIT_ICONS[i % CRIT_ICONS.length],
-      dashArray: `${CRIT_C * lengthPct} ${CRIT_C * (1 - lengthPct)}`,
-      dashOffset: -CRIT_C * startPct,
-    };
-  });
+  const CRIT_ICONS: LucideIcon[] = [Sparkles, Rocket, Wrench, Expand, Presentation];
+  const critSegments = criteriaItems.map((item, i) => ({
+    ...item,
+    color: CRIT_COLORS[i % CRIT_COLORS.length],
+    Icon: CRIT_ICONS[i % CRIT_ICONS.length],
+    // Bar height scales to the largest criterion so the ranking of
+    // importance reads at a glance without pie-chart math.
+    barPct: Math.round((item.weight / criteriaMaxWeight) * 100),
+  }));
   const prizeItems = t.raw('landing.prizes.items') as { tier: string; value: string }[];
   const heroWords = t.raw('landing.hero.words') as string[];
   const previousGallery = t.raw('landing.previous.gallery') as string[];
@@ -349,51 +338,63 @@ export default async function LandingPage({
             </div>
 
             <div className="mt-12 grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,_1fr)_minmax(0,_1.15fr)] lg:gap-14">
-              {/* Donut chart */}
-              <div className="relative mx-auto aspect-square w-full max-w-sm">
-                <svg
-                  viewBox="0 0 200 200"
-                  className="h-full w-full -rotate-90"
-                  aria-hidden="true"
-                >
-                  {/* Track */}
-                  <circle
-                    cx="100"
-                    cy="100"
-                    r={CRIT_R}
-                    fill="none"
-                    stroke="rgba(255,255,255,0.08)"
-                    strokeWidth="18"
-                  />
-                  {/* Segments */}
-                  {critSegments.map((s, i) => (
-                    <circle
-                      key={i}
-                      cx="100"
-                      cy="100"
-                      r={CRIT_R}
-                      fill="none"
-                      stroke={s.color}
-                      strokeWidth="18"
-                      strokeLinecap="butt"
-                      strokeDasharray={s.dashArray}
-                      strokeDashoffset={s.dashOffset}
-                      className="origin-center animate-[criteria-draw_1.2s_ease-out_both]"
-                      style={{ animationDelay: `${i * 0.12}s` }}
-                    />
-                  ))}
-                </svg>
-                {/* Center content — total score */}
-                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
-                  <span className="text-5xl font-bold tabular-nums text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] sm:text-6xl">
-                    {criteriaTotal}
-                    <span className="text-brand-gold">%</span>
-                  </span>
-                  <span className="text-[11px] uppercase tracking-widest text-white/60 sm:text-xs">
-                    {t('landing.criteria.centerLabel')}
-                  </span>
+              {/* Weighted bar chart — elegant vertical bars, one per criterion.
+                  Height is proportional to weight (relative to the heaviest),
+                  which reads as a ranking at a glance. Segment colors mirror
+                  the badges in the list so the eye connects them.
+                  Full-width on mobile, side-panel on desktop — fully responsive. */}
+              <figure className="relative mx-auto w-full max-w-md" aria-label={t('landing.criteria.title')}>
+                <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm sm:p-6">
+                  {/* Bars row */}
+                  <div
+                    className="flex h-52 items-end justify-between gap-2 sm:h-64 sm:gap-3"
+                    role="list"
+                  >
+                    {critSegments.map((s, i) => (
+                      <div
+                        key={i}
+                        role="listitem"
+                        className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2"
+                      >
+                        {/* Percentage label above bar */}
+                        <span className="text-xs font-bold tabular-nums text-white sm:text-sm">
+                          {s.weight}%
+                        </span>
+                        {/* Bar */}
+                        <div
+                          className="w-full origin-bottom animate-[criteria-draw_1s_ease-out_both] overflow-hidden rounded-t-lg ring-1 ring-inset ring-white/10 transition-[filter] group-hover:brightness-110"
+                          style={{
+                            height: `${s.barPct}%`,
+                            background: `linear-gradient(180deg, ${s.color} 0%, ${s.color}CC 100%)`,
+                            animationDelay: `${i * 0.12}s`,
+                            boxShadow: `0 -1px 0 ${s.color}66 inset, 0 12px 24px -12px ${s.color}88`,
+                          }}
+                          aria-hidden="true"
+                        />
+                        {/* Index chip under bar */}
+                        <span
+                          className="flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-semibold tabular-nums text-white ring-1 ring-inset ring-white/10"
+                          style={{ backgroundColor: `${s.color}33` }}
+                        >
+                          {i + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Baseline */}
+                  <div className="mt-1 h-px w-full bg-gradient-to-r from-transparent via-white/25 to-transparent" aria-hidden="true" />
+                  {/* Total footer */}
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-[11px] uppercase tracking-widest text-white/50 sm:text-xs">
+                      {t('landing.criteria.centerLabel')}
+                    </span>
+                    <span className="text-2xl font-bold tabular-nums text-white sm:text-3xl">
+                      {criteriaTotal}
+                      <span className="text-brand-gold">%</span>
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </figure>
 
               {/* Criteria list */}
               <ol className="space-y-3">
