@@ -1,10 +1,150 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { fetchUsers, fetchAuditLogs } from '@/lib/data';
+import { Card, CardContent } from '@/components/ui/card';
+import { Link } from '@/i18n/routing';
 import { getCurrentUser } from '@/lib/user';
 import { MyEscalationsStrip } from '@/components/my-escalations-strip';
+import {
+  Users as UsersIcon,
+  Shapes,
+  Upload,
+  BarChart3,
+  Database,
+  SlidersHorizontal,
+  FileBarChart,
+  ShieldCheck,
+  Split as SplitIcon,
+  ClipboardEdit,
+  FileText,
+  CalendarClock,
+  ArrowRight,
+  ArrowLeft,
+  type LucideIcon,
+} from 'lucide-react';
+
+/**
+ * /admin — Admin Hub.
+ *
+ * This is the LANDING page for administrators. Instead of dumping the users
+ * table + audit log inline (the previous design), every admin capability now
+ * lives as its own card that links out to a dedicated sub-page. The result:
+ *   - Backup, phase scheduling, and other previously "hidden" features are
+ *     discoverable from a single glance.
+ *   - Users / audit tables are moved into /admin/users and /admin/audit
+ *     respectively (they already exist there).
+ *   - The layout is fully responsive (2 cols mobile → 3 tablet → 4 desktop).
+ *
+ * Escalation strip stays at the top so admins never miss items requiring
+ * their action.
+ */
+type AdminCard = {
+  href: string;
+  labelAr: string;
+  labelEn: string;
+  descAr: string;
+  descEn: string;
+  icon: LucideIcon;
+};
+
+const ADMIN_CARDS: AdminCard[] = [
+  {
+    href: '/admin/users',
+    labelAr: 'إدارة المستخدمين',
+    labelEn: 'User Management',
+    descAr: 'إضافة، تعديل، وتعطيل حسابات المستخدمين.',
+    descEn: 'Add, edit, and disable user accounts.',
+    icon: UsersIcon,
+  },
+  {
+    href: '/admin/roles',
+    labelAr: 'كتالوج الأدوار',
+    labelEn: 'Roles Catalog',
+    descAr: 'تعريف الأدوار وصلاحياتها في المنصة.',
+    descEn: 'Define roles and their permissions.',
+    icon: Shapes,
+  },
+  {
+    href: '/admin/employees/import',
+    labelAr: 'استيراد الموظفين',
+    labelEn: 'Employees Import',
+    descAr: 'رفع ملف الموظفين لإنشاء الحسابات دفعة واحدة.',
+    descEn: 'Bulk-create accounts from an employee spreadsheet.',
+    icon: Upload,
+  },
+  {
+    href: '/admin/analytics',
+    labelAr: 'التحليلات',
+    labelEn: 'Analytics',
+    descAr: 'مؤشرات الأداء، الاتجاهات، والتقارير التنفيذية.',
+    descEn: 'KPIs, trends, and executive reporting.',
+    icon: BarChart3,
+  },
+  {
+    href: '/admin/backup',
+    labelAr: 'النسخ الاحتياطي',
+    labelEn: 'Backup & Restore',
+    descAr: 'تنزيل بيانات المنصة كملف Excel واستعادتها لاحقاً.',
+    descEn: 'Download the full database as Excel and restore later.',
+    icon: Database,
+  },
+  {
+    href: '/admin/phases',
+    labelAr: 'جدولة المراحل',
+    labelEn: 'Phase Scheduling',
+    descAr: 'تحديد تواريخ فتح وإغلاق كل مرحلة من المراحل السبع.',
+    descEn: 'Set open/close dates for each of the seven phases.',
+    icon: CalendarClock,
+  },
+  {
+    href: '/admin/settings',
+    labelAr: 'إعدادات المنصة',
+    labelEn: 'Platform Settings',
+    descAr: 'المفاتيح العامة: النطاقات، البريد، OTP، إعدادات النظام.',
+    descEn: 'Global toggles: domains, email, OTP, system settings.',
+    icon: SlidersHorizontal,
+  },
+  {
+    href: '/admin/audit',
+    labelAr: 'سجلات التدقيق',
+    labelEn: 'Audit Logs',
+    descAr: 'سجل تفصيلي لكل إجراء في المنصة.',
+    descEn: 'A detailed log of every action taken on the platform.',
+    icon: FileBarChart,
+  },
+  {
+    href: '/admin/escalations',
+    labelAr: 'الترقيات والاعتراضات',
+    labelEn: 'Escalations & Approvals',
+    descAr: 'مراجعة اعتراضات المستخدمين وقرارات التصعيد.',
+    descEn: 'Review user objections and escalation decisions.',
+    icon: ShieldCheck,
+  },
+  {
+    href: '/admin/assignments',
+    labelAr: 'التعيينات',
+    labelEn: 'Assignments',
+    descAr: 'توزيع المُقيِّمين على الأفكار وإدارة أعباء العمل.',
+    descEn: 'Assign evaluators to ideas and balance workloads.',
+    icon: SplitIcon,
+  },
+  {
+    href: '/admin/change-requests',
+    labelAr: 'طلبات التعديل',
+    labelEn: 'Change Requests',
+    descAr: 'مراجعة طلبات تعديل الأفكار بعد الإرسال.',
+    descEn: 'Review post-submission idea change requests.',
+    icon: ClipboardEdit,
+  },
+  {
+    href: '/admin/cms',
+    labelAr: 'محرر المحتوى',
+    labelEn: 'Content Editor',
+    descAr: 'تعديل نصوص وصور وفيديو المنصة بدون كود.',
+    descEn: 'Edit platform text, images, and video — no code.',
+    icon: FileText,
+  },
+];
 
 export default async function AdminPage({
   params,
@@ -14,74 +154,70 @@ export default async function AdminPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('admin');
-  const tc = await getTranslations('categories');
-  const users = await fetchUsers();
-  const audit = await fetchAuditLogs(8);
   const user = await getCurrentUser();
+
+  const isAr = locale === 'ar';
+  const ChevronIcon = isAr ? ArrowLeft : ArrowRight;
 
   return (
     <AppShell>
-      <PageHeader title={t('title')} subtitle={t('subtitle')} />
+      <PageHeader
+        title={isAr ? 'لوحة الإدارة' : 'Admin Hub'}
+        subtitle={
+          isAr
+            ? 'كل ما تحتاجه لإدارة المنصة في مكان واحد. اختر القسم للانتقال إليه.'
+            : 'Everything you need to manage the platform in one place. Pick a section to jump in.'
+        }
+      />
 
-      {user && <MyEscalationsStrip userId={user.id} role={user.role} locale={locale} />}
+      {user && (
+        <MyEscalationsStrip userId={user.id} role={user.role} locale={locale} />
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-brand-teal">{t('users')}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="teal-header">
-                  <th className="px-4 py-3 text-start text-xs font-semibold uppercase">Name</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold uppercase">Email</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold uppercase">{t('roles')}</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold uppercase">{t('department')}</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold uppercase">{t('userCategory')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="border-t border-border">
-                    <td className="px-4 py-3 font-medium">{u.full_name}</td>
-                    <td className="px-4 py-3 text-muted-foreground" dir="ltr">{u.email}</td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-brand-teal-light px-2 py-0.5 text-xs text-brand-teal">{u.role}</span>
-                    </td>
-                    <td className="px-4 py-3">{u.department}</td>
-                    <td className="px-4 py-3">{tc(u.user_category as any)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <div
+        className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        role="list"
+      >
+        {ADMIN_CARDS.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Link
+              key={card.href}
+              href={card.href as any}
+              role="listitem"
+              className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 rounded-xl"
+            >
+              <Card className="h-full border-border bg-card transition group-hover:border-brand-teal group-hover:shadow-md group-focus-visible:border-brand-teal">
+                <CardContent className="flex h-full flex-col gap-3 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-teal-light/60 text-brand-teal transition group-hover:bg-brand-teal group-hover:text-white">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <ChevronIcon
+                      className="mt-2 h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">
+                      {isAr ? card.labelAr : card.labelEn}
+                    </h3>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {isAr ? card.descAr : card.descEn}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-brand-teal">{t('auditLog')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {audit.length === 0 ? (
-            <p className="p-3 text-sm text-muted-foreground">{t('auditEmpty')}</p>
-          ) : (
-            audit.map((a) => (
-              <div key={a.id} className="flex items-center justify-between rounded-md border border-border p-3 text-sm">
-                <div>
-                  <span className="font-medium">{a.action}</span>{' '}
-                  <span className="text-muted-foreground">on {a.entity_type}</span>
-                </div>
-                <div className="text-end text-xs text-muted-foreground">
-                  <p className="font-mono">{a.actor_id?.slice(0, 8) ?? '—'}</p>
-                  <p dir="ltr">{a.created_at?.slice(0, 19).replace('T', ' ')}</p>
-                </div>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+      <p className="mt-8 text-xs text-muted-foreground">
+        {isAr
+          ? 'هل تحتاج قدرة إضافية غير موجودة أعلاه؟ تواصل مع فريق المنصة.'
+          : 'Need a capability not shown above? Contact the platform team.'}
+      </p>
     </AppShell>
   );
 }

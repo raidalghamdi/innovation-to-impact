@@ -84,7 +84,8 @@
     "openMenu": "Open navigation menu",
     "closeMenu": "Close navigation menu",
     "logout": "Sign out",
-    "genericError": "Something went wrong. Please try again."
+    "genericError": "Something went wrong. Please try again.",
+    "retry": "Try again"
   },
   "brand": {
     "logo": {

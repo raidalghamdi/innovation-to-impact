@@ -50,48 +50,82 @@ const DASHBOARD_ITEM: MenuItem = {
   icon: LayoutDashboard,
 };
 
+// Admin never has a personal "my dashboard" — the console IS the dashboard.
+const ADMIN_HUB_ITEM: MenuItem = {
+  href: '/admin',
+  labelAr: 'لوحة الإدارة',
+  labelEn: 'Admin Hub',
+  icon: LayoutDashboard,
+};
+
 const TAIL_ITEMS: MenuItem[] = [
   { href: '/notifications', labelAr: 'الإشعارات', labelEn: 'Notifications', icon: Bell },
   { href: '/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: SettingsIcon },
 ];
 
+// Role → dropdown items MUST match the canonical Role enum in src/lib/roles.ts
+// ('submitter' | 'evaluator' | 'judge' | 'admin'). We also keep aliases
+// ('innovator' → submitter, 'committee' → judge, 'supervisor' → evaluator's
+// team-lead variant) so the same menu works if a caller passes an older role
+// code returned from user_profiles/user_roles.
+const SUBMITTER_ITEMS: MenuItem[] = [
+  { href: '/my-ideas', labelAr: 'أفكاري', labelEn: 'My Ideas', icon: Lightbulb },
+  { href: '/ideas/new', labelAr: 'قدّم فكرة', labelEn: 'Submit Idea', icon: PlusCircle },
+  { href: '/team', labelAr: 'فريقي', labelEn: 'My Team', icon: Users2 },
+  { href: '/profile/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
+];
+
+const EVALUATOR_ITEMS: MenuItem[] = [
+  { href: '/evaluation', labelAr: 'التقييمات المخصّصة لي', labelEn: 'My Evaluations', icon: ClipboardList },
+  { href: '/evaluation?filter=completed', labelAr: 'التقييمات المكتملة', labelEn: 'Completed Evaluations', icon: CheckCircle2 },
+  { href: '/profile/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
+];
+
+const JUDGE_ITEMS: MenuItem[] = [
+  { href: '/committee', labelAr: 'القرارات المعلّقة', labelEn: 'Pending Decisions', icon: Gavel },
+  { href: '/committee?filter=history', labelAr: 'سجل القرارات', labelEn: 'Decision History', icon: History },
+];
+
+const ADMIN_ITEMS: MenuItem[] = [
+  { href: '/admin/users', labelAr: 'إدارة المستخدمين', labelEn: 'User Management', icon: UserCog },
+  { href: '/admin/roles', labelAr: 'كتالوج الأدوار', labelEn: 'Roles Catalog', icon: Shapes },
+  { href: '/admin/employees/import', labelAr: 'استيراد الموظفين', labelEn: 'Employees Import', icon: Upload },
+  { href: '/admin/analytics', labelAr: 'تحليلات المشرف', labelEn: 'Analytics', icon: FileBarChart },
+  { href: '/admin/backup', labelAr: 'النسخ الاحتياطي', labelEn: 'Backup', icon: Upload },
+  { href: '/admin/settings', labelAr: 'إعدادات المنصة', labelEn: 'Platform Settings', icon: SlidersHorizontal },
+  { href: '/admin/audit', labelAr: 'سجلات التدقيق', labelEn: 'Audit Logs', icon: FileBarChart },
+];
+
+const SUPERVISOR_ITEMS: MenuItem[] = [
+  { href: '/team', labelAr: 'أفكار قطاعي', labelEn: 'Sector Ideas', icon: Users2 },
+  { href: '/admin/escalations', labelAr: 'التصعيدات', labelEn: 'Escalations', icon: ShieldCheck },
+  { href: '/analytics', labelAr: 'تقارير القطاع', labelEn: 'Sector Reports', icon: FileBarChart },
+];
+
 const ROLE_ITEMS: Record<string, MenuItem[]> = {
-  innovator: [
-    { href: '/my-ideas', labelAr: 'أفكاري', labelEn: 'My Ideas', icon: Lightbulb },
-    { href: '/ideas/new', labelAr: 'قدّم فكرة', labelEn: 'Submit Idea', icon: PlusCircle },
-    { href: '/team', labelAr: 'فريقي', labelEn: 'My Team', icon: Users2 },
-    { href: '/profile/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
-  ],
-  judge: [
-    { href: '/evaluation', labelAr: 'قائمة التقييم', labelEn: 'Evaluation Queue', icon: ClipboardList },
-    { href: '/evaluation?filter=completed', labelAr: 'التقييمات المكتملة', labelEn: 'Completed Evaluations', icon: CheckCircle2 },
-  ],
-  committee: [
-    { href: '/committee', labelAr: 'القرارات المعلّقة', labelEn: 'Pending Decisions', icon: Gavel },
-    { href: '/committee?filter=history', labelAr: 'سجل القرارات', labelEn: 'Decision History', icon: History },
-  ],
-  admin: [
-    { href: '/admin/users', labelAr: 'إدارة المستخدمين', labelEn: 'User Management', icon: UserCog },
-    { href: '/admin/roles', labelAr: 'كتالوج الأدوار', labelEn: 'Roles Catalog', icon: Shapes },
-    { href: '/admin/employees/import', labelAr: 'استيراد الموظفين', labelEn: 'Employees Import', icon: Upload },
-    { href: '/admin/settings', labelAr: 'إعدادات المنصة', labelEn: 'Platform Settings', icon: SlidersHorizontal },
-    { href: '/admin/audit', labelAr: 'سجلات التدقيق', labelEn: 'Audit Logs', icon: FileBarChart },
-  ],
-  supervisor: [
-    { href: '/team', labelAr: 'نظرة عامة على الفريق', labelEn: 'Team Overview', icon: Users2 },
-    { href: '/admin/escalations', labelAr: 'التصعيدات', labelEn: 'Escalations', icon: ShieldCheck },
-    { href: '/analytics', labelAr: 'تقارير القطاع', labelEn: 'Sector Reports', icon: FileBarChart },
-  ],
+  // canonical Role enum values
+  submitter: SUBMITTER_ITEMS,
+  evaluator: EVALUATOR_ITEMS,
+  judge: JUDGE_ITEMS,
+  admin: ADMIN_ITEMS,
+  // aliases returned by innovation.v_user_roles.role_code
+  innovator: SUBMITTER_ITEMS,
+  committee: JUDGE_ITEMS,
+  supervisor: SUPERVISOR_ITEMS,
 };
 
 /**
- * Returns the unified menu for a role: My Dashboard → role items → Notifications → Settings.
+ * Returns the unified menu for a role:
+ *   admin      → Admin Hub → admin items → Notifications → Settings
+ *   everyone   → My Dashboard → role items → Notifications → Settings
  * Logout is appended separately by the consuming component (it's a form action,
  * not a link).
  */
 export function getMenuForRole(roleCode: string | null | undefined): MenuItem[] {
-  const roleItems = (roleCode && ROLE_ITEMS[roleCode]) || [];
-  return [DASHBOARD_ITEM, ...roleItems, ...TAIL_ITEMS];
+  const key = (roleCode ?? '').toLowerCase();
+  const roleItems = ROLE_ITEMS[key] ?? SUBMITTER_ITEMS;
+  const head = key === 'admin' ? ADMIN_HUB_ITEM : DASHBOARD_ITEM;
+  return [head, ...roleItems, ...TAIL_ITEMS];
 }
 
 export { LogOut as LogoutIcon };

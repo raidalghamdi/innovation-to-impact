@@ -82,15 +82,23 @@ export async function POST(req: NextRequest) {
   }
 
   // Clear the must_change_password flag so subsequent logins go through the
-  // normal login flow instead of being routed back to /activate. Best-effort
-  // — a failure here doesn't invalidate the activation itself.
-  try {
-    await admin
-      .from('user_profiles')
-      .update({ must_change_password: false })
-      .eq('id', userId);
-  } catch {
-    /* non-fatal */
+  // normal login flow instead of being routed back to /activate.
+  //
+  // Historical bug: `admin.from('user_profiles').update(...)` was failing
+  // silently under RLS (supabase-js resolves { data, error } without throwing).
+  // Switched to a SECURITY DEFINER RPC (migration 00024) granted only to
+  // service_role so the update is guaranteed to run and errors are surfaced.
+  {
+    const { error: clearErr } = await admin.rpc('clear_must_change_password', {
+      p_user_id: userId,
+    });
+    if (clearErr) {
+      console.error('[activate] failed to clear must_change_password', clearErr);
+      return NextResponse.json(
+        { error: 'activation_flag_not_cleared', detail: clearErr.message },
+        { status: 500 },
+      );
+    }
   }
 
   // Now behave like login-start: issue an OTP (or skip if disabled), and

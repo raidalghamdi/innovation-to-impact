@@ -11,8 +11,8 @@ import { HitlBanner } from '@/components/hitl-banner';
 import { PointsBadge } from '@/components/points-badge';
 import { GlobalSearch } from '@/components/global-search';
 import { HeaderSearch } from '@/components/header-search';
-import { SignOutButton } from '@/components/sign-out-button';
 import { UserMenu } from '@/components/user-menu';
+import { RoleUserMenu } from '@/components/role-user-menu';
 import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
@@ -150,16 +150,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="hidden md:block">
             <GlobalSearch />
           </div>
-          <Button asChild size="sm" variant="gold" className="hidden sm:inline-flex">
-            <Link href="/ideas/new">
-              <Plus className="h-4 w-4" />
-              {t('nav.submitIdea')}
-            </Link>
-          </Button>
+          {/* Admin shell: no "Submit Idea" CTA — admins manage the pipeline,
+              they don't submit ideas from their own console. */}
           <PointsBadge userId={userId} role={role} />
           <NotificationBell userId={userId} />
           <LanguageToggle />
-          {userId && <SignOutButton />}
+          {userId && (
+            <RoleUserMenu
+              displayName={displayName || t('common.logout')}
+              activeRole={role}
+            />
+          )}
         </div>
       </header>
 

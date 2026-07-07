@@ -53,32 +53,65 @@ export function useNotificationsStream(
 
   useEffect(() => {
     if (!userId) return;
-    const supabase = createClient();
-    if (!supabase) return;
+    // The realtime handshake can throw synchronously (e.g. auth token not yet
+    // ready, publication missing, network offline). Any throw here would
+    // bubble up during hydration and trip the parent error boundary
+    // (“حدث خطأ غير متوقّع” on /notifications). Wrap defensively so a
+    // realtime failure degrades to “no live updates” instead of a full
+    // page-crash.
+    let cleanup: (() => void) | null = null;
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
 
-    let channel: RealtimeChannel | null = supabase
-      .channel(`notifications:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'innovation',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          onInsertRef.current(payload.new as RealtimeNotification);
+      let channel: RealtimeChannel | null = supabase
+        .channel(`notifications:${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'innovation',
+            table: 'notifications',
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            try {
+              onInsertRef.current(payload.new as RealtimeNotification);
+            } catch (err) {
+              // eslint-disable-next-line no-console
+              console.error('[notifications-stream] onInsert threw:', err);
+            }
+          }
+        )
+        .subscribe((status) => {
+          try {
+            onStatusChangeRef.current?.(
+              status as 'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR' | 'TIMED_OUT',
+            );
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('[notifications-stream] onStatusChange threw:', err);
+          }
+        });
+
+      cleanup = () => {
+        if (channel) {
+          try {
+            supabase.removeChannel(channel);
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('[notifications-stream] cleanup threw:', err);
+          }
+          channel = null;
         }
-      )
-      .subscribe((status) => {
-        onStatusChangeRef.current?.(status as 'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR' | 'TIMED_OUT');
-      });
+      };
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[notifications-stream] setup threw:', err);
+    }
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-        channel = null;
-      }
+      cleanup?.();
     };
   }, [userId]);
 }

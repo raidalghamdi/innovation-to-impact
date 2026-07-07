@@ -58,6 +58,12 @@ export function HeroNetwork({ className }: { className?: string }) {
 
     let width = parent.clientWidth;
     let height = parent.clientHeight;
+    // Prevent motion accumulator drift when the tab was backgrounded
+    // (rAF fires with wildly large gaps on resume). Bug seen previously:
+    // over time nodes appeared to “clump toward the middle”. Fixed by
+    // (a) using a fixed logical step, (b) a small mutual repulsion when
+    // two nodes get too close so they can't stagnate on top of each other,
+    // (c) periodic small random impulse so stuck nodes get nudged.
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const setSize = () => {
@@ -73,14 +79,30 @@ export function HeroNetwork({ className }: { className?: string }) {
 
     const isMobile = width < 640;
     const count = isMobile ? NODE_COUNT_MOBILE : NODE_COUNT_DESKTOP;
-    const nodes: Node[] = Array.from({ length: count }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.25,
-      vy: (Math.random() - 0.5) * 0.25,
-      r: 1.6 + Math.random() * 1.8,
-      gold: Math.random() < GOLD_RATIO,
-    }));
+    // Ensure every node has a non-trivial velocity in a random direction, so
+    // over time they actually roam the canvas instead of drifting toward
+    // whatever central hot-spot the reflections happen to favor.
+    const MIN_SPEED = 0.15;
+    const MAX_SPEED = 0.4;
+    const randomVelocity = () => {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED);
+      return { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
+    };
+    const nodes: Node[] = Array.from({ length: count }, () => {
+      const { vx, vy } = randomVelocity();
+      return {
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx,
+        vy,
+        r: 1.6 + Math.random() * 1.8,
+        gold: Math.random() < GOLD_RATIO,
+      };
+    });
+
+    const MIN_SEPARATION = 24; // px; below this, apply mild repulsion
+    let frame = 0;
 
     let raf = 0;
 
@@ -123,12 +145,70 @@ export function HeroNetwork({ className }: { className?: string }) {
     };
 
     const tick = () => {
+      frame++;
+      // Mutual repulsion — keeps nodes from stagnating on top of each other
+      // near the middle of the canvas. Applied at half the connectivity cost.
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[j].x - nodes[i].x;
+          const dy = nodes[j].y - nodes[i].y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 > MIN_SEPARATION * MIN_SEPARATION) continue;
+          const d = Math.max(Math.sqrt(d2), 0.5);
+          const push = (MIN_SEPARATION - d) / MIN_SEPARATION;
+          const ux = dx / d;
+          const uy = dy / d;
+          const impulse = 0.02 * push;
+          nodes[i].vx -= ux * impulse;
+          nodes[i].vy -= uy * impulse;
+          nodes[j].vx += ux * impulse;
+          nodes[j].vy += uy * impulse;
+        }
+      }
+
       for (const n of nodes) {
         n.x += n.vx;
         n.y += n.vy;
-        if (n.x < 0 || n.x > width) n.vx *= -1;
-        if (n.y < 0 || n.y > height) n.vy *= -1;
+
+        // Bounce off walls; also nudge back inside if a resize pushed us out.
+        if (n.x < 0) {
+          n.x = 0;
+          n.vx = Math.abs(n.vx);
+        } else if (n.x > width) {
+          n.x = width;
+          n.vx = -Math.abs(n.vx);
+        }
+        if (n.y < 0) {
+          n.y = 0;
+          n.vy = Math.abs(n.vy);
+        } else if (n.y > height) {
+          n.y = height;
+          n.vy = -Math.abs(n.vy);
+        }
+
+        // Clamp speed so repulsion impulses can't runaway.
+        const speed = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+        if (speed > MAX_SPEED) {
+          n.vx = (n.vx / speed) * MAX_SPEED;
+          n.vy = (n.vy / speed) * MAX_SPEED;
+        } else if (speed < MIN_SPEED / 2) {
+          // Speed collapsed — give it a fresh random direction.
+          const v = randomVelocity();
+          n.vx = v.vx;
+          n.vy = v.vy;
+        }
       }
+
+      // Every ~4 seconds, add a tiny jitter to every node so long-lived
+      // sessions never settle into a static pattern (this is the main
+      // safeguard against the “clumps at center” regression).
+      if (frame % 240 === 0) {
+        for (const n of nodes) {
+          n.vx += (Math.random() - 0.5) * 0.05;
+          n.vy += (Math.random() - 0.5) * 0.05;
+        }
+      }
+
       draw();
       raf = requestAnimationFrame(tick);
     };
