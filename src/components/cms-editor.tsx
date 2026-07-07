@@ -18,8 +18,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Check, Loader2, Save, Eye, EyeOff, ExternalLink, FileText, ChevronRight } from 'lucide-react';
+import { Check, Loader2, Save, Eye, EyeOff, ExternalLink, FileText, ChevronRight, RotateCcw } from 'lucide-react';
 import { Link } from '@/i18n/routing';
+import { defaultTextFor } from '@/lib/cms-defaults';
 
 type Block = {
   id: string;
@@ -106,7 +107,20 @@ export function CmsEditor({ locale }: { locale: string }) {
       .order('page')
       .order('sort_order')
       .then(({ data }) => {
-        setBlocks((data as Block[]) ?? []);
+        // For each row, if there is no admin override yet, pre-fill the field
+        // with the current site default text so the admin can edit it directly.
+        const rows = ((data as Block[]) ?? []).map((b) => ({
+          ...b,
+          value_en:
+            b.value_en && b.value_en.trim().length > 0
+              ? b.value_en
+              : defaultTextFor(b.page, b.section, b.key, 'en'),
+          value_ar:
+            b.value_ar && b.value_ar.trim().length > 0
+              ? b.value_ar
+              : defaultTextFor(b.page, b.section, b.key, 'ar'),
+        }));
+        setBlocks(rows);
         setLoading(false);
       });
   }, [supabase]);
@@ -246,8 +260,8 @@ export function CmsEditor({ locale }: { locale: string }) {
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {isAr
-              ? 'حرّر النصوص بالإنجليزية والعربية. اترك الحقل فارغاً لاستخدام النص الافتراضي.'
-              : 'Edit text in English and Arabic. Leave a field empty to fall back to the default translation.'}
+              ? 'يظهر النص الحالي المعروض على الموقع مباشرة. عدّل كلمة أو جملة أو استبدل النص بالكامل، ثم احفظ. استخدم «استعادة النص الأصلي» للتراجع عن أي تعديل.'
+              : "The current live text is loaded into each field. Edit a word, a sentence, or replace the whole text, then save. Use 'Reset to default' to revert."}
           </p>
         </div>
 
@@ -317,6 +331,19 @@ export function CmsEditor({ locale }: { locale: string }) {
                                 {isAr ? 'تعديل غير محفوظ' : 'Unsaved'}
                               </span>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const defEn = defaultTextFor(row.page, row.section, row.key, 'en');
+                                const defAr = defaultTextFor(row.page, row.section, row.key, 'ar');
+                                updateBlock(row.id, { value_en: defEn, value_ar: defAr });
+                              }}
+                              className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition hover:border-brand-teal/40 hover:text-brand-teal"
+                              title={isAr ? 'إعادة النص الافتراضي' : 'Reset to default'}
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                              {isAr ? 'استعادة النص الأصلي' : 'Reset to default'}
+                            </button>
                           </div>
                         </div>
 
@@ -426,7 +453,18 @@ export function CmsEditor({ locale }: { locale: string }) {
                     .order('page')
                     .order('sort_order')
                     .then(({ data }) => {
-                      setBlocks((data as Block[]) ?? []);
+                      const rows = ((data as Block[]) ?? []).map((b) => ({
+                        ...b,
+                        value_en:
+                          b.value_en && b.value_en.trim().length > 0
+                            ? b.value_en
+                            : defaultTextFor(b.page, b.section, b.key, 'en'),
+                        value_ar:
+                          b.value_ar && b.value_ar.trim().length > 0
+                            ? b.value_ar
+                            : defaultTextFor(b.page, b.section, b.key, 'ar'),
+                      }));
+                      setBlocks(rows);
                       setLoading(false);
                     });
                 }}
