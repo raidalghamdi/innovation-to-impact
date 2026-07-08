@@ -75,7 +75,10 @@ function pickFont(text: string, fonts: Fonts, bold = false): PDFFont {
 function fitText(text: string, font: PDFFont, size: number, maxWidth: number): string {
   if (!text) return '';
   if (font.widthOfTextAtSize(text, size) <= maxWidth) return text;
-  const ellipsis = '…';
+  // Use ASCII '...' — the Unicode ellipsis '…' (U+2026) is NOT in Helvetica's
+  // WinAnsi encoding and pdf-lib throws when we try to draw it with a standard
+  // font. Latin text uses Helvetica, so we stick to ASCII here.
+  const ellipsis = '...';
   let lo = 0;
   let hi = text.length;
   while (lo < hi) {
@@ -266,7 +269,7 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
       ? ctx.locale === 'ar'
         ? 'جميع الفترات'
         : 'All Periods'
-      : `${bundle.dateFrom ?? '…'}  →  ${bundle.dateTo ?? '…'}`;
+      : `${bundle.dateFrom ?? '...'}  –  ${bundle.dateTo ?? '...'}`;
   const byLabel = ctx.locale === 'ar' ? 'الجهة المُصدِرة' : 'Prepared By';
   const byValue = bundle.generatedBy || (ctx.locale === 'ar' ? 'إدارة النظام' : 'System Administration');
   const dateLabel = ctx.locale === 'ar' ? 'تاريخ الإصدار' : 'Issued On';
@@ -346,7 +349,7 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number, maxLi
   }
   if (cur && lines.length < maxLines) lines.push(cur);
   if (lines.length === maxLines) {
-    lines[lines.length - 1] = fitText(lines[lines.length - 1] + '…', font, size, maxWidth);
+    lines[lines.length - 1] = fitText(lines[lines.length - 1] + '...', font, size, maxWidth);
   }
   return lines.length ? lines : [''];
 }
@@ -702,7 +705,7 @@ function drawFooters(ctx: Ctx, bundle: ReportBundle, coverIndex: number, tocInde
       ? ctx.locale === 'ar'
         ? 'جميع الفترات'
         : 'All Periods'
-      : `${bundle.dateFrom ?? '…'} → ${bundle.dateTo ?? '…'}`;
+      : `${bundle.dateFrom ?? '...'} – ${bundle.dateTo ?? '...'}`;
 
   const totalPages = ctx.doc.getPageCount();
   const bodyPageCount = totalPages - (tocIndex === null ? 1 : 2);
