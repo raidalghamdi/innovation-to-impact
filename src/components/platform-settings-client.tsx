@@ -47,56 +47,21 @@ const META: Record<string, SettingMeta> = {
     descEn: 'When on, users outside the internal domain can self-register.',
     group: 'auth',
   },
-  otp_required: {
-    labelAr: 'اشتراط رمز التحقق (OTP) عند الدخول',
-    labelEn: 'Require OTP on Login',
-    descAr: 'عند التفعيل، يُطلب رمز تحقق بعد كلمة المرور.',
-    descEn: 'When on, an OTP is required after password entry.',
-    group: 'otp',
-  },
-  otp_length: {
-    labelAr: 'عدد خانات رمز التحقق',
-    labelEn: 'OTP Length',
-    descAr: 'عدد الأرقام في رمز التحقق (يُنصح بـ 6).',
-    descEn: 'Number of digits in the OTP code (6 recommended).',
-    group: 'otp',
-  },
-  otp_ttl_minutes: {
-    labelAr: 'مدة صلاحية رمز التحقق (دقائق)',
-    labelEn: 'OTP Validity (minutes)',
-    descAr: 'المدة الزمنية التي يظل فيها الرمز صالحاً بالدقائق.',
-    descEn: 'How long an OTP stays valid, in minutes.',
-    group: 'otp',
-  },
-  otp_max_attempts: {
-    labelAr: 'الحد الأقصى لمحاولات التحقق',
-    labelEn: 'OTP Max Attempts',
-    descAr: 'عدد المحاولات المسموح بها قبل انتهاء صلاحية الرمز.',
-    descEn: 'Maximum verification attempts per OTP.',
-    group: 'otp',
-  },
-  whatsapp_enabled: {
-    labelAr: 'تفعيل واتساب',
-    labelEn: 'Enable WhatsApp',
-    descAr: 'إرسال رموز التحقق والإشعارات عبر واتساب.',
-    descEn: 'Send OTPs and notifications via WhatsApp.',
-    group: 'integrations',
-  },
-  whatsapp_provider: {
-    labelAr: 'مزوّد واتساب',
-    labelEn: 'WhatsApp Provider',
-    descAr: 'المزوّد المستخدم: stub | meta | unifonic | twilio.',
-    descEn: 'Provider to use: stub | meta | unifonic | twilio.',
-    group: 'integrations',
-  },
-  whatsapp_channels: {
-    labelAr: 'قنوات واتساب المُفَعَّلة',
-    labelEn: 'WhatsApp Channels',
-    descAr: 'اختر ما يُرسَل عبر واتساب: رموز التحقق، الإشعارات، أو كليهما.',
-    descEn: 'Pick what gets sent via WhatsApp: OTPs, notifications, or both.',
-    group: 'integrations',
-  },
 };
+
+// OTP and WhatsApp settings have been retired. Their platform_settings rows
+// (otp_required, otp_length, otp_ttl_minutes, otp_max_attempts,
+// whatsapp_enabled, whatsapp_provider, whatsapp_channels) are ignored here
+// and will not render in the admin settings page.
+const HIDDEN_KEYS = new Set([
+  'otp_required',
+  'otp_length',
+  'otp_ttl_minutes',
+  'otp_max_attempts',
+  'whatsapp_enabled',
+  'whatsapp_provider',
+  'whatsapp_channels',
+]);
 
 const GROUP_LABELS: Record<SettingMeta['group'], { ar: string; en: string }> = {
   domain: { ar: 'النطاقات والتصنيف', en: 'Domains & Classification' },
@@ -109,8 +74,6 @@ const GROUP_LABELS: Record<SettingMeta['group'], { ar: string; en: string }> = {
 const GROUP_ORDER: SettingMeta['group'][] = [
   'domain',
   'auth',
-  'otp',
-  'integrations',
   'general',
 ];
 
@@ -160,6 +123,7 @@ export function PlatformSettingsClient({
     general: [],
   };
   for (const row of rows) {
+    if (HIDDEN_KEYS.has(row.key)) continue;
     const meta = META[row.key];
     const g = meta?.group ?? 'general';
     groups[g].push(row);

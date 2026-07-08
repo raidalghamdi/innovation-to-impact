@@ -363,7 +363,6 @@ export function AuthForm({ mode: _mode }: { mode?: 'login' | 'signup' }) {
                   autoFocus
                 />
               </div>
-              <p className="text-xs text-muted-foreground">{t('otpHint')}</p>
               <p className="text-end text-xs">
                 <Link href={('/forgot-password') as any} className="font-medium text-brand-teal hover:underline">
                   {t('forgotPassword')}
