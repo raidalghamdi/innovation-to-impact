@@ -46,14 +46,16 @@ export default async function StagesPage({
   const tLanding = await getTranslations('landing');
   const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
 
-  const stages = Array.from({ length: 9 }, (_, i) => i);
+  // Stages now start at idea submission (stage 1). The pre-idea
+  // strategic-framework stage 0 is no longer part of the lifecycle.
+  const stages = Array.from({ length: 8 }, (_, i) => i + 1);
 
   return (
     <AppShell>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
 
       <ol className="space-y-4">
-        {stages.map((i) => {
+        {stages.map((i, idx) => {
           const Icon = STAGE_ICONS[i];
           return (
             <li key={i} className="relative">
@@ -117,7 +119,7 @@ export default async function StagesPage({
               </Card>
 
               {/* Vertical connector between stages */}
-              {i < stages.length - 1 && (
+              {idx < stages.length - 1 && (
                 <div className="my-1 flex justify-center">
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-cyan text-white shadow">
                     <ArrowRight className="h-3.5 w-3.5 rotate-90" />

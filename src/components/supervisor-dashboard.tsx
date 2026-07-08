@@ -506,6 +506,13 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                         }
                         rows={3}
                       />
+                      {decision === 'return' && reason.trim().length < 10 && (
+                        <div className="mt-1 text-xs text-red-700">
+                          {isAr
+                            ? 'اكتب سبب الإرجاع (10 أحرف على الأقل).'
+                            : 'Enter a return reason (at least 10 characters).'}
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="flex gap-2">
@@ -513,7 +520,8 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                       onClick={submitDecision}
                       disabled={
                         pending ||
-                        (decision === 'return' && editableSections.size === 0)
+                        (decision === 'return' &&
+                          (editableSections.size === 0 || reason.trim().length < 10))
                       }
                       className={
                         decision === 'approve'

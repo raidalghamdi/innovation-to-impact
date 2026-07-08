@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
 import { uploadEvidence } from '@/lib/storage';
+import { getTrackChallenges } from '@/lib/tracks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,8 +19,8 @@ import {
   Paperclip,
   CheckCircle2,
   AlertTriangle,
-  Copy,
-  ChevronDown,
+  Plus,
+  Download,
   X,
   FileText,
 } from 'lucide-react';
@@ -68,14 +69,9 @@ type SimilarIdea = {
   similarity: number;
 };
 
-type DupCandidate = {
-  ideaId: string;
-  code: string | null;
-  title_ar: string | null;
-  title_en: string | null;
-  score: number;
-  matched_field: 'title' | 'description';
-};
+type TeamMember = { email: string; name: string };
+
+const MAX_TEAM_MEMBERS = 5;
 
 // Character limits per field.
 const LIMITS = { title: 120, summary: 300, description: 2000 };
@@ -125,10 +121,9 @@ export function IdeaForm({
   const [description, setDescription] = useState('');
   const [theme, setTheme] = useState(themes[0]?.id ?? '');
   const [activity, setActivity] = useState(activities[0]?.id ?? '');
-  // Confidentiality is a data-governance decision the submitter makes. Defaults
-  // to 'internal' — matches the DB default on innovation.ideas and reflects
-  // the safe middle ground (visible inside GAC, hidden from the public feed).
-  const [confidentiality, setConfidentiality] = useState<'public' | 'internal' | 'confidential'>('internal');
+  const [challenge, setChallenge] = useState('');
+  const [participation, setParticipation] = useState<'individual' | 'team'>('individual');
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([{ email: '', name: '' }]);
   const [ack, setAck] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -139,9 +134,12 @@ export function IdeaForm({
   const [attachError, setAttachError] = useState<string | null>(null);
   const [similar, setSimilar] = useState<SimilarIdea[]>([]);
   const [checkingSimilar, setCheckingSimilar] = useState(false);
-  const [duplicates, setDuplicates] = useState<DupCandidate[]>([]);
-  const [dupOpen, setDupOpen] = useState(true);
   const restored = useRef(false);
+
+  // Challenges are static per track (see lib/tracks.ts). Reset the selection
+  // whenever the track changes so a stale challenge from a prior track can't
+  // be submitted.
+  const challenges = getTrackChallenges(theme, locale);
 
   // Ref to the current step's heading. On step change we move keyboard focus
   // here so screen readers announce the new section and sighted keyboard users
@@ -228,39 +226,21 @@ export function IdeaForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
-  // Duplicate detection (WS7 F3): debounced 500ms POST to the duplicate-check
-  // endpoint as the title (and description) change. Surfaced as a collapsible
-  // card above the description field on the details step.
-  useEffect(() => {
-    const q = title.trim();
-    if (q.length < 4) {
-      setDuplicates([]);
-      return;
-    }
-    const id = setTimeout(async () => {
-      try {
-        const res = await fetch('/api/ideas/duplicate-check', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            title_ar: isAr ? title : null,
-            title_en: !isAr ? title : null,
-            description,
-          }),
-        });
-        if (res.ok) {
-          const json = (await res.json()) as { duplicates?: DupCandidate[] };
-          setDuplicates(json.duplicates ?? []);
-        }
-      } catch {
-        /* best-effort */
-      }
-    }, 500);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description]);
-
   const strongMatches = similar.filter((s) => s.similarity > 0.5).length;
+
+  function updateMember(idx: number, patch: Partial<TeamMember>) {
+    setTeamMembers((prev) => prev.map((m, i) => (i === idx ? { ...m, ...patch } : m)));
+  }
+  function addMember() {
+    setTeamMembers((prev) =>
+      prev.length >= MAX_TEAM_MEMBERS ? prev : [...prev, { email: '', name: '' }]
+    );
+  }
+  function removeMember(idx: number) {
+    setTeamMembers((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)));
+  }
+
+  const validTeamMembers = teamMembers.filter((m) => /\S+@\S+\.\S+/.test(m.email.trim()));
 
   function suggestTitle() {
     const suggestion = smartTitle(summary || description, locale);
@@ -268,8 +248,17 @@ export function IdeaForm({
   }
 
   function stepValid(s: number): boolean {
-    if (s === 0) return title.trim().length > 0 && summary.trim().length > 0;
-    if (s === 1) return description.trim().length > 0 && Boolean(theme);
+    if (s === 0) {
+      const basics =
+        title.trim().length > 0 &&
+        summary.trim().length > 0 &&
+        Boolean(activity) &&
+        Boolean(theme);
+      // Team participation requires at least one valid member email.
+      const teamOk = participation === 'individual' || validTeamMembers.length >= 1;
+      return basics && teamOk;
+    }
+    if (s === 1) return description.trim().length > 0;
     return true;
   }
 
@@ -291,6 +280,7 @@ export function IdeaForm({
     'flex h-10 w-full rounded-md border border-input bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
   const activeTheme = themes.find((th) => th.id === theme);
+  const activeActivity = activities.find((a) => a.id === activity);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -321,7 +311,6 @@ export function IdeaForm({
       strategic_theme_id: theme || null,
       activity_id: activity || null,
       ownership_acknowledged: ack,
-      confidentiality,
       status: 'submitted',
       current_stage: 1,
       submitter_id: userData.user.id,
@@ -368,37 +357,22 @@ export function IdeaForm({
         console.warn('[idea-form] attachment upload(s) failed:', failed);
       }
     }
-    // If duplicates were surfaced and the author submitted anyway, record it.
-    if (duplicates.length > 0) {
-      try {
-        await fetch('/api/ideas/duplicate-check', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ dismissed: true, excludeId: newIdeaId, candidates: duplicates }),
-        });
-      } catch {
-        /* best-effort */
-      }
-    }
     try {
       localStorage.removeItem(DRAFT_KEY);
     } catch {
       /* ignore */
     }
     setSubmitting(false);
+    // Use a full-page navigation (window.location.assign) rather than
+    // router.push here. The idea insert above may have triggered a Supabase
+    // JWT refresh in the browser client. Those refreshed cookies live on
+    // document.cookie but Next's client router keeps its in-memory RSC
+    // payload — meaning the middleware on the next protected route can
+    // occasionally see stale auth state and bounce the user to /login
+    // right after they submit. A hard navigation forces a full round-trip
+    // so middleware reads the fresh cookies from the request.
     if (newIdeaId) {
-      // Each team member signs the IP terms independently after submission —
-      // route through /ip-sign rather than straight to the confirmation page.
-      //
-      // Use a full-page navigation (window.location.assign) rather than
-      // router.push here. The idea insert above may have triggered a Supabase
-      // JWT refresh in the browser client. Those refreshed cookies live on
-      // document.cookie but Next's client router keeps its in-memory RSC
-      // payload — meaning the middleware on the next protected route can
-      // occasionally see stale auth state and bounce the user to /login
-      // right after they submit. A hard navigation forces a full round-trip
-      // so middleware reads the fresh cookies from the request.
-      window.location.assign(`/${locale}/ideas/${newIdeaId}/ip-sign`);
+      window.location.assign(`/${locale}/ideas/${newIdeaId}?submitted=1`);
     } else {
       window.location.assign(`/${locale}/my-ideas`);
     }
@@ -512,6 +486,138 @@ export function IdeaForm({
                 <div className="flex justify-end">{counter(summary, LIMITS.summary)}</div>
               </div>
 
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="activity">{t('activity')}</Label>
+                  <select
+                    id="activity"
+                    value={activity}
+                    onChange={(e) => setActivity(e.target.value)}
+                    className={selectClass}
+                  >
+                    {activities.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {pickFromRow(a, 'name', locale)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme">{tf('themeLabel')}</Label>
+                  <select
+                    id="theme"
+                    value={theme}
+                    onChange={(e) => {
+                      setTheme(e.target.value);
+                      setChallenge('');
+                    }}
+                    className={selectClass}
+                  >
+                    {themes.map((th) => (
+                      <option key={th.id} value={th.id}>
+                        {pickFromRow(th, 'name', locale)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="challenge">{tf('challengeLabel')}</Label>
+                {challenges.length === 0 ? (
+                  <p className="rounded-lg bg-muted/50 p-2.5 text-xs text-muted-foreground">
+                    {tf('challengeNone')}
+                  </p>
+                ) : (
+                  <select
+                    id="challenge"
+                    value={challenge}
+                    onChange={(e) => setChallenge(e.target.value)}
+                    className={selectClass}
+                  >
+                    <option value="">{tf('challengePlaceholder')}</option>
+                    {challenges.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-medium">{tf('participationLabel')}</legend>
+                <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                  {(['individual', 'team'] as const).map((opt) => (
+                    <label
+                      key={opt}
+                      className={`flex flex-1 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition ${
+                        participation === opt
+                          ? 'border-brand-teal bg-brand-teal-light/40 font-medium text-brand-teal'
+                          : 'border-border hover:border-brand-teal/40'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="participation"
+                        value={opt}
+                        checked={participation === opt}
+                        onChange={() => setParticipation(opt)}
+                        className="h-4 w-4 accent-brand-teal"
+                      />
+                      {opt === 'individual' ? tf('participationIndividual') : tf('participationTeam')}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {participation === 'team' && (
+                <div className="space-y-2 rounded-2xl border border-border bg-muted/20 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label>{tf('teamMembersLabel')}</Label>
+                    <span className="text-xs text-muted-foreground">{tf('teamMembersHint')}</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {teamMembers.map((m, idx) => (
+                      <li key={idx} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <Input
+                          type="email"
+                          inputMode="email"
+                          placeholder={tf('teamMemberEmail')}
+                          value={m.email}
+                          onChange={(e) => updateMember(idx, { email: e.target.value })}
+                          className="flex-1"
+                          dir="ltr"
+                        />
+                        <Input
+                          type="text"
+                          placeholder={tf('teamMemberName')}
+                          value={m.name}
+                          onChange={(e) => updateMember(idx, { name: e.target.value })}
+                          className="flex-1"
+                          dir={isAr ? 'rtl' : 'ltr'}
+                        />
+                        <button
+                          type="button"
+                          aria-label={tf('teamMemberRemove')}
+                          onClick={() => removeMember(idx)}
+                          disabled={teamMembers.length <= 1}
+                          className="self-end rounded p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 sm:self-auto"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  {teamMembers.length < MAX_TEAM_MEMBERS && (
+                    <Button type="button" size="sm" variant="outline" onClick={addMember}>
+                      <Plus className="h-4 w-4" />
+                      {tf('teamMemberAdd')}
+                    </Button>
+                  )}
+                </div>
+              )}
+
               {/* AI similarity suggestions */}
               {(checkingSimilar || similar.length > 0) && (
                 <div className="rounded-2xl border border-brand-cyan/30 bg-brand-cyan-light/20 p-4">
@@ -557,49 +663,18 @@ export function IdeaForm({
           {/* ---- Step 2: Details ---- */}
           {step === 1 && (
             <div className="space-y-5">
-              {/* Duplicate-idea warning (WS7 F3) — collapsible, above the
-                  description field so the author reconsiders before elaborating. */}
-              {duplicates.length > 0 && (
-                <div className="rounded-2xl border border-brand-gold/40 bg-brand-gold-light/30 p-4">
-                  <button
-                    type="button"
-                    onClick={() => setDupOpen((o) => !o)}
-                    className="flex w-full items-center justify-between gap-2 text-sm font-semibold text-brand-teal"
-                    aria-expanded={dupOpen}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Copy className="h-4 w-4 text-brand-gold" />
-                      {ts('duplicatesTitle', { n: duplicates.length })}
-                    </span>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${dupOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                  {dupOpen && (
-                    <ul className="mt-3 space-y-1.5">
-                      {duplicates.map((d) => (
-                        <li key={d.ideaId}>
-                          <Link
-                            href={`/ideas/${d.ideaId}` as any}
-                            target="_blank"
-                            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm transition hover:border-brand-teal/40"
-                          >
-                            <span className="line-clamp-1 flex-1" dir={isAr ? 'rtl' : 'ltr'}>
-                              {pickFromRow(d, 'title', locale) || d.code || d.ideaId}
-                            </span>
-                            <span className="shrink-0 rounded-full bg-brand-gold-light px-2 py-0.5 text-[11px] font-medium text-brand-teal">
-                              {ts('match', { pct: Math.round(d.score * 100) })}
-                            </span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-
               <div className="space-y-1.5">
-                <Label htmlFor="description">{tf('descriptionLabel')}</Label>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label htmlFor="description">{tf('descriptionLabel')}</Label>
+                  <a
+                    href="/templates/idea-description-template.docx"
+                    download
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-teal underline-offset-2 hover:underline"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    {tf('descriptionTemplate')}
+                  </a>
+                </div>
                 <Textarea
                   id="description"
                   value={description}
@@ -610,67 +685,6 @@ export function IdeaForm({
                   dir={isAr ? 'rtl' : 'ltr'}
                 />
                 <div className="flex justify-end">{counter(description, LIMITS.description)}</div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label>{tf('themeLabel')}</Label>
-                  <select value={theme} onChange={(e) => setTheme(e.target.value)} className={selectClass}>
-                    {themes.map((th) => (
-                      <option key={th.id} value={th.id}>
-                        {pickFromRow(th, 'name', locale)}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="rounded-lg bg-brand-teal-light/40 p-2.5 text-xs text-brand-teal">
-                    {activeTheme?.description || tf('themeExplain')}
-                  </p>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>{t('activity')}</Label>
-                  <select
-                    value={activity}
-                    onChange={(e) => setActivity(e.target.value)}
-                    className={selectClass}
-                  >
-                    {activities.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {pickFromRow(a, 'name', locale)}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="rounded-lg bg-brand-teal-light/40 p-2.5 text-xs text-brand-teal">
-                    {tf('activityHelp')}
-                  </p>
-                </div>
-              </div>
-
-              {/* Confidentiality — data-governance selector. Author declares who
-                  can see this idea: public (visible on the marketing feed),
-                  internal (visible only to signed-in GAC staff), or
-                  confidential (restricted to evaluators/committee only). Matches
-                  innovation.confidentiality_level enum and enforces at RLS. */}
-              <div className="space-y-1.5">
-                <Label htmlFor="confidentiality">{t('confidentiality')}</Label>
-                <select
-                  id="confidentiality"
-                  value={confidentiality}
-                  onChange={(e) =>
-                    setConfidentiality(e.target.value as 'public' | 'internal' | 'confidential')
-                  }
-                  className={selectClass}
-                >
-                  <option value="public">{tf('confPublic')}</option>
-                  <option value="internal">{tf('confInternal')}</option>
-                  <option value="confidential">{tf('confConfidential')}</option>
-                </select>
-                <p className="rounded-lg bg-brand-teal-light/40 p-2.5 text-xs text-brand-teal">
-                  {confidentiality === 'public'
-                    ? tf('confPublicHelp')
-                    : confidentiality === 'confidential'
-                      ? tf('confConfidentialHelp')
-                      : tf('confInternalHelp')}
-                </p>
               </div>
             </div>
           )}
@@ -798,17 +812,29 @@ export function IdeaForm({
                   </dd>
                 </div>
                 <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{t('confidentiality')}</dt>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{t('activity')}</dt>
                   <dd className="text-sm text-foreground sm:col-span-2">
-                    {confidentiality === 'public'
-                      ? tf('confPublic')
-                      : confidentiality === 'confidential'
-                        ? tf('confConfidential')
-                        : tf('confInternal')}
+                    {activeActivity ? pickFromRow(activeActivity, 'name', locale) : '—'}
+                  </dd>
+                </div>
+                {challenge && (
+                  <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('challengeLabel')}</dt>
+                    <dd className="text-sm text-foreground sm:col-span-2">{challenge}</dd>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('participationLabel')}</dt>
+                  <dd className="text-sm text-foreground sm:col-span-2">
+                    {participation === 'team'
+                      ? `${tf('participationTeam')} (${validTeamMembers.length})`
+                      : tf('participationIndividual')}
                   </dd>
                 </div>
               </dl>
 
+              {/* IP declaration — required. Replaces the former /ip-sign step;
+                  the author confirms authorship inline before submitting. */}
               <label className="flex items-start gap-2 rounded-2xl border border-border bg-muted/40 p-3 text-sm">
                 <input
                   type="checkbox"
@@ -818,7 +844,7 @@ export function IdeaForm({
                   className="mt-0.5 h-4 w-4 accent-brand-teal"
                 />
                 <span>
-                  {t('ownershipAckPrefix')}{' '}
+                  {tf('ipDeclaration')}{' '}
                   <Link
                     href="/ip-terms"
                     target="_blank"
@@ -828,10 +854,6 @@ export function IdeaForm({
                   </Link>
                 </span>
               </label>
-
-              <p className="rounded-lg bg-brand-cyan-light/30 p-3 text-xs text-brand-teal">
-                {t('ipSignNote')}
-              </p>
             </div>
           )}
 

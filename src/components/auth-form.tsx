@@ -368,6 +368,16 @@ export function AuthForm({ mode: _mode }: { mode?: 'login' | 'signup' }) {
                   {t('forgotPassword')}
                 </Link>
               </p>
+              <p className="text-center text-xs text-muted-foreground">
+                {t('noAccount')}{' '}
+                <button
+                  type="button"
+                  onClick={() => setFlow({ phase: 'closed' })}
+                  className="font-medium text-brand-teal hover:underline"
+                >
+                  {t('signUp')}
+                </button>
+              </p>
               {errorBlock}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? t('pleaseWait') : t('continueToOtp')}

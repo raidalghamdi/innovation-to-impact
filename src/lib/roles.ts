@@ -3,7 +3,7 @@ export type Role = (typeof ROLES)[number];
 
 // Landing dashboard per role after login.
 export const ROLE_HOME: Record<Role, string> = {
-  submitter: '/my-ideas',
+  submitter: '/dashboard',
   evaluator: '/evaluation',
   judge: '/committee',
   admin: '/admin',
@@ -18,8 +18,8 @@ export function homeForRoleCode(roleCode: string | null | undefined): string {
   if (key === 'judge' || key === 'committee') return '/committee';
   if (key === 'supervisor') return '/supervisor';
   if (key === 'evaluator') return '/evaluation';
-  if (key === 'submitter' || key === 'innovator') return '/my-ideas';
-  return '/my-ideas';
+  if (key === 'submitter' || key === 'innovator') return '/dashboard';
+  return '/dashboard';
 }
 
 // Route prefixes each role is NOT allowed to access (locale prefix stripped).

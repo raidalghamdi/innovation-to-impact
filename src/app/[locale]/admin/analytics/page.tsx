@@ -208,9 +208,11 @@ export default async function AdminAnalyticsPage({
     getSubmittedToPilotConversion(),
   ]);
 
-  const stageLabels = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'].map(
-    (k) => tStages(k as 's0'),
-  );
+  // DB stage 0 (pre-idea strategic framework) is no longer part of the idea
+  // timeline, so index 0 gets an empty label; DB stages 1..8 map to s1..s8.
+  const stageLabels = ['', ...['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'].map(
+    (k) => tStages(k as 's1'),
+  )];
 
   // Always Latin digits regardless of UI locale (per user preference)
   const sar = new Intl.NumberFormat('en-US').format(

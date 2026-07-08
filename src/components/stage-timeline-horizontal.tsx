@@ -27,11 +27,15 @@ export function StageTimelineHorizontal({
         'md:overflow-visible'
       )}
     >
-      {Array.from({ length: 9 }, (_, idx) => {
-        const done = idx < current;
-        const active = idx === current;
-        const displayNumber = idx + 1;
-        const nextDone = idx + 1 < current;
+      {Array.from({ length: 8 }, (_, idx) => {
+        // Stages now start at idea submission (DB stage 1 = s1). `base` is the
+        // DB-stored stage this node represents; the strategic-framework stage 0
+        // is no longer shown.
+        const base = idx + 1;
+        const done = base < current;
+        const active = base === current;
+        const displayNumber = base;
+        const nextDone = base + 1 < current;
         const trackColor = done
           ? 'bg-emerald-500'
           : active
@@ -42,7 +46,7 @@ export function StageTimelineHorizontal({
         return (
           <li key={idx} className="relative flex min-w-[80px] flex-col items-center">
             {/* Track segment (skip on last) */}
-            {idx < 8 && (
+            {idx < 7 && (
               <div
                 className={cn(
                   'absolute top-4 h-0.5 w-full',
@@ -76,9 +80,9 @@ export function StageTimelineHorizontal({
                 done && (dark ? 'text-emerald-200' : 'text-emerald-700'),
                 !done && !active && (dark ? 'text-white/60' : 'text-slate-500')
               )}
-              title={t(`d${idx}` as any)}
+              title={t(`d${base}` as any)}
             >
-              {t(`s${idx}` as any)}
+              {t(`s${base}` as any)}
             </span>
           </li>
         );

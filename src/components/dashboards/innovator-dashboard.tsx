@@ -2,10 +2,11 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { RoleKpiCard as KpiCard } from '@/components/role-kpi-card';
+import { NotificationsList } from '@/components/notifications-list';
 import { fetchIdeas } from '@/lib/data';
 import { getUserPoints } from '@/lib/gamification';
 import { formatDate } from '@/lib/utils';
-import { Lightbulb, Clock, CheckCircle2, Award, PlusCircle, ArrowLeft, ArrowRight, Users, TrendingUp } from 'lucide-react';
+import { Lightbulb, Clock, CheckCircle2, Award, PlusCircle, ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
 
 // src/components/dashboards/innovator-dashboard.tsx
 // Overview-only innovator dashboard.
@@ -66,21 +67,42 @@ export async function InnovatorDashboard({ userId, locale }: { userId: string; l
         </div>
       </div>
 
-      {/* KPI overview — no "prize position" */}
+      {/* KPI overview — no "prize position". Each card links to a filtered list. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <KpiCard label={isAr ? 'أفكاري' : 'My Ideas'} value={myIdeas.length} icon={Lightbulb} />
-        <KpiCard label={isAr ? 'قيد المراجعة' : 'In Review'} value={inReview} icon={Clock} />
-        <KpiCard label={isAr ? 'مقبولة' : 'Accepted'} value={accepted} icon={CheckCircle2} />
-        <KpiCard
-          label={isAr ? 'مستواي' : 'My Level'}
-          value={`L${level}`}
-          icon={Award}
-          hint={isAr ? `${points} نقطة` : `${points} pts`}
-        />
+        <Link href={'/my-ideas' as any} className="rounded-2xl transition hover:opacity-90">
+          <KpiCard label={isAr ? 'أفكاري' : 'My Ideas'} value={myIdeas.length} icon={Lightbulb} />
+        </Link>
+        <Link href={'/my-ideas?status=in_review' as any} className="rounded-2xl transition hover:opacity-90">
+          <KpiCard label={isAr ? 'قيد المراجعة' : 'In Review'} value={inReview} icon={Clock} />
+        </Link>
+        <Link href={'/my-ideas?status=approved' as any} className="rounded-2xl transition hover:opacity-90">
+          <KpiCard label={isAr ? 'مقبولة' : 'Accepted'} value={accepted} icon={CheckCircle2} />
+        </Link>
+        <Link href={'/profile/level' as any} className="rounded-2xl transition hover:opacity-90">
+          <KpiCard
+            label={isAr ? 'مستواي' : 'My Level'}
+            value={`L${level}`}
+            icon={Award}
+            hint={isAr ? `${points} نقطة` : `${points} pts`}
+          />
+        </Link>
+      </div>
+
+      {/* Recent notifications strip — top 3 unread */}
+      <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-bold text-brand-teal">
+            {isAr ? 'آخر الإشعارات' : 'Recent notifications'}
+          </h3>
+          <Link href={'/notifications' as any} className="text-xs font-medium text-brand-teal hover:underline">
+            {isAr ? 'عرض الكل' : 'View all'}
+          </Link>
+        </div>
+        <NotificationsList compact limit={3} />
       </div>
 
       {/* Quick links row */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Link
           href="/my-ideas"
           className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 transition hover:border-brand-teal/40 hover:shadow-md"
@@ -97,23 +119,6 @@ export async function InnovatorDashboard({ userId, locale }: { userId: string; l
             </div>
           </div>
           <ArrowIcon className="h-4 w-4 text-muted-foreground transition group-hover:text-brand-teal" />
-        </Link>
-        <Link
-          href="/team"
-          className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 transition hover:border-brand-teal/40 hover:shadow-md"
-        >
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-brand-cyan/10 p-2 text-brand-cyan">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">{isAr ? 'فريقي' : 'My Team'}</p>
-              <p className="text-[11px] text-muted-foreground">
-                {isAr ? 'الأعضاء والصلاحيات' : 'Members and permissions'}
-              </p>
-            </div>
-          </div>
-          <ArrowIcon className="h-4 w-4 text-muted-foreground transition group-hover:text-brand-cyan" />
         </Link>
         <Link
           href="/profile/level"

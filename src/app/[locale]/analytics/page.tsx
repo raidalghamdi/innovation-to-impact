@@ -7,6 +7,8 @@ import { fetchIdeas, fetchBenefits } from '@/lib/data';
 import { formatSAR } from '@/lib/utils';
 import { Users, GitMerge, Clock, FlaskConical, Rocket, TrendingUp } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AnalyticsPage({
   params,
 }: {

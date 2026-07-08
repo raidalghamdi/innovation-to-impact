@@ -19,12 +19,18 @@ type Notif = {
   created_at: string;
 };
 
-export function NotificationsList() {
+export function NotificationsList({
+  compact = false,
+  limit,
+}: {
+  compact?: boolean;
+  limit?: number;
+} = {}) {
   const t = useTranslations('notifications');
   const te = useTranslations('emptyStates');
   const locale = useLocale();
   const [items, setItems] = useState<Notif[]>([]);
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread'>(compact ? 'unread' : 'all');
   const [loaded, setLoaded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -93,7 +99,36 @@ export function NotificationsList() {
         .is('read_at', null);
   }
 
-  const shown = filter === 'unread' ? items.filter((i) => !i.read_at) : items;
+  const filtered = filter === 'unread' ? items.filter((i) => !i.read_at) : items;
+  const shown = typeof limit === 'number' ? filtered.slice(0, limit) : filtered;
+
+  if (compact) {
+    return (
+      <div>
+        {loaded && shown.length === 0 ? (
+          <p className="py-4 text-center text-xs text-muted-foreground">
+            {te('notificationsTitle')}
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {shown.map((n) => {
+              const title = locale === 'ar' ? n.title_ar : n.title_en;
+              return (
+                <li key={n.id}>
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-brand-teal/30 bg-brand-teal-light/20 px-3 py-2">
+                    <p className="line-clamp-1 text-sm font-medium text-foreground">{title}</p>
+                    <span className="shrink-0 text-[11px] text-muted-foreground" dir="ltr">
+                      {n.created_at?.slice(0, 10)}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>

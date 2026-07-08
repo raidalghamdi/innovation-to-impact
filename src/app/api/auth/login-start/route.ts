@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   // login-start does not create a code and the client is instructed to POST
   // straight to /api/auth/login-verify (which re-reads the setting server-
   // side, so the client cannot bypass by lying).
-  const otpRequired = await getPlatformSetting<boolean>('otp_required', true);
+  const otpRequired = await getPlatformSetting<boolean>('otp_required', false);
   if (!otpRequired) {
     return NextResponse.json({
       ok: true,

@@ -2,21 +2,22 @@ import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 
-// Idea lifecycle stages — s0..s8 are the DB-stored zero-based indices. The
-// UI numbers users see starts at 1 (idx + 1), so "Stage 1" is the first step
-// in the pipeline, not "Stage 0". Storage stays zero-based (never mutate).
-const STAGE_KEYS = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as const;
-const DESC_KEYS = ['d0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8'] as const;
+// Idea lifecycle stages — s1..s8 map to the DB-stored stage indices 1..8.
+// The pipeline now starts at idea submission (stage 1); the pre-idea
+// strategic-framework stage (0) is no longer shown. Storage stays as-is.
+const STAGE_KEYS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as const;
+const DESC_KEYS = ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8'] as const;
 
 export function StageTimeline({ current }: { current: number }) {
   const t = useTranslations('stages');
   return (
     <ol className="flex flex-col gap-0 sm:flex-row sm:flex-wrap sm:gap-2">
       {STAGE_KEYS.map((key, idx) => {
-        const done = idx < current;
-        const active = idx === current;
-        // Display value is 1-based so users see "1…9", never "0".
-        const displayNumber = idx + 1;
+        // `base` is the DB stage this node represents (1..8).
+        const base = idx + 1;
+        const done = base < current;
+        const active = base === current;
+        const displayNumber = base;
         return (
           <li
             key={key}

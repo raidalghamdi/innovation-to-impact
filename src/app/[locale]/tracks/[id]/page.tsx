@@ -6,7 +6,7 @@ import { fetchThemes, fetchIdeas, fetchCompliance } from '@/lib/data';
 import { pickFromRow } from '@/lib/i18n-content';
 import { getTrackChallenges } from '@/lib/tracks';
 import { Link } from '@/i18n/routing';
-import { Target, Lightbulb, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Target, Lightbulb, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 const ACCENTS = ['cyan', 'gold', 'teal'] as const;
 
@@ -46,6 +46,14 @@ export default async function TrackDetailPage({
         { label: trackName },
       ]}
     >
+      <Link
+        href="/tracks"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-teal underline-offset-2 hover:underline"
+      >
+        <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+        {t('trackPage.backToTracks')}
+      </Link>
+
       {/* Track hero — primary CTA (Submit Idea) lives here at the top so it's
          the first action a visitor can take. UX note batch 07/26: previously
          the CTA sat mid-page which forced users to scroll before deciding. */}

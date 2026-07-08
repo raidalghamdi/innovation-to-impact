@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/routing';
 import { fetchIdeas } from '@/lib/data';
 import { findSimilarIdeas } from '@/lib/similarity';
-import { ideas as demoIdeas, benefits } from '@/lib/demo-data';
+import { ideas as demoIdeas } from '@/lib/demo-data';
 import { formatDate } from '@/lib/utils';
 import { CheckCircle2, Paperclip, Sparkles, Download } from 'lucide-react';
 import { getFeedbackForIdea } from '@/lib/feedback';
@@ -29,10 +29,14 @@ import { getCurrentUser } from '@/lib/user';
  */
 export default async function IdeaDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ submitted?: string }>;
 }) {
   const { locale, id } = await params;
+  const { submitted } = await searchParams;
+  const justSubmitted = submitted === '1';
   setRequestLocale(locale);
   const t = await getTranslations('ideas');
   const tc = await getTranslations('common');
@@ -41,14 +45,6 @@ export default async function IdeaDetailPage({
   const allIdeas = await fetchIdeas();
   const idea = allIdeas.find((i) => i.id === id) ?? demoIdeas.find((i) => i.id === id);
   if (!idea) notFound();
-
-  const related = allIdeas
-    .filter(
-      (o) =>
-        o.id !== idea.id && (o.category === idea.category || o.strategic_theme_id === idea.strategic_theme_id)
-    )
-    .slice(0, 4);
-  const ideaBenefits = benefits.filter((b) => b.idea_id === idea.id);
 
   const similarQuery =
     idea.problem_statement || (locale === 'ar' ? idea.title_ar : idea.title_en) || '';
@@ -185,6 +181,18 @@ export default async function IdeaDetailPage({
 
   return (
     <AppShell>
+      {justSubmitted && (
+        <div
+          role="status"
+          className="mb-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
+        >
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          <div>
+            <p className="font-semibold">{t('submitSuccessTitle')}</p>
+            <p className="text-emerald-700">{t('submitSuccessBody')}</p>
+          </div>
+        </div>
+      )}
       <IdeaHero
         locale={locale}
         ideaId={id}
@@ -291,30 +299,6 @@ export default async function IdeaDetailPage({
             </Card>
           )}
 
-          {ideaBenefits.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-brand-teal">{t('benefits')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  {ideaBenefits.map((b) => (
-                    <li
-                      key={b.id}
-                      className="flex items-center justify-between rounded-md border border-border p-3"
-                    >
-                      <span>
-                        {b.category} ({b.benefit_type})
-                      </span>
-                      <span className="font-medium">
-                        {b.realized_value} / {b.target_value} {b.measurement_unit}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* Side rail — 1/3 */}
@@ -377,31 +361,6 @@ export default async function IdeaDetailPage({
               )}
             </CardContent>
           </Card>
-
-          {related.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-brand-teal">{t('relationships')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {related.map((r) => (
-                    <li key={r.id}>
-                      <Link
-                        href={`/ideas/${r.id}`}
-                        className="flex items-center justify-between rounded-md border border-border p-2 text-sm hover:bg-muted/50"
-                      >
-                        <span className="line-clamp-1">
-                          {locale === 'ar' ? r.title_ar : r.title_en}
-                        </span>
-                        <span className="text-xs text-brand-gold">{r.code}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
 
           {similarIdeas.length > 0 && (
             <Card>

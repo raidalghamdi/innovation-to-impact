@@ -99,7 +99,7 @@ export function LandingNav({
            search box + auth actions on a 1280px viewport. We cap it at h-14
            (≈50px, ~290px wide) until 2xl (1536px), where the extra breathing
            room finally allows h-16. */}
-        <CoBrand className="h-10 sm:h-12 xl:h-14 2xl:h-16" locale={locale} />
+        <CoBrand className="h-12 sm:h-14 xl:h-16" locale={locale} />
       </Link>
 
       {/* Desktop nav (≥lg) */}
@@ -121,7 +121,7 @@ export function LandingNav({
       {/* Desktop actions (≥lg). HeaderSearch only appears at 2xl+ (≥1536px)
           because CoBrand + 6 anchor links already fill the row at 1280–1535. */}
       <div className="hidden shrink-0 items-center gap-1.5 lg:flex xl:gap-2">
-        <div className="hidden 2xl:block">
+        <div className="hidden xl:block">
           <HeaderSearch />
         </div>
         {!hideLoginCta && (
@@ -207,6 +207,10 @@ export function LandingNav({
           </ul>
 
           <div className="my-4 border-t border-border" />
+
+          <div className="px-1 pb-3">
+            <HeaderSearch />
+          </div>
 
           <div className="px-1">
             <LanguageToggle />

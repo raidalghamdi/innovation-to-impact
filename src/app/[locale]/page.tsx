@@ -1,5 +1,6 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
+import Image from 'next/image';
 import { Link } from '@/i18n/routing';
 import { SiteFooter } from '@/components/site-footer';
 import { Countdown } from '@/components/countdown';
@@ -149,7 +150,7 @@ export default async function LandingPage({
             any viewport. */}
         <section
           id="hero"
-          className="relative scroll-mt-24 overflow-hidden border-b border-border bg-gradient-to-br from-brand-teal-dark via-brand-teal-dark to-[#0a1e21] py-16 text-white sm:py-24"
+          className="relative flex min-h-[85svh] scroll-mt-24 items-center overflow-hidden border-b border-border bg-gradient-to-br from-brand-teal-dark via-brand-teal-dark to-[#0a1e21] py-16 text-white sm:min-h-[100svh] sm:py-24"
         >
           {/* Layer 1: animated network canvas covering the whole section */}
           <HeroNetwork className="pointer-events-none absolute inset-0 h-full w-full" />
@@ -303,6 +304,30 @@ export default async function LandingPage({
                 </Link>
                 );
               })}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== 4b. HOW IT WORKS (idea funnel diagram) ===== */}
+        <section id="how-it-works" className="scroll-mt-24 border-y border-border bg-card py-16 sm:py-24">
+          <div className="mx-auto max-w-5xl px-4 sm:px-8">
+            <h2 className="text-center text-2xl font-bold text-brand-teal sm:text-3xl">
+              {locale === 'ar' ? 'كيف تسير الفكرة' : 'How it works'}
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-muted-foreground sm:text-base">
+              {locale === 'ar'
+                ? 'رحلة الفكرة من التقديم حتى التصفيات: 100 ← 80 ← 60 ← 40 ← 5'
+                : 'The journey of an idea from submission to the finals: 100 -> 80 -> 60 -> 40 -> 5'}
+            </p>
+            <div className="mt-8 flex justify-center">
+              <Image
+                src="/brand/idea-flow.png"
+                alt={locale === 'ar' ? 'مخطط تدفق الأفكار' : 'Idea flow diagram'}
+                width={1200}
+                height={675}
+                className="h-auto w-full max-w-3xl rounded-2xl border border-border"
+                priority={false}
+              />
             </div>
           </div>
         </section>

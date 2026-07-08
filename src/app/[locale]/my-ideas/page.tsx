@@ -7,7 +7,6 @@ import { Link } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/server';
 import { fetchIdeas } from '@/lib/data';
 import { StatusBadge } from '@/components/status-badge';
-import { PipelineIndicator } from '@/components/pipeline-indicator';
 import { PioneerBadge, isPioneerIdea } from '@/components/pioneer-badge';
 import { FeedbackCountBadge } from '@/components/feedback-section';
 import { getFeedbackCountsForSubmitter } from '@/lib/feedback';
@@ -100,8 +99,6 @@ export default async function MyIdeasPage({
                       <StatusBadge status={idea.status} locale={locale} />
                     </div>
                   </div>
-
-                  <PipelineIndicator current={idea.current_stage} />
 
                   <div className="flex flex-wrap items-center justify-end gap-3">
                     {idea.status === 'returned' && (

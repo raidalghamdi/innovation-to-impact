@@ -290,6 +290,7 @@
     "searchPlaceholder": "Search the platform..."
   },
   "trackPage": {
+    "backToTracks": "Back to tracks",
     "eyebrow": "Participation track",
     "introTitle": "Overview",
     "detailsTitle": "Details",
@@ -300,7 +301,6 @@
     "eligibilityTitle": "Who can participate"
   },
   "stages": {
-    "s0": "Strategic Framework",
     "s1": "Idea Submission",
     "s2": "Initial Screening",
     "s3": "Technical Evaluation",
@@ -309,7 +309,6 @@
     "s6": "Pilot Implementation",
     "s7": "Measurement & Impact",
     "s8": "Scale & Adoption",
-    "d0": "Before ideas come in, leadership sets the direction — what problems matter most right now.",
     "d1": "You submit your idea. It gets a reference number and enters the queue.",
     "d2": "The team checks your submission meets the basics before sending it to specialist evaluators.",
     "d3": "Relevant experts read your idea and score it independently across five dimensions.",
@@ -318,7 +317,6 @@
     "d6": "The idea runs as a real experiment — tested in a real context before full rollout.",
     "d7": "What actually changed? This stage captures the real-world difference the idea made.",
     "d8": "What worked gets rolled out properly — so the improvement reaches everyone it should.",
-    "you0": "Review strategic priorities before submitting your idea.",
     "you1": "Tell us your idea in your own words. Attach anything that helps explain it.",
     "you2": "Participate in events and campaigns linked to priorities.",
     "you3": "Watch where your idea is in the process. The team may reach out if they need more from you.",
@@ -376,7 +374,6 @@
     "category": "Category",
     "theme": "Strategic theme",
     "activity": "Activity (optional)",
-    "activityHelp": "If your idea is tied to a specific program activity, pick it. Otherwise leave the default.",
     "submitter": "Submitter",
     "confidentiality": "Confidentiality",
     "problemStatement": "Problem statement",
@@ -425,6 +422,8 @@
     "filterActivity": "Activity",
     "emptyRepo": "No ideas match the current filters.",
     "ipSignNote": "Each team member will independently sign the IP terms after submission.",
+    "submitSuccessTitle": "Your idea has been submitted",
+    "submitSuccessBody": "You can track its progress here. We'll notify you as it moves through the pipeline.",
     "viewFeedbackCta": "View feedback"
   },
   "migrate": {
@@ -1466,13 +1465,20 @@
     "attachmentsRejectSize": "exceeds 10MB",
     "attachmentsRejectCount": "Only 5 files allowed; extras were skipped.",
     "required": "Please complete the required fields in this step.",
-    "themeExplain": "Choose the track that best fits your idea among the approved tracks.",
-    "confPublic": "Public",
-    "confInternal": "Internal",
-    "confConfidential": "Confidential",
-    "confPublicHelp": "Anyone can see this idea, including visitors on the public site.",
-    "confInternalHelp": "Visible to signed-in GAC staff only. This is the safe default.",
-    "confConfidentialHelp": "Restricted to evaluators and the review committee only."
+    "challengeLabel": "Challenge",
+    "challengePlaceholder": "Select a challenge (optional)",
+    "challengeNone": "No challenges are defined for this track yet.",
+    "participationLabel": "Participation type",
+    "participationIndividual": "Individual",
+    "participationTeam": "Team",
+    "teamMembersLabel": "Team members",
+    "teamMembersHint": "Add 1 to 5 members by email.",
+    "teamMemberEmail": "Email",
+    "teamMemberName": "Name (optional)",
+    "teamMemberAdd": "Add member",
+    "teamMemberRemove": "Remove member",
+    "descriptionTemplate": "Download description template",
+    "ipDeclaration": "I confirm I am the author of this idea and responsible for it, and I accept the"
   },
   "roles": {
     "submitter": "Submitter",
@@ -1565,7 +1571,7 @@
     "whatHappensNext": "What happens next",
     "step1Title": "Initial screening",
     "step1Meta": "Within 5 business days",
-    "step1Body": "We check your idea is complete and make sure it goes to the right reviewers.",
+    "step1Body": "We check your idea is complete and make sure it goes to the right evaluators.",
     "step2Title": "Evaluation committee review",
     "step2Meta": "Within 15 days",
     "step2Body": "Experts read your idea carefully and score it across five dimensions.",
@@ -1601,15 +1607,15 @@
     "empty": "No ideas in the spotlight yet — be the first."
   },
   "feedback": {
-    "title": "Reviewer feedback",
+    "title": "Evaluator feedback",
     "subtitle": "Comments from evaluators and judges on your idea.",
-    "empty": "No feedback yet. Reviewer comments will appear here once your idea has been reviewed.",
+    "empty": "No feedback yet. Evaluator comments will appear here once your idea has been evaluated.",
     "roleEvaluator": "Evaluator",
     "roleJudge": "Judge",
     "ratingLabel": "Rating",
     "recommendationLabel": "Recommendation",
     "countBadge": "reviews",
-    "anonymityNote": "Reviewer identities are kept anonymous — only their role is shown."
+    "anonymityNote": "Evaluator identities are kept anonymous — only their role is shown."
   },
   "notFound": {
     "title": "Page not found",
