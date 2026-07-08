@@ -43,11 +43,14 @@ export default async function SupervisorPage({
     .in('status', ['submitted', 'screening', 'returned', 'approved', 'assigned', 'evaluation', 'rejected'])
     .order('submitted_at', { ascending: false, nullsFirst: false });
 
-  // Themes / tracks
-  const { data: themes } = await supabase!
+  // Themes / tracks — DB uses name_ar/name_en, alias to title_* for the client.
+  const { data: themesRaw } = await supabase!
     .from('strategic_themes')
-    .select('id, title_ar, title_en')
-    .order('title_en');
+    .select('id, name_ar, name_en')
+    .order('name_en');
+  const themes = ((themesRaw as Array<{ id: string; name_ar: string | null; name_en: string | null }> | null) ?? []).map(
+    (th) => ({ id: th.id, title_ar: th.name_ar, title_en: th.name_en })
+  );
 
   // Available evaluators (users with evaluator OR judge role)
   const { data: evalRoleRows } = await supabase!
@@ -83,7 +86,7 @@ export default async function SupervisorPage({
       <SupervisorDashboard
         locale={locale}
         ideas={(ideas as any[]) ?? []}
-        themes={(themes as any[]) ?? []}
+        themes={themes}
         evaluators={evaluators}
         trackAssignments={(trackAssignments as any[]) ?? []}
       />

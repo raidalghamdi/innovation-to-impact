@@ -47,10 +47,10 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
   const [search, setSearch] = useState('');
   const [themeFilter, setThemeFilter] = useState<string>('all');
   const [pending, startTransition] = useTransition();
-  const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+  // Two-stage flow: view = full-detail review modal; decision = confirm sub-modal.
+  const [viewIdea, setViewIdea] = useState<Idea | null>(null);
   const [decision, setDecision] = useState<'approve' | 'reject' | 'return' | null>(null);
-  const [reasonAr, setReasonAr] = useState('');
-  const [reasonEn, setReasonEn] = useState('');
+  const [reason, setReason] = useState('');
   const [flash, setFlash] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const themeMap = useMemo(() => {
@@ -94,26 +94,35 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
     return { total, pending, approved, rejected, returned };
   }, [ideas]);
 
-  function openDecision(idea: Idea, kind: 'approve' | 'reject' | 'return') {
-    setSelectedIdea(idea);
+  function openReview(idea: Idea) {
+    setViewIdea(idea);
+    setDecision(null);
+    setReason('');
+  }
+  function closeReview() {
+    setViewIdea(null);
+    setDecision(null);
+  }
+  function openDecision(kind: 'approve' | 'reject' | 'return') {
     setDecision(kind);
-    setReasonAr('');
-    setReasonEn('');
+    setReason('');
   }
 
   function submitDecision() {
-    if (!selectedIdea || !decision) return;
+    if (!viewIdea || !decision) return;
     startTransition(async () => {
-      const res = await fetch(`/api/supervisor/ideas/${selectedIdea.id}/decision`, {
+      // Single reason box — send the same text to both AR/EN fields so it shows
+      // regardless of the innovator's current locale.
+      const r = reason.trim() || null;
+      const res = await fetch(`/api/supervisor/ideas/${viewIdea.id}/decision`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision, reason: reasonEn || null, reason_ar: reasonAr || null }),
+        body: JSON.stringify({ decision, reason: r, reason_ar: r }),
       });
       const j = await res.json().catch(() => ({}));
       if (res.ok) {
         setFlash({ ok: true, msg: isAr ? 'تم حفظ القرار' : 'Decision saved' });
-        setSelectedIdea(null);
-        setDecision(null);
+        closeReview();
         router.refresh();
       } else {
         setFlash({ ok: false, msg: j.error || (isAr ? 'فشل الحفظ' : 'Save failed') });
@@ -189,12 +198,24 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
               {screeningIdeas.map((i) => {
                 const theme = i.strategic_theme_id ? themeMap.get(i.strategic_theme_id) : null;
                 return (
-                  <Card key={i.id} className="flex flex-col">
+                  <Card
+                    key={i.id}
+                    className="flex cursor-pointer flex-col transition hover:border-teal-500 hover:shadow-md"
+                    onClick={() => openReview(i)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openReview(i);
+                      }
+                    }}
+                  >
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="text-xs text-muted-foreground">{i.code}</div>
-                          <CardTitle className="mt-1 truncate text-base">
+                          <CardTitle className="mt-1 line-clamp-2 text-base">
                             {isAr ? i.title_ar || i.title_en : i.title_en || i.title_ar}
                           </CardTitle>
                           {theme && (
@@ -212,40 +233,18 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                           <div className="text-xs font-medium text-muted-foreground">
                             {isAr ? 'المشكلة' : 'Problem'}
                           </div>
-                          <p className="line-clamp-3 text-sm">{i.problem_statement}</p>
+                          <p className="line-clamp-2 text-sm">{i.problem_statement}</p>
                         </div>
                       )}
-                      {i.proposed_solution && (
-                        <div>
-                          <div className="text-xs font-medium text-muted-foreground">
-                            {isAr ? 'الحل المقترح' : 'Proposed solution'}
-                          </div>
-                          <p className="line-clamp-3 text-sm">{i.proposed_solution}</p>
-                        </div>
-                      )}
-                      <div className="mt-auto flex flex-wrap gap-2 pt-2">
-                        <Button
-                          size="sm"
-                          onClick={() => openDecision(i, 'approve')}
-                          className="bg-green-700 hover:bg-green-800"
-                        >
-                          {isAr ? 'اعتماد' : 'Approve'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openDecision(i, 'return')}
-                        >
-                          {isAr ? 'إعادة للمبتكر' : 'Return'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-red-500 text-red-700 hover:bg-red-50"
-                          onClick={() => openDecision(i, 'reject')}
-                        >
-                          {isAr ? 'رفض' : 'Reject'}
-                        </Button>
+                      <div className="mt-auto flex items-center justify-between pt-2 text-xs text-muted-foreground">
+                        <span>
+                          {i.submitted_at
+                            ? new Date(i.submitted_at).toLocaleDateString(isAr ? 'ar-SA' : 'en-US')
+                            : ''}
+                        </span>
+                        <span className="font-medium text-teal-700">
+                          {isAr ? 'اضغط للمراجعة ←' : 'Click to review →'}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -299,65 +298,145 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
         </div>
       )}
 
-      {/* Decision modal */}
-      {selectedIdea && decision && (
+      {/* Full-review modal — supervisor sees the entire idea, then acts. */}
+      {viewIdea && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setSelectedIdea(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={closeReview}
         >
-          <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <CardHeader>
-              <CardTitle className="text-lg">
-                {decision === 'approve' && (isAr ? 'اعتماد الفكرة' : 'Approve idea')}
-                {decision === 'reject' && (isAr ? 'رفض الفكرة' : 'Reject idea')}
-                {decision === 'return' && (isAr ? 'إعادة للمبتكر' : 'Return to innovator')}
-              </CardTitle>
-              <div className="text-sm text-muted-foreground">
-                {selectedIdea.code} — {isAr ? selectedIdea.title_ar || selectedIdea.title_en : selectedIdea.title_en || selectedIdea.title_ar}
+          <Card
+            className="max-h-[92vh] w-full max-w-3xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CardHeader className="border-b">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground">{viewIdea.code}</div>
+                  <CardTitle className="mt-1 text-lg">
+                    {isAr ? viewIdea.title_ar || viewIdea.title_en : viewIdea.title_en || viewIdea.title_ar}
+                  </CardTitle>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {viewIdea.strategic_theme_id && themeMap.get(viewIdea.strategic_theme_id) && (
+                      <Badge variant="outline">
+                        {(() => {
+                          const th = themeMap.get(viewIdea.strategic_theme_id!)!;
+                          return isAr ? th.title_ar || th.title_en : th.title_en || th.title_ar;
+                        })()}
+                      </Badge>
+                    )}
+                    <StatusBadge status={viewIdea.status as any} locale={locale} />
+                    {viewIdea.submitted_at && (
+                      <span className="text-xs text-muted-foreground">
+                        {isAr ? 'قُدّمت في' : 'Submitted'}{' '}
+                        {new Date(viewIdea.submitted_at).toLocaleDateString(isAr ? 'ar-SA' : 'en-US')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={closeReview}
+                  className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label={isAr ? 'إغلاق' : 'Close'}
+                >
+                  ✕
+                </button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {decision !== 'approve' && (
-                <>
-                  <div>
-                    <Label>{isAr ? 'السبب (عربي)' : 'Reason (Arabic)'}</Label>
-                    <Textarea
-                      value={reasonAr}
-                      onChange={(e) => setReasonAr(e.target.value)}
-                      placeholder={isAr ? 'اكتب السبب…' : 'Write reason in Arabic…'}
-                      rows={3}
-                    />
+
+            <div className="max-h-[60vh] overflow-y-auto">
+              <CardContent className="space-y-5 py-5">
+                {viewIdea.problem_statement && (
+                  <ReviewSection label={isAr ? 'المشكلة' : 'Problem statement'} value={viewIdea.problem_statement} />
+                )}
+                {viewIdea.proposed_solution && (
+                  <ReviewSection
+                    label={isAr ? 'الحل المقترح' : 'Proposed solution'}
+                    value={viewIdea.proposed_solution}
+                  />
+                )}
+                {viewIdea.expected_benefits && (
+                  <ReviewSection
+                    label={isAr ? 'الفوائد المتوقعة' : 'Expected benefits'}
+                    value={viewIdea.expected_benefits}
+                  />
+                )}
+                {(viewIdea.rejection_reason_ar || viewIdea.rejection_reason) && (
+                  <div className="rounded-md border border-red-200 bg-red-50 p-3">
+                    <div className="text-xs font-semibold text-red-800">
+                      {isAr ? 'سبب سابق' : 'Previous reason'}
+                    </div>
+                    <p className="mt-1 text-sm text-red-900">
+                      {isAr
+                        ? viewIdea.rejection_reason_ar || viewIdea.rejection_reason
+                        : viewIdea.rejection_reason || viewIdea.rejection_reason_ar}
+                    </p>
                   </div>
-                  <div>
-                    <Label>{isAr ? 'السبب (إنجليزي)' : 'Reason (English)'}</Label>
-                    <Textarea
-                      value={reasonEn}
-                      onChange={(e) => setReasonEn(e.target.value)}
-                      placeholder={isAr ? 'اكتب السبب بالإنجليزية…' : 'Write reason in English…'}
-                      rows={3}
-                    />
+                )}
+              </CardContent>
+            </div>
+
+            {/* Action bar — either action picker or reason form */}
+            <div className="border-t bg-muted/30 p-4">
+              {!decision ? (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm text-muted-foreground">
+                    {isAr ? 'اتخذ قراراً بشأن هذه الفكرة:' : 'Take a decision on this idea:'}
                   </div>
-                </>
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => openDecision('approve')} className="bg-green-700 hover:bg-green-800">
+                      {isAr ? 'اعتماد' : 'Approve'}
+                    </Button>
+                    <Button variant="outline" onClick={() => openDecision('return')}>
+                      {isAr ? 'إعادة للمبتكر' : 'Return'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-red-500 text-red-700 hover:bg-red-50"
+                      onClick={() => openDecision('reject')}
+                    >
+                      {isAr ? 'رفض' : 'Reject'}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold">
+                    {decision === 'approve' && (isAr ? 'تأكيد الاعتماد' : 'Confirm approval')}
+                    {decision === 'reject' && (isAr ? 'تأكيد الرفض' : 'Confirm rejection')}
+                    {decision === 'return' && (isAr ? 'تأكيد الإعادة' : 'Confirm return')}
+                  </div>
+                  {decision !== 'approve' && (
+                    <div>
+                      <Label>{isAr ? 'السبب' : 'Reason'}</Label>
+                      <Textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder={isAr ? 'اكتب السبب…' : 'Write the reason…'}
+                        rows={3}
+                      />
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={submitDecision}
+                      disabled={pending}
+                      className={
+                        decision === 'approve'
+                          ? 'bg-green-700 hover:bg-green-800'
+                          : decision === 'reject'
+                          ? 'bg-red-700 hover:bg-red-800'
+                          : ''
+                      }
+                    >
+                      {pending ? (isAr ? 'جارٍ الحفظ…' : 'Saving…') : isAr ? 'تأكيد' : 'Confirm'}
+                    </Button>
+                    <Button variant="outline" onClick={() => setDecision(null)} disabled={pending}>
+                      {isAr ? 'رجوع' : 'Back'}
+                    </Button>
+                  </div>
+                </div>
               )}
-              <div className="flex gap-2 pt-2">
-                <Button
-                  onClick={submitDecision}
-                  disabled={pending}
-                  className={
-                    decision === 'approve'
-                      ? 'bg-green-700 hover:bg-green-800'
-                      : decision === 'reject'
-                      ? 'bg-red-700 hover:bg-red-800'
-                      : ''
-                  }
-                >
-                  {pending ? (isAr ? 'جارٍ الحفظ…' : 'Saving…') : isAr ? 'تأكيد' : 'Confirm'}
-                </Button>
-                <Button variant="outline" onClick={() => setSelectedIdea(null)}>
-                  {isAr ? 'إلغاء' : 'Cancel'}
-                </Button>
-              </div>
-            </CardContent>
+            </div>
           </Card>
         </div>
       )}
@@ -411,6 +490,17 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
   );
 }
 
+function ReviewSection({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{value}</p>
+    </div>
+  );
+}
+
 function TrackAssignmentsPanel({
   locale,
   themes,
@@ -426,9 +516,9 @@ function TrackAssignmentsPanel({
 }) {
   const isAr = locale === 'ar';
   const [selectedTheme, setSelectedTheme] = useState<string>(themes[0]?.id ?? '');
-  const [selectedEvalIds, setSelectedEvalIds] = useState<string[]>([]);
+  const [selectedEval, setSelectedEval] = useState<string>('');
   const [pending, startTransition] = useTransition();
-  const [msg, setMsg] = useState<string>('');
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const byTheme = useMemo(() => {
     const m = new Map<string, TA[]>();
@@ -440,23 +530,28 @@ function TrackAssignmentsPanel({
     return m;
   }, [assignments]);
 
+  // Evaluators already assigned to the currently-selected track (to grey them out).
+  const alreadyAssignedIds = useMemo(() => {
+    return new Set((byTheme.get(selectedTheme) ?? []).map((r) => r.evaluator_id));
+  }, [byTheme, selectedTheme]);
+
   function assign() {
-    if (!selectedTheme || selectedEvalIds.length === 0) return;
+    if (!selectedTheme || !selectedEval) return;
     startTransition(async () => {
       const res = await fetch('/api/supervisor/track-assignments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ themeId: selectedTheme, evaluatorIds: selectedEvalIds }),
+        body: JSON.stringify({ themeId: selectedTheme, evaluatorIds: [selectedEval] }),
       });
       if (res.ok) {
-        setMsg(isAr ? 'تم التعيين' : 'Assigned');
-        setSelectedEvalIds([]);
+        setMsg({ ok: true, text: isAr ? 'تم التعيين' : 'Assigned' });
+        setSelectedEval('');
         onChanged();
       } else {
         const j = await res.json().catch(() => ({}));
-        setMsg(j.error || (isAr ? 'فشل التعيين' : 'Assign failed'));
+        setMsg({ ok: false, text: j.error || (isAr ? 'فشل التعيين' : 'Assign failed') });
       }
-      setTimeout(() => setMsg(''), 2500);
+      setTimeout(() => setMsg(null), 2500);
     });
   }
 
@@ -467,91 +562,157 @@ function TrackAssignmentsPanel({
     });
   }
 
+  const themeLabel = (t: Theme) => (isAr ? t.title_ar || t.title_en : t.title_en || t.title_ar) ?? '';
+  const evalLabel = (e: Evaluator) => e.full_name || e.email || e.id.slice(0, 6);
+  const currentThemeAssignments = byTheme.get(selectedTheme) ?? [];
+
   return (
     <div className="space-y-6">
-      {/* Assign form */}
+      {/* Assign form: dropdown track + dropdown evaluator + Add */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
             {isAr ? 'تعيين مقيّمين لمسار' : 'Assign evaluators to a track'}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <Label>{isAr ? 'المسار' : 'Track'}</Label>
-            <select
-              value={selectedTheme}
-              onChange={(e) => setSelectedTheme(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              {themes.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {isAr ? t.title_ar || t.title_en : t.title_en || t.title_ar}
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+            <div>
+              <Label>{isAr ? 'المسار' : 'Track'}</Label>
+              <select
+                value={selectedTheme}
+                onChange={(e) => {
+                  setSelectedTheme(e.target.value);
+                  setSelectedEval('');
+                }}
+                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="" disabled>
+                  {isAr ? '— اختر المسار —' : '— Choose a track —'}
                 </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label>{isAr ? 'المقيّمون' : 'Evaluators'}</Label>
-            <div className="max-h-56 overflow-y-auto rounded-md border p-2">
-              {evaluators.length === 0 && (
-                <div className="p-3 text-sm text-muted-foreground">
-                  {isAr ? 'لا يوجد مقيّمون بعد. أنشئهم من إدارة المستخدمين.' : 'No evaluators yet. Create them via User management.'}
-                </div>
-              )}
-              {evaluators.map((e) => (
-                <label key={e.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted">
-                  <input
-                    type="checkbox"
-                    checked={selectedEvalIds.includes(e.id)}
-                    onChange={(ev) => {
-                      setSelectedEvalIds((prev) =>
-                        ev.target.checked ? [...prev, e.id] : prev.filter((x) => x !== e.id)
-                      );
-                    }}
-                  />
-                  <span className="text-sm">
-                    {e.full_name || e.email} {e.email && <span className="text-xs text-muted-foreground">({e.email})</span>}
-                  </span>
-                </label>
-              ))}
+                {themes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {themeLabel(t)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label>{isAr ? 'المقيّم' : 'Evaluator'}</Label>
+              <select
+                value={selectedEval}
+                onChange={(e) => setSelectedEval(e.target.value)}
+                disabled={!selectedTheme || evaluators.length === 0}
+                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
+              >
+                <option value="">
+                  {evaluators.length === 0
+                    ? isAr
+                      ? 'لا يوجد مقيّمون'
+                      : 'No evaluators available'
+                    : isAr
+                    ? '— اختر مقيّماً —'
+                    : '— Choose an evaluator —'}
+                </option>
+                {evaluators.map((e) => {
+                  const taken = alreadyAssignedIds.has(e.id);
+                  return (
+                    <option key={e.id} value={e.id} disabled={taken}>
+                      {evalLabel(e)}
+                      {e.email ? ` — ${e.email}` : ''}
+                      {taken ? (isAr ? ' (مُعيّن مسبقاً)' : ' (already assigned)') : ''}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <Button
+                onClick={assign}
+                disabled={pending || !selectedTheme || !selectedEval}
+                className="h-10 w-full md:w-auto"
+              >
+                {pending ? (isAr ? 'جارٍ…' : 'Adding…') : isAr ? '+ إضافة' : '+ Add'}
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={assign} disabled={pending || !selectedTheme || selectedEvalIds.length === 0}>
-              {pending ? (isAr ? 'جارٍ…' : 'Working…') : isAr ? 'تعيين' : 'Assign'}
-            </Button>
-            {msg && <span className="text-sm text-muted-foreground">{msg}</span>}
-          </div>
+          {msg && (
+            <div
+              className={`text-sm ${msg.ok ? 'text-green-700' : 'text-red-700'}`}
+            >
+              {msg.text}
+            </div>
+          )}
+          {evaluators.length === 0 && (
+            <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+              {isAr
+                ? 'لا يوجد مقيّمون بعد. أنشئهم من إدارة المستخدمين.'
+                : 'No evaluators yet. Create them via User management.'}
+            </div>
+          )}
+
+          {/* Chips for the currently-selected track — quick view/remove */}
+          {selectedTheme && (
+            <div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {isAr ? 'مقيّمو هذا المسار' : 'Evaluators on this track'}
+                <span className="ml-1 rtl:mr-1 rtl:ml-0">({currentThemeAssignments.length})</span>
+              </div>
+              {currentThemeAssignments.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  {isAr ? 'لا يوجد مقيّمون معيّنون بعد.' : 'None assigned yet.'}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {currentThemeAssignments.map((r) => {
+                    const ev = evaluators.find((e) => e.id === r.evaluator_id);
+                    return (
+                      <Badge key={r.id} variant="secondary" className="gap-2 py-1">
+                        <span>{ev ? evalLabel(ev) : r.evaluator_id.slice(0, 6)}</span>
+                        <button
+                          onClick={() => revoke(r.id)}
+                          className="text-red-600 hover:text-red-800"
+                          title={isAr ? 'إزالة' : 'Remove'}
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Current assignments per track */}
-      <div className="space-y-4">
+      {/* Full summary — all tracks and their evaluators */}
+      <div className="space-y-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {isAr ? 'نظرة عامة على جميع المسارات' : 'All tracks overview'}
+        </div>
         {themes.map((t) => {
           const rows = byTheme.get(t.id) ?? [];
           return (
             <Card key={t.id}>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  {isAr ? t.title_ar || t.title_en : t.title_en || t.title_ar}
-                  <span className="ml-2 text-sm text-muted-foreground">
-                    ({rows.length} {isAr ? 'مقيّم' : 'evaluators'})
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {rows.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    {isAr ? 'لا يوجد مقيّمون معيّنون لهذا المسار.' : 'No evaluators assigned to this track yet.'}
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                <div className="min-w-0">
+                  <div className="font-medium">{themeLabel(t)}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {rows.length} {isAr ? 'مقيّم' : 'evaluators'}
                   </div>
+                </div>
+                {rows.length === 0 ? (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    {isAr ? 'فارغ' : 'Empty'}
+                  </Badge>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {rows.map((r) => {
                       const ev = evaluators.find((e) => e.id === r.evaluator_id);
                       return (
                         <Badge key={r.id} variant="secondary" className="gap-2 py-1">
-                          <span>{ev?.full_name || ev?.email || r.evaluator_id.slice(0, 6)}</span>
+                          <span>{ev ? evalLabel(ev) : r.evaluator_id.slice(0, 6)}</span>
                           <button
                             onClick={() => revoke(r.id)}
                             className="text-red-600 hover:text-red-800"
