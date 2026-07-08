@@ -77,27 +77,17 @@ export async function middleware(request: NextRequest) {
 
   // RBAC — enforce role-based access on protected routes.
   if (isProtected && user) {
-    // Edge runtime: no DB queries per request, so use the sync resolver
-    // (metadata → email). See resolveRoleSync in src/lib/roles.ts.
-    const role: Role = resolveRoleSync(user);
-    // Exception: /admin/analytics is allowed for judges (not the rest of /admin).
-    const isAnalyticsRoute =
-      pathnameWithoutLocale === '/admin/analytics' ||
-      pathnameWithoutLocale.startsWith('/admin/analytics/');
-    const analyticsAllowed = isAnalyticsRoute && (role === 'admin' || role === 'judge');
-    const isAdminRoute =
-      pathnameWithoutLocale === '/admin' || pathnameWithoutLocale.startsWith('/admin/');
-    let hasDbAdminRole = false;
-    // src/middleware.ts — Batch B multi-role fix: legacy `resolveRoleSync`
-    // only reads user_profiles.role via JWT metadata/email, so DB-only
-    // admins (assigned solely through innovation.user_roles, e.g. via the
-    // new /admin/users role editor) were being redirected away from /admin/*
-    // before the page component's isCurrentUserAdmin() check could even run.
-    // This does ONE extra query, scoped to /admin/* only, against the
-    // `innovation` schema (schema config untouched elsewhere), to check for
-    // a DB-driven `admin` role. Additive only — legacy admins still pass via
-    // resolveRoleSync above with zero extra queries on non-admin routes.
-    if (isAdminRoute && role !== 'admin' && user.id) {
+    // Sync (metadata + email) role — fast fallback when DB is unreachable.
+    let role: Role = resolveRoleSync(user);
+
+    // Canonical: fetch DB roles from innovation.v_user_roles. This is the ONLY
+    // source of truth for multi-role users. `user_profiles.role` is legacy
+    // and often stale ("member"), and `user_metadata.role` isn't populated
+    // for users assigned via the /admin/users role editor. Without this,
+    // e.g. AbdulazizO (evaluator in DB, "member" in profile) gets treated as
+    // a submitter and blocked from /evaluation.
+    const dbRoleCodes = new Set<string>();
+    if (user.id) {
       try {
         const innovationClient = createServerClient(supabaseUrl, supabaseKey, {
           db: { schema: 'innovation' },
@@ -114,15 +104,29 @@ export async function middleware(request: NextRequest) {
           .from('v_user_roles')
           .select('role_code')
           .eq('user_id', user.id)
-          .eq('role_active', true)
-          .eq('role_code', 'admin')
-          .limit(1);
-        hasDbAdminRole = !!roleRows && roleRows.length > 0;
+          .eq('role_active', true);
+        for (const r of (roleRows as { role_code?: string }[] | null) ?? []) {
+          if (r.role_code) dbRoleCodes.add(r.role_code.toLowerCase());
+        }
       } catch {
-        hasDbAdminRole = false;
+        // ignore; fall back to sync role
       }
     }
-    if (!analyticsAllowed && !hasDbAdminRole && !canAccess(role, pathnameWithoutLocale)) {
+
+    // Promote to the strongest DB role we found. Priority mirrors
+    // getCurrentUser (see src/lib/user.ts).
+    if (dbRoleCodes.has('admin') || dbRoleCodes.has('supervisor')) role = 'admin';
+    else if (dbRoleCodes.has('judge') || dbRoleCodes.has('committee')) role = 'judge';
+    else if (dbRoleCodes.has('evaluator')) role = 'evaluator';
+    else if (dbRoleCodes.has('innovator') || dbRoleCodes.has('submitter')) role = 'submitter';
+
+    // Exception: /admin/analytics is allowed for judges (not the rest of /admin).
+    const isAnalyticsRoute =
+      pathnameWithoutLocale === '/admin/analytics' ||
+      pathnameWithoutLocale.startsWith('/admin/analytics/');
+    const analyticsAllowed = isAnalyticsRoute && (role === 'admin' || role === 'judge');
+
+    if (!analyticsAllowed && !canAccess(role, pathnameWithoutLocale)) {
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}${ROLE_HOME[role]}`;
       url.search = '';
