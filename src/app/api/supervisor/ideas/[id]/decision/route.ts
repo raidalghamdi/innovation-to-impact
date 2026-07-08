@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { userHasRole } from '@/lib/user-role-check';
+import { createNotification, fanOut, type NotificationType } from '@/lib/notifications';
 
 type Decision = 'approve' | 'reject' | 'return';
 
@@ -61,6 +62,54 @@ export async function POST(
   const { error } = await supabase.from('ideas').update(update).eq('id', id);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  // ── Notifications (best-effort) ─────────────────────────────────────────
+  // 1) Innovator (submitter) is always notified about the supervisor's decision.
+  // 2) On approve, evaluators assigned to the idea's track are notified so they
+  //    know a new idea has entered their queue.
+  try {
+    const { data: ideaRow } = await supabase
+      .from('ideas')
+      .select('id, code, submitter_id, strategic_theme_id')
+      .eq('id', id)
+      .maybeSingle();
+    const submitterId = (ideaRow as { submitter_id?: string } | null)?.submitter_id ?? null;
+    const ideaCode = (ideaRow as { code?: string } | null)?.code ?? id;
+    const themeId = (ideaRow as { strategic_theme_id?: string } | null)?.strategic_theme_id ?? null;
+
+    const notifType: NotificationType =
+      decision === 'approve'
+        ? 'idea_approved'
+        : decision === 'reject'
+          ? 'idea_rejected'
+          : 'idea_feedback_requested';
+    const link = `/my-ideas/${id}`;
+
+    if (submitterId) {
+      await createNotification(
+        submitterId,
+        notifType,
+        { ideaId: id, ideaCode, reason: reason ?? reason_ar ?? '' },
+        { email: true, link }
+      );
+    }
+
+    if (decision === 'approve' && themeId) {
+      const { data: trackRows } = await supabase
+        .from('track_assignments')
+        .select('evaluator_id')
+        .eq('theme_id', themeId)
+        .eq('status', 'active');
+      const evalIds = ((trackRows as { evaluator_id: string }[]) ?? [])
+        .map((r) => r.evaluator_id)
+        .filter(Boolean);
+      if (evalIds.length) {
+        await fanOut(evalIds, 'evaluation_assigned', { ideaId: id, ideaCode }, { link: `/evaluation` });
+      }
+    }
+  } catch {
+    // Swallow — notifications must never fail the decision request.
   }
 
   // Best-effort audit

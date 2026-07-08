@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { userHasRole } from '@/lib/user-role-check';
+import { fanOut } from '@/lib/notifications';
 
 async function guard() {
   const user = await getCurrentUser();
@@ -51,6 +52,24 @@ export async function POST(req: NextRequest) {
     .select('id, theme_id, evaluator_id, status');
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  // Notify each newly-assigned evaluator (best-effort).
+  try {
+    const activeIds = ((data as { evaluator_id: string; status: string }[]) ?? [])
+      .filter((r) => r.status === 'active')
+      .map((r) => r.evaluator_id);
+    if (activeIds.length) {
+      await fanOut(
+        activeIds,
+        'evaluation_assigned',
+        { themeId },
+        { link: '/evaluation', email: true }
+      );
+    }
+  } catch {
+    // never block the response on a notification failure
+  }
+
   return NextResponse.json({ ok: true, rows: data ?? [] });
 }
 

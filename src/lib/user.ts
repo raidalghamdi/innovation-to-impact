@@ -20,18 +20,51 @@ export async function getCurrentUser(): Promise<CurrentUser> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Canonical role resolution: user_profiles → user_metadata → email.
-  // See src/lib/roles.ts resolveRoleWithProfile for rationale.
-  let profileRole: unknown = undefined;
+  // Canonical role resolution:
+  //   1. innovation.user_roles (source of truth — supports multi-role users)
+  //   2. user_profiles.role (legacy single-role column, often stale/"member")
+  //   3. user_metadata.role (JWT-embedded fallback)
+  //   4. roleFromEmail (demo-only)
+  //
+  // Priority order for user_roles picks the highest privilege that maps to a
+  // Role enum value (admin > judge > evaluator > submitter). This ensures a
+  // supervisor/judge/evaluator with role='member' in user_profiles is not
+  // silently demoted to 'submitter'.
+  let derivedRole: unknown = undefined;
   try {
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('role, full_name')
-      .eq('id', user.id)
-      .maybeSingle();
-    profileRole = data?.role;
+    const { data: roleRows } = await supabase
+      .from('v_user_roles')
+      .select('role_code, role_active')
+      .eq('user_id', user.id);
+    const codes = new Set(
+      ((roleRows as { role_code?: string; role_active?: boolean }[]) ?? [])
+        .filter((r) => r.role_active !== false)
+        .map((r) => (r.role_code ?? '').toLowerCase())
+    );
+    // Map DB role codes to the app's Role enum. Supervisor is treated as
+    // 'admin'-level for landing/navigation purposes (they have supervisor UI),
+    // committee acts like a judge.
+    if (codes.has('admin')) derivedRole = 'admin';
+    else if (codes.has('supervisor')) derivedRole = 'admin';
+    else if (codes.has('judge') || codes.has('committee')) derivedRole = 'judge';
+    else if (codes.has('evaluator')) derivedRole = 'evaluator';
+    else if (codes.has('innovator') || codes.has('submitter')) derivedRole = 'submitter';
   } catch {
-    // user_profiles unreachable — fall through to metadata/email.
+    // v_user_roles unreachable — fall through.
+  }
+
+  let profileRole: unknown = undefined;
+  if (!derivedRole) {
+    try {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('role, full_name')
+        .eq('id', user.id)
+        .maybeSingle();
+      profileRole = data?.role;
+    } catch {
+      // user_profiles unreachable — fall through to metadata/email.
+    }
   }
 
   // First-time vs returning: Supabase sets last_sign_in_at ~= created_at on
@@ -44,7 +77,7 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     id: user.id,
     email: user.email ?? null,
     role: resolveRoleWithProfile({
-      profileRole,
+      profileRole: derivedRole ?? profileRole,
       metadataRole: user.user_metadata?.role,
       email: user.email,
     }),

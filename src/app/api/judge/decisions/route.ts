@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { userHasRole } from '@/lib/user-role-check';
+import { createNotification, fanOut } from '@/lib/notifications';
 
 type Decision = 'approve' | 'reject';
 
@@ -88,6 +89,46 @@ export async function POST(req: NextRequest) {
   const { error: updErr } = await supabase.from('ideas').update(update).eq('id', idea_id);
   if (updErr) {
     return NextResponse.json({ error: updErr.message }, { status: 400 });
+  }
+
+  // ── Notifications (best-effort) ─────────────────────────────────────────
+  // Innovator (idea submitter) + supervisor role get a committee_decision alert.
+  try {
+    const { data: ideaRow } = await supabase
+      .from('ideas')
+      .select('id, code, submitter_id')
+      .eq('id', idea_id)
+      .maybeSingle();
+    const submitterId = (ideaRow as { submitter_id?: string } | null)?.submitter_id ?? null;
+    const ideaCode = (ideaRow as { code?: string } | null)?.code ?? idea_id;
+
+    if (submitterId) {
+      await createNotification(
+        submitterId,
+        'committee_decision',
+        { ideaId: idea_id, ideaCode, decision },
+        { email: true, link: `/my-ideas/${idea_id}` }
+      );
+    }
+    // Ping supervisors so they can track final outcomes. Use v_user_roles
+    // (canonical multi-role source) rather than user_profiles.role which is
+    // often stale/'member' for supervisors.
+    const { data: supRows } = await supabase
+      .from('v_user_roles')
+      .select('user_id')
+      .eq('role_code', 'supervisor')
+      .eq('role_active', true);
+    const supIds = ((supRows as { user_id: string }[]) ?? []).map((r) => r.user_id).filter(Boolean);
+    if (supIds.length) {
+      await fanOut(
+        supIds,
+        'committee_decision',
+        { ideaId: idea_id, ideaCode, decision },
+        { link: `/supervisor` }
+      );
+    }
+  } catch {
+    // Never fail the decision on a notification error.
   }
 
   // Best-effort audit
