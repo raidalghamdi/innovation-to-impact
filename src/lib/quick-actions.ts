@@ -17,7 +17,9 @@ export type QuickAction = {
   href: string; // in-app route (locale prefix added by <Link> from @/i18n/routing)
 };
 
-export const QUICK_ACTIONS: Record<Role, QuickAction[]> = {
+// Partial: aliased roles (supervisor/committee/innovator) fall back to the
+// closest base role via getQuickActions() below, so they need no own entry.
+export const QUICK_ACTIONS: Partial<Record<Role, QuickAction[]>> = {
   submitter: [
     {
       id: 'submit-idea',
@@ -208,8 +210,17 @@ export const QUICK_ACTIONS: Record<Role, QuickAction[]> = {
   ],
 };
 
+// Alias the first-class-but-derived roles onto their base action set:
+// committee → judge, supervisor → evaluator, innovator → submitter.
+const QUICK_ACTION_ALIAS: Partial<Record<Role, Role>> = {
+  committee: 'judge',
+  supervisor: 'evaluator',
+  innovator: 'submitter',
+};
+
 export function getQuickActions(role: Role): QuickAction[] {
-  return QUICK_ACTIONS[role] ?? QUICK_ACTIONS.submitter;
+  const resolved = QUICK_ACTIONS[role] ?? QUICK_ACTIONS[QUICK_ACTION_ALIAS[role] ?? 'submitter'];
+  return resolved ?? QUICK_ACTIONS.submitter!;
 }
 
 // Widget registry — parallel to the prototype's WIDGETS[]. Each widget id

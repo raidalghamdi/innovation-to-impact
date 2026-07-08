@@ -48,10 +48,14 @@ const ANCHOR_NAV = [
 export function LandingNav({
   locale,
   hideLoginCta = false,
+  hideAnchors = false,
   user = null,
 }: {
   locale: string;
   hideLoginCta?: boolean;
+  // Suppress the marketing anchor links (about/tracks/…). Used when LandingNav
+  // serves as the header for an authenticated app surface (e.g. /dashboard).
+  hideAnchors?: boolean;
   user?: LandingNavUser;
 }) {
   const t = useTranslations();
@@ -103,20 +107,22 @@ export function LandingNav({
       </Link>
 
       {/* Desktop nav (≥lg) */}
-      <nav
-        className="hidden items-center gap-0.5 lg:flex xl:gap-1"
-        aria-label={t('footer.quickLinks')}
-      >
-        {ANCHOR_NAV.map((n) => (
-          <a
-            key={n.anchor}
-            href={buildHref(n.anchor)}
-            className="rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal xl:px-3"
-          >
-            {t(`landing.${n.key}`)}
-          </a>
-        ))}
-      </nav>
+      {!hideAnchors && (
+        <nav
+          className="hidden items-center gap-0.5 lg:flex xl:gap-1"
+          aria-label={t('footer.quickLinks')}
+        >
+          {ANCHOR_NAV.map((n) => (
+            <a
+              key={n.anchor}
+              href={buildHref(n.anchor)}
+              className="rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal xl:px-3"
+            >
+              {t(`landing.${n.key}`)}
+            </a>
+          ))}
+        </nav>
+      )}
 
       {/* Desktop actions (≥lg). HeaderSearch only appears at 2xl+ (≥1536px)
           because CoBrand + 6 anchor links already fill the row at 1280–1535. */}
@@ -192,21 +198,25 @@ export function LandingNav({
           className="flex-1 overflow-y-auto px-3 py-4"
           aria-label={t('footer.quickLinks')}
         >
-          <ul className="space-y-1">
-            {ANCHOR_NAV.map((n) => (
-              <li key={n.anchor}>
-                <a
-                  href={buildHref(n.anchor)}
-                  onClick={() => setOpen(false)}
-                  className="flex min-h-[44px] items-center rounded-lg px-4 text-base font-medium text-foreground transition hover:bg-brand-teal-light hover:text-brand-teal"
-                >
-                  {t(`landing.${n.key}`)}
-                </a>
-              </li>
-            ))}
-          </ul>
+          {!hideAnchors && (
+            <>
+              <ul className="space-y-1">
+                {ANCHOR_NAV.map((n) => (
+                  <li key={n.anchor}>
+                    <a
+                      href={buildHref(n.anchor)}
+                      onClick={() => setOpen(false)}
+                      className="flex min-h-[44px] items-center rounded-lg px-4 text-base font-medium text-foreground transition hover:bg-brand-teal-light hover:text-brand-teal"
+                    >
+                      {t(`landing.${n.key}`)}
+                    </a>
+                  </li>
+                ))}
+              </ul>
 
-          <div className="my-4 border-t border-border" />
+              <div className="my-4 border-t border-border" />
+            </>
+          )}
 
           <div className="px-1 pb-3">
             <HeaderSearch />

@@ -16,13 +16,18 @@ import {
   ShieldCheck,
   Split as SplitIcon,
   ClipboardEdit,
+  ClipboardList,
   FileText,
   FileDown,
   CalendarClock,
+  MailPlus,
+  UserPlus,
+  Bell,
   ArrowRight,
   ArrowLeft,
   type LucideIcon,
 } from 'lucide-react';
+import { ResendStatusCard } from '@/components/resend-status-card';
 
 /**
  * /admin — Admin Hub.
@@ -64,6 +69,30 @@ const ADMIN_CARDS: AdminCard[] = [
     descAr: 'تعريف الأدوار وصلاحياتها في المنصة.',
     descEn: 'Define roles and their permissions.',
     icon: Shapes,
+  },
+  {
+    href: '/admin/roster',
+    labelAr: 'قائمة المستخدمين',
+    labelEn: 'Roster',
+    descAr: 'عرض شامل لجميع المستخدمين والأدوار.',
+    descEn: 'Comprehensive view of all users and roles.',
+    icon: ClipboardList,
+  },
+  {
+    href: '/admin/invitation-settings',
+    labelAr: 'الأدوار والدعوات',
+    labelEn: 'Roles & Invitations',
+    descAr: 'إعدادات الدعوات، القنوات، والصلاحيات.',
+    descEn: 'Invitation channels, quotas, and permissions.',
+    icon: UserPlus,
+  },
+  {
+    href: '/admin/invitation-templates',
+    labelAr: 'قوالب الدعوات',
+    labelEn: 'Invitation Templates',
+    descAr: 'تصميم وإدارة قوالب رسائل الدعوة.',
+    descEn: 'Design and manage invitation message templates.',
+    icon: MailPlus,
   },
   {
     href: '/admin/employees/import',
@@ -153,6 +182,14 @@ const ADMIN_CARDS: AdminCard[] = [
     descEn: '12 report types in PDF/Excel/PowerPoint with direct download or email delivery.',
     icon: FileDown,
   },
+  {
+    href: '/notifications',
+    labelAr: 'الإشعارات',
+    labelEn: 'Notifications',
+    descAr: 'إعدادات الإشعارات وسجل التنبيهات.',
+    descEn: 'Notification settings and alert history.',
+    icon: Bell,
+  },
 ];
 
 export default async function AdminPage({
@@ -182,6 +219,12 @@ export default async function AdminPage({
       {user && (
         <MyEscalationsStrip userId={user.id} role={user.role} locale={locale} />
       )}
+
+      {/* S3-09 — read-only health status: is transactional email configured? */}
+      <ResendStatusCard
+        configured={Boolean(process.env.RESEND_API_KEY)}
+        locale={locale}
+      />
 
       <div
         className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"

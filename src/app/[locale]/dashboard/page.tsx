@@ -80,7 +80,7 @@ export default async function DashboardPage({
 
     return (
       <div className="min-h-screen bg-background">
-        <LandingNav locale={locale} hideLoginCta />
+        <LandingNav locale={locale} hideLoginCta hideAnchors />
         <DashboardRoleHeader roles={roleOptions} activeRole={activeRole} displayName={displayName} />
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           {isValidRoleCode(activeRole) && activeRole === 'innovator' && (

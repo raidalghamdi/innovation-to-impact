@@ -18,6 +18,9 @@ const config: Config = {
         brand: {
           // Competition Innovation Program identity
           // Moon Raker (primary navy) + Swans Down (cyan) + Humming Bird (gold)
+          // NOTE: the `teal` key is Moon Raker navy — used as the primary dark
+          // brand color. It is NOT actual teal (real teal lives in brand-cyan /
+          // brand-gold). Historical name kept for backward compat with usages.
           teal: '#1C4854',
           'teal-dark': '#0F2D36',
           'teal-light': '#D8EFE5',

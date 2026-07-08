@@ -44,6 +44,7 @@ const SUGGESTED_SLOTS: { slot_key: string; kind: 'image' | 'video'; page: string
   { slot_key: 'landing.previous.image5', kind: 'image', page: 'landing', label_ar: 'النسخة السابقة · صورة 5', label_en: 'Previous edition · image 5' },
   { slot_key: 'landing.previous.image6', kind: 'image', page: 'landing', label_ar: 'النسخة السابقة · صورة 6', label_en: 'Previous edition · image 6' },
   { slot_key: 'landing.previous.video',  kind: 'video', page: 'landing', label_ar: 'النسخة السابقة · فيديو', label_en: 'Previous edition · video' },
+  { slot_key: 'landing.previous.video_poster', kind: 'image', page: 'landing', label_ar: 'النسخة السابقة · غلاف الفيديو', label_en: 'Previous edition · video poster' },
   { slot_key: 'stages.header.image',    kind: 'image', page: 'stages',  label_ar: 'رأس صفحة المراحل',               label_en: 'Stages page header' },
   { slot_key: 'about.header.image',     kind: 'image', page: 'about',   label_ar: 'رأس صفحة عن البرنامج',           label_en: 'About page header' },
 ];

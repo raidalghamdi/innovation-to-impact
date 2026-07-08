@@ -1,4 +1,10 @@
 {
+  "invitationTemplates": {
+    "kind": {
+      "open": "Open",
+      "openOptions": "Open Options"
+    }
+  },
   "app": {
     "name": "Innovation to Impact",
     "shortName": "I2I",

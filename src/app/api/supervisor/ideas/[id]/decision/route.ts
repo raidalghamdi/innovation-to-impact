@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { userHasRole } from '@/lib/user-role-check';
-import { createNotification, fanOut, type NotificationType } from '@/lib/notifications';
+import { createNotification, type NotificationType } from '@/lib/notifications';
 
 type Decision = 'approve' | 'reject' | 'return';
 
@@ -126,20 +126,88 @@ export async function POST(
     }
 
     if (decision === 'approve' && themeId) {
+      // S4-26 — auto-assign an evaluator on approval, round-robin by workload.
+      // Candidate evaluators are those assigned to the idea's track/theme.
       const { data: trackRows } = await supabase
         .from('track_assignments')
         .select('evaluator_id')
         .eq('theme_id', themeId)
         .eq('status', 'active');
-      const evalIds = ((trackRows as { evaluator_id: string }[]) ?? [])
-        .map((r) => r.evaluator_id)
-        .filter(Boolean);
-      if (evalIds.length) {
-        await fanOut(evalIds, 'evaluation_assigned', { ideaId: id, ideaCode }, { link: `/evaluation` });
+      const evalIds = Array.from(
+        new Set(
+          ((trackRows as { evaluator_id: string }[]) ?? [])
+            .map((r) => r.evaluator_id)
+            .filter(Boolean)
+        )
+      );
+
+      if (evalIds.length === 0) {
+        // No evaluators for this track — record a warning and skip (non-fatal).
+        await supabase
+          .from('audit_logs')
+          .insert({
+            actor_id: user.id,
+            action: 'assignment.auto_skip_no_evaluators',
+            entity_type: 'idea',
+            entity_id: id,
+            metadata: { reason: 'no_active_evaluators_for_track', theme_id: themeId },
+          })
+          .then(() => undefined, () => undefined);
+      } else {
+        // Skip if this idea already has a live (pending/completed) assignment,
+        // so re-approvals don't stack duplicate rows.
+        const { data: existing } = await supabase
+          .from('assignments')
+          .select('id')
+          .eq('idea_id', id)
+          .in('status', ['pending', 'completed'])
+          .limit(1);
+
+        if (!existing || existing.length === 0) {
+          // Current workload = count of live assignments per candidate.
+          const { data: loadRows } = await supabase
+            .from('assignments')
+            .select('evaluator_id')
+            .in('evaluator_id', evalIds)
+            .in('status', ['pending', 'completed']);
+          const load = new Map<string, number>(evalIds.map((e) => [e, 0]));
+          for (const r of (loadRows as { evaluator_id: string }[]) ?? []) {
+            load.set(r.evaluator_id, (load.get(r.evaluator_id) ?? 0) + 1);
+          }
+          // Least-loaded wins; ties broken by the track-assignment order.
+          const chosen = evalIds.reduce((best, e) =>
+            (load.get(e) ?? 0) < (load.get(best) ?? 0) ? e : best
+          );
+
+          const { error: assignErr } = await supabase.from('assignments').insert({
+            idea_id: id,
+            evaluator_id: chosen,
+            assigned_by: user.id,
+            status: 'pending',
+          });
+          if (!assignErr) {
+            await createNotification(
+              chosen,
+              'evaluation_assigned',
+              { ideaId: id, ideaCode },
+              { email: true, link: '/evaluation' }
+            );
+            await supabase
+              .from('audit_logs')
+              .insert({
+                actor_id: user.id,
+                action: 'assignment.auto_created',
+                entity_type: 'idea',
+                entity_id: id,
+                metadata: { evaluator_id: chosen, theme_id: themeId, strategy: 'round_robin_least_loaded' },
+              })
+              .then(() => undefined, () => undefined);
+          }
+        }
       }
     }
   } catch {
-    // Swallow — notifications must never fail the decision request.
+    // Swallow — auto-assignment/notifications must never fail the decision.
   }
 
   // Best-effort audit

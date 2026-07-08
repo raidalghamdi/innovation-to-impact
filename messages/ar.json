@@ -1,4 +1,10 @@
 {
+  "invitationTemplates": {
+    "kind": {
+      "open": "مفتوح",
+      "openOptions": "مفتوح الخيارات"
+    }
+  },
   "app": {
     "name": "الابتكار من الفكرة إلى الأثر",
     "shortName": "الابتكار",

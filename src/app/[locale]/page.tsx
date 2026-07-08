@@ -127,6 +127,9 @@ export default async function LandingPage({
     mediaBySlot.get(`landing.previous.image${i + 1}`) ?? null,
   );
   const previousVideo = mediaBySlot.get('landing.previous.video') ?? null;
+  // Dedicated CMS slot for the previous-edition video poster (thumbnail shown
+  // before playback). Falls back to the video asset's own poster_url if unset.
+  const previousVideoPoster = mediaBySlot.get('landing.previous.video_poster') ?? null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -544,7 +547,7 @@ export default async function LandingPage({
                   className="aspect-video w-full"
                   controls
                   preload="metadata"
-                  poster={previousVideo.poster_url ?? undefined}
+                  poster={previousVideoPoster?.url ?? previousVideo.poster_url ?? undefined}
                   src={previousVideo.url}
                 >
                   {getText(landingCms, 'previous', 'video_hint', locale, t('landing.previous.videoHint'))}

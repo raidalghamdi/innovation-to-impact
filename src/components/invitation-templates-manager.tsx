@@ -16,6 +16,10 @@ import {
   CheckCircle2,
   XCircle,
   Bell,
+  Globe,
+  Unlock,
+  ListChecks,
+  Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,16 +27,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
+// `open` / `open_options` and `is_broadcast` / `template_options` are Round-2
+// additions. They require DB changes before they are fully functional (see
+// commit notes): the innovation.email_templates.kind ENUM must gain the two
+// new values, and columns `is_broadcast boolean` + `template_options jsonb`
+// must be added. Until then the UI renders but persistence of these fields
+// will error (handled gracefully with a toast).
+type TemplateKind = 'invite' | 'accept' | 'reject' | 'reminder' | 'open' | 'open_options';
+
+type TemplateOption = { title: string; url?: string };
+
 type Template = {
   id: string;
   code: string;
-  kind: 'invite' | 'accept' | 'reject' | 'reminder';
+  kind: TemplateKind;
   role: string;
   subject_ar: string;
   subject_en: string;
   body_ar: string;
   body_en: string;
   is_active: boolean;
+  is_broadcast?: boolean;
+  template_options?: TemplateOption[] | null;
 };
 
 type Attachment = {
@@ -53,11 +69,13 @@ type Props = {
   locale: 'ar' | 'en';
 };
 
-const KINDS: { key: Template['kind']; ar: string; en: string; icon: any }[] = [
+const KINDS: { key: TemplateKind; ar: string; en: string; icon: any }[] = [
   { key: 'invite', ar: 'دعوة', en: 'Invite', icon: Mail },
   { key: 'accept', ar: 'قبول', en: 'Accept', icon: CheckCircle2 },
   { key: 'reject', ar: 'رفض', en: 'Reject', icon: XCircle },
   { key: 'reminder', ar: 'تذكير', en: 'Reminder', icon: Bell },
+  { key: 'open', ar: 'مفتوح', en: 'Open', icon: Unlock },
+  { key: 'open_options', ar: 'مفتوح الخيارات', en: 'Open Options', icon: ListChecks },
 ];
 
 export function InvitationTemplatesManager({
@@ -94,9 +112,11 @@ export function InvitationTemplatesManager({
   const [subjectEn, setSubjectEn] = useState(currentTpl?.subject_en ?? '');
   const [bodyAr, setBodyAr] = useState(currentTpl?.body_ar ?? '');
   const [bodyEn, setBodyEn] = useState(currentTpl?.body_en ?? '');
+  const [isBroadcast, setIsBroadcast] = useState<boolean>(currentTpl?.is_broadcast ?? false);
+  const [options, setOptions] = useState<TemplateOption[]>(currentTpl?.template_options ?? []);
 
   // Reset editor when template selection changes
-  const switchTo = (kind: Template['kind'], role: string) => {
+  const switchTo = (kind: TemplateKind, role: string) => {
     setActiveKind(kind);
     setActiveRole(role);
     const next = templates.find((t) => t.kind === kind && t.role === role);
@@ -104,6 +124,8 @@ export function InvitationTemplatesManager({
     setSubjectEn(next?.subject_en ?? '');
     setBodyAr(next?.body_ar ?? '');
     setBodyEn(next?.body_en ?? '');
+    setIsBroadcast(next?.is_broadcast ?? false);
+    setOptions(next?.template_options ?? []);
   };
 
   const save = async () => {
@@ -133,6 +155,47 @@ export function InvitationTemplatesManager({
       setBusy(null);
     }
   };
+
+  // Persist Round-2 metadata (broadcast flag + open-options list) separately
+  // from the subject/body save, so a missing DB column can't block core edits.
+  const saveMeta = async (patch: { is_broadcast?: boolean; template_options?: TemplateOption[] }) => {
+    if (!currentTpl) return;
+    setBusy('meta');
+    try {
+      const res = await fetch('/api/admin/invitations/templates', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentTpl.id, ...patch }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'save-failed');
+      setTemplates((prev) =>
+        prev.map((t) => (t.id === currentTpl.id ? { ...t, ...patch } : t))
+      );
+      showToast('ok', isAr ? 'تم الحفظ.' : 'Saved.');
+    } catch (e: any) {
+      showToast(
+        'err',
+        isAr
+          ? 'تعذّر الحفظ — قد تتطلب هذه الميزة تحديث قاعدة البيانات.'
+          : 'Save failed — this feature may require a database update.'
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const toggleBroadcast = async () => {
+    const next = !isBroadcast;
+    setIsBroadcast(next);
+    await saveMeta({ is_broadcast: next });
+  };
+
+  const addOption = () => setOptions((prev) => [...prev, { title: '', url: '' }]);
+  const updateOption = (i: number, patch: Partial<TemplateOption>) =>
+    setOptions((prev) => prev.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
+  const removeOption = (i: number) =>
+    setOptions((prev) => prev.filter((_, idx) => idx !== i));
 
   const uploadFile = async (file: File) => {
     if (!currentTpl) return;
@@ -263,6 +326,96 @@ export function InvitationTemplatesManager({
                   {'{{name}} · {{role}} · {{link}} · {{deadline}} · {{program}}'}
                 </code>
               </div>
+
+              {/* "For everyone" broadcast toggle — marks the template as a
+                  generic broadcast (not tied to a single invitee). */}
+              <button
+                type="button"
+                onClick={toggleBroadcast}
+                disabled={busy === 'meta'}
+                aria-pressed={isBroadcast}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg border p-3 text-start transition ${
+                  isBroadcast
+                    ? 'border-teal-500 bg-teal-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Globe className={`h-4 w-4 ${isBroadcast ? 'text-teal-600' : 'text-slate-400'}`} />
+                  <span className="text-sm font-medium text-slate-800">
+                    {isAr ? 'قالب للجميع' : 'For everyone'}
+                  </span>
+                </span>
+                <span
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${
+                    isBroadcast ? 'bg-teal-600' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                      isBroadcast ? 'translate-x-4 rtl:-translate-x-4' : 'translate-x-0.5 rtl:-translate-x-0.5'
+                    }`}
+                  />
+                </span>
+              </button>
+
+              {/* Open-options editor — only for the `open_options` kind. Lets
+                  the admin define clickable options (title + optional URL)
+                  embedded in the invitation. */}
+              {activeKind === 'open_options' && (
+                <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-800">
+                      {isAr ? 'الخيارات القابلة للنقر' : 'Clickable options'}
+                    </span>
+                    <Button type="button" size="sm" variant="outline" onClick={addOption} className="gap-1">
+                      <Plus className="h-3.5 w-3.5" />
+                      {isAr ? 'إضافة خيار' : 'Add option'}
+                    </Button>
+                  </div>
+                  {options.length === 0 ? (
+                    <p className="text-xs text-slate-400">
+                      {isAr ? 'لا توجد خيارات بعد.' : 'No options yet.'}
+                    </p>
+                  ) : (
+                    options.map((opt, i) => (
+                      <div key={i} className="flex flex-col gap-2 sm:flex-row">
+                        <Input
+                          placeholder={isAr ? 'العنوان' : 'Title'}
+                          value={opt.title}
+                          onChange={(e) => updateOption(i, { title: e.target.value })}
+                        />
+                        <Input
+                          placeholder={isAr ? 'الرابط (اختياري)' : 'URL (optional)'}
+                          value={opt.url ?? ''}
+                          onChange={(e) => updateOption(i, { url: e.target.value })}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeOption(i)}
+                          className="rounded p-2 text-rose-600 hover:bg-rose-50"
+                          aria-label={isAr ? 'حذف' : 'Remove'}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={busy === 'meta'}
+                      onClick={() => saveMeta({ template_options: options })}
+                      className="gap-2"
+                    >
+                      {busy === 'meta' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {isAr ? 'حفظ الخيارات' : 'Save options'}
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end">
                 <Button onClick={save} disabled={busy === 'save'} className="gap-2">

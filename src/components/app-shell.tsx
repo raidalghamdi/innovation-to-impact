@@ -45,6 +45,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const locale = useLocale();
   const pathname = usePathname() ?? '';
   const isAdminSubPage = /^\/(ar|en)?\/admin\/[^/]+/.test(pathname);
+
+  // Authenticated app routes must NOT show the public marketing anchor nav
+  // (عن البرنامج · المسارات · …). These are RBAC-gated app surfaces, not the
+  // public landing page. Strip the locale prefix, then match by route prefix.
+  const APP_ROUTE_PREFIXES = [
+    '/admin',
+    '/dashboard',
+    '/my-ideas',
+    '/ideas',
+    '/evaluation',
+    '/supervisor',
+    '/committee',
+    '/notifications',
+  ];
+  const pathNoLocale = pathname.replace(/^\/(ar|en)(?=\/|$)/, '') || '/';
+  const showAnchorNav = !APP_ROUTE_PREFIXES.some(
+    (p) => pathNoLocale === p || pathNoLocale.startsWith(`${p}/`)
+  );
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<Role>('submitter');
   const [userId, setUserId] = useState<string | null>(null);
@@ -123,21 +141,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <CoBrand className="h-10 sm:h-12 xl:h-14 2xl:h-16" locale={locale} />
           </Link>
 
-          {/* Desktop anchor nav (≥xl) — same links as LandingNav */}
-          <nav
-            className="hidden items-center gap-0.5 xl:flex 2xl:gap-1"
-            aria-label="Program sections"
-          >
-            {ANCHOR_NAV.map(({ anchor, key }) => (
-              <a
-                key={anchor}
-                href={anchorHref(anchor)}
-                className="rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal 2xl:px-3"
-              >
-                {t(`landing.${key}`)}
-              </a>
-            ))}
-          </nav>
+          {/* Desktop anchor nav (≥xl) — same links as LandingNav. Hidden on
+              authenticated app routes (dashboard, my-ideas, ideas, …). */}
+          {showAnchorNav && (
+            <nav
+              className="hidden items-center gap-0.5 xl:flex 2xl:gap-1"
+              aria-label="Program sections"
+            >
+              {ANCHOR_NAV.map(({ anchor, key }) => (
+                <a
+                  key={anchor}
+                  href={anchorHref(anchor)}
+                  className="rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal 2xl:px-3"
+                >
+                  {t(`landing.${key}`)}
+                </a>
+              ))}
+            </nav>
+          )}
 
           {/* Actions. Search hidden until 2xl to keep parity with LandingNav
               and avoid the same overflow issue that clipped the language button. */}
@@ -228,22 +249,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
         </div>
-        {/* Anchor row — same landing-page sections available in the public shell.
-            Admins keep the primary program navigation reachable everywhere. */}
-        <nav
-          aria-label="Program sections"
-          className="scrollbar-none flex items-center gap-4 overflow-x-auto border-t border-border/60 bg-card/60 px-4 py-2 text-sm sm:justify-center sm:gap-6 sm:px-8"
-        >
-          {ANCHOR_NAV.map(({ anchor, key }) => (
-            <a
-              key={anchor}
-              href={anchorHref(anchor)}
-              className="shrink-0 whitespace-nowrap font-medium text-muted-foreground transition hover:text-brand-teal"
-            >
-              {t(`landing.${key}`)}
-            </a>
-          ))}
-        </nav>
+        {/* Anchor row — public landing sections. Hidden on /admin/* so the
+            admin console renders inside its own shell only (no marketing nav). */}
+        {showAnchorNav && (
+          <nav
+            aria-label="Program sections"
+            className="scrollbar-none flex items-center gap-4 overflow-x-auto border-t border-border/60 bg-card/60 px-4 py-2 text-sm sm:justify-center sm:gap-6 sm:px-8"
+          >
+            {ANCHOR_NAV.map(({ anchor, key }) => (
+              <a
+                key={anchor}
+                href={anchorHref(anchor)}
+                className="shrink-0 whitespace-nowrap font-medium text-muted-foreground transition hover:text-brand-teal"
+              >
+                {t(`landing.${key}`)}
+              </a>
+            ))}
+          </nav>
+        )}
       </header>
 
       <HitlBanner />

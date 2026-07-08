@@ -1,4 +1,17 @@
-export const ROLES = ['submitter', 'evaluator', 'judge', 'admin'] as const;
+// First-class roles. `supervisor`, `committee`, and `innovator` mirror the
+// innovation.roles table values (8 rows) so the enum is aligned with the DB.
+// `committee` and `judge` are aliases (committee = judge home), and
+// `innovator` aliases `submitter`; both live here as canonical members so
+// role-code lookups from innovation.v_user_roles resolve without coercion.
+export const ROLES = [
+  'submitter',
+  'evaluator',
+  'judge',
+  'admin',
+  'supervisor',
+  'committee',
+  'innovator',
+] as const;
 export type Role = (typeof ROLES)[number];
 
 // Landing dashboard per role after login.
@@ -7,6 +20,9 @@ export const ROLE_HOME: Record<Role, string> = {
   evaluator: '/evaluation',
   judge: '/committee',
   admin: '/admin',
+  supervisor: '/supervisor',
+  committee: '/committee',
+  innovator: '/dashboard',
 };
 
 // Resolve the correct landing route from a DB role_code that may use aliases
@@ -27,8 +43,11 @@ export function homeForRoleCode(roleCode: string | null | undefined): string {
 // — see analytics page role check. /admin (non-analytics) remains admin-only.
 export const ROLE_DENY: Record<Role, string[]> = {
   submitter: ['/evaluation', '/committee', '/admin', '/analytics'],
+  innovator: ['/evaluation', '/committee', '/admin', '/analytics'],
   evaluator: ['/committee', '/admin', '/analytics'],
+  supervisor: ['/committee', '/admin', '/analytics'],
   judge: ['/admin', '/analytics'],
+  committee: ['/admin', '/analytics'],
   admin: [],
 };
 

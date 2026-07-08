@@ -48,7 +48,20 @@ export async function PATCH(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'missing_id' }, { status: 400 });
 
   const updates: Record<string, unknown> = {};
-  const fields = ['subject_ar', 'subject_en', 'body_ar', 'body_en', 'is_active'] as const;
+  // NOTE: `is_broadcast` + `template_options` are Round-2 additions and require
+  // DB columns on innovation.email_templates before they persist. Until the
+  // migration lands, PATCHes including them will fail at the DB layer (the
+  // client surfaces a graceful toast).
+  const fields = [
+    'subject_ar',
+    'subject_en',
+    'body_ar',
+    'body_en',
+    'is_active',
+    'is_broadcast',
+    'template_options',
+    'kind',
+  ] as const;
   for (const f of fields) {
     if (body[f] !== undefined) updates[f] = body[f];
   }

@@ -147,6 +147,24 @@ Create `.env.local` from `.env.local.example`:
 
 > **Seed note:** The seed migration temporarily relaxes the `user_profiles` foreign key so demo profiles can exist without `auth.users` rows. In production, real users are created through Supabase Auth and the `handle_new_user()` trigger populates their profile automatically.
 
+> **⚠️ Schema drift — hosted DB is ahead of the committed migrations.** The
+> following objects exist on the hosted Supabase database but are **not** yet
+> captured as migrations under `supabase/migrations/` (do not assume a fresh
+> `supabase db reset` reproduces production):
+> - Tables: `track_assignments`, `content_strings`, `report_generations`
+> - RPC: `clear_must_change_password`
+> - RLS policies: `user_roles_read_scoped` plus track-scoped read restrictions
+>
+> In addition, these Round-2 UI features ship ahead of their schema and require
+> DB changes before they are functional:
+> - `innovation.email_templates.kind` ENUM must add `open` and `open_options`
+> - `innovation.email_templates` needs `is_broadcast boolean` and
+>   `template_options jsonb` columns (invitation "For everyone" broadcast +
+>   clickable open-options list)
+>
+> These changes must be authored as new migrations by a maintainer; this repo's
+> automation is not permitted to edit `supabase/migrations/`.
+
 ### Vercel Deployment
 
 1. Push the repository to GitHub.
