@@ -13,7 +13,7 @@ import { FeedbackCountBadge } from '@/components/feedback-section';
 import { getFeedbackCountsForSubmitter } from '@/lib/feedback';
 import { EmptyState } from '@/components/empty-state';
 import { WithdrawIdeaButton } from '@/components/withdraw-idea-button';
-import { Lightbulb, Plus, ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
+import { Lightbulb, Plus, ChevronLeft, ChevronRight, Calendar, Clock, MessageSquareWarning } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default async function MyIdeasPage({
@@ -89,10 +89,6 @@ export default async function MyIdeasPage({
                           <Clock className="h-3.5 w-3.5" />
                           {tc('lastUpdated')}: {formatDate(idea.updated_at ?? idea.created_at, locale)}
                         </span>
-                        <span>·</span>
-                        <span>
-                          {t('currentStage')}: <span className="font-medium text-foreground">{idea.current_stage}/8</span>
-                        </span>
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -108,6 +104,15 @@ export default async function MyIdeasPage({
                   <PipelineIndicator current={idea.current_stage} />
 
                   <div className="flex flex-wrap items-center justify-end gap-3">
+                    {idea.status === 'returned' && (
+                      <Link
+                        href={`/ideas/${idea.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-amber-500 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
+                      >
+                        <MessageSquareWarning className="h-4 w-4" />
+                        <span>{t('viewFeedbackCta')}</span>
+                      </Link>
+                    )}
                     {idea.current_stage <= 2 && idea.status !== 'withdrawn' && (
                       <WithdrawIdeaButton ideaId={idea.id} />
                     )}

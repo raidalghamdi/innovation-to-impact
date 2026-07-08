@@ -51,6 +51,20 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
   const [viewIdea, setViewIdea] = useState<Idea | null>(null);
   const [decision, setDecision] = useState<'approve' | 'reject' | 'return' | null>(null);
   const [reason, setReason] = useState('');
+  // For "return" decisions ONLY: which sections must the innovator revise?
+  // These correspond to the idea-form sections. When empty, the innovator
+  // can edit any field (backward compat). When set, only listed sections
+  // are editable and the rest are locked.
+  const RETURN_SECTIONS = [
+    'title',
+    'problem_statement',
+    'proposed_solution',
+    'expected_benefits',
+    'attachments',
+    'team',
+  ] as const;
+  type ReturnSection = typeof RETURN_SECTIONS[number];
+  const [editableSections, setEditableSections] = useState<Set<ReturnSection>>(new Set());
   const [flash, setFlash] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const themeMap = useMemo(() => {
@@ -98,15 +112,37 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
     setViewIdea(idea);
     setDecision(null);
     setReason('');
+    setEditableSections(new Set());
   }
   function closeReview() {
     setViewIdea(null);
     setDecision(null);
+    setEditableSections(new Set());
   }
   function openDecision(kind: 'approve' | 'reject' | 'return') {
     setDecision(kind);
     setReason('');
+    // Default: mark all sections as editable so a supervisor who just wants
+    // an open-ended return doesn't have to tick every box.
+    setEditableSections(new Set(RETURN_SECTIONS));
   }
+  function toggleSection(s: ReturnSection) {
+    setEditableSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  }
+
+  const sectionLabels = {
+    title: isAr ? 'عنوان الفكرة' : 'Idea title',
+    problem_statement: isAr ? 'بيان المشكلة' : 'Problem statement',
+    proposed_solution: isAr ? 'الحل المقترح' : 'Proposed solution',
+    expected_benefits: isAr ? 'المنافع المتوقعة' : 'Expected benefits',
+    attachments: isAr ? 'المرفقات' : 'Attachments',
+    team: isAr ? 'بيانات الفريق' : 'Team details',
+  } as const;
 
   function submitDecision() {
     if (!viewIdea || !decision) return;
@@ -114,10 +150,18 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
       // Single reason box — send the same text to both AR/EN fields so it shows
       // regardless of the innovator's current locale.
       const r = reason.trim() || null;
+      // Only include editable_sections when decision === 'return'.
+      const editable_sections =
+        decision === 'return' ? Array.from(editableSections) : null;
       const res = await fetch(`/api/supervisor/ideas/${viewIdea.id}/decision`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision, reason: r, reason_ar: r }),
+        body: JSON.stringify({
+          decision,
+          reason: r,
+          reason_ar: r,
+          editable_sections,
+        }),
       });
       const j = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -403,15 +447,63 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                   <div className="text-sm font-semibold">
                     {decision === 'approve' && (isAr ? 'تأكيد الاعتماد' : 'Confirm approval')}
                     {decision === 'reject' && (isAr ? 'تأكيد الرفض' : 'Confirm rejection')}
-                    {decision === 'return' && (isAr ? 'تأكيد الإعادة' : 'Confirm return')}
+                    {decision === 'return' && (isAr ? 'إعادة الفكرة للمبتكر للتعديل' : 'Return idea to innovator')}
                   </div>
+                  {decision === 'return' && (
+                    <div className="rounded-md border border-amber-300 bg-amber-50/60 p-3">
+                      <div className="mb-2 text-xs font-semibold text-amber-900">
+                        {isAr
+                          ? 'اختر الأقسام التي يجب على المبتكر تعديلها:'
+                          : 'Select which sections the innovator must edit:'}
+                      </div>
+                      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                        {RETURN_SECTIONS.map((s) => (
+                          <label
+                            key={s}
+                            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-white"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={editableSections.has(s)}
+                              onChange={() => toggleSection(s)}
+                              className="h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                            />
+                            <span>{sectionLabels[s]}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {editableSections.size === 0 && (
+                        <div className="mt-2 text-xs text-red-700">
+                          {isAr
+                            ? 'اختر قسماً واحداً على الأقل.'
+                            : 'Select at least one section.'}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {decision !== 'approve' && (
                     <div>
-                      <Label>{isAr ? 'السبب' : 'Reason'}</Label>
+                      <Label>
+                        {decision === 'return'
+                          ? isAr
+                            ? 'ملاحظات المشرف'
+                            : 'Supervisor notes'
+                          : isAr
+                            ? 'السبب'
+                            : 'Reason'}
+                      </Label>
                       <Textarea
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        placeholder={isAr ? 'اكتب السبب…' : 'Write the reason…'}
+                        placeholder={
+                          decision === 'return'
+                            ? isAr
+                              ? 'اشرح للمبتكر ما يجب تعديله…'
+                              : 'Explain to the innovator what needs updating…'
+                            : isAr
+                              ? 'اكتب السبب…'
+                              : 'Write the reason…'
+                        }
                         rows={3}
                       />
                     </div>
@@ -419,7 +511,10 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                   <div className="flex gap-2">
                     <Button
                       onClick={submitDecision}
-                      disabled={pending}
+                      disabled={
+                        pending ||
+                        (decision === 'return' && editableSections.size === 0)
+                      }
                       className={
                         decision === 'approve'
                           ? 'bg-green-700 hover:bg-green-800'

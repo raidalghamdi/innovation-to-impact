@@ -17,6 +17,7 @@ import {
   Split as SplitIcon,
   ClipboardEdit,
   FileText,
+  FileDown,
   CalendarClock,
   ArrowRight,
   ArrowLeft,
@@ -143,6 +144,14 @@ const ADMIN_CARDS: AdminCard[] = [
     descAr: 'تعديل نصوص وصور وفيديو المنصة بدون كود.',
     descEn: 'Edit platform text, images, and video — no code.',
     icon: FileText,
+  },
+  {
+    href: '/admin/reports',
+    labelAr: 'مركز التقارير',
+    labelEn: 'Reports Center',
+    descAr: '12 تقريراً بصيغ PDF/Excel/PowerPoint مع تحميل مباشر أو إرسال بالبريد.',
+    descEn: '12 report types in PDF/Excel/PowerPoint with direct download or email delivery.',
+    icon: FileDown,
   },
 ];
 

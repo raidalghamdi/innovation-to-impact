@@ -86,7 +86,8 @@
     "closeMenu": "Close navigation menu",
     "logout": "Sign out",
     "genericError": "Something went wrong. Please try again.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "download": "Download"
   },
   "brand": {
     "logo": {
@@ -423,7 +424,8 @@
     "filterStatus": "Status",
     "filterActivity": "Activity",
     "emptyRepo": "No ideas match the current filters.",
-    "ipSignNote": "Each team member will independently sign the IP terms after submission."
+    "ipSignNote": "Each team member will independently sign the IP terms after submission.",
+    "viewFeedbackCta": "View feedback"
   },
   "migrate": {
     "title": "Legacy idea migration",

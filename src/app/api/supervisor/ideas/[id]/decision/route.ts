@@ -28,16 +28,39 @@ export async function POST(
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
-  let body: { decision?: Decision; reason?: string; reason_ar?: string } = {};
+  let body: {
+    decision?: Decision;
+    reason?: string;
+    reason_ar?: string;
+    editable_sections?: string[] | null;
+  } = {};
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'bad_json' }, { status: 400 });
   }
 
-  const { decision, reason = null, reason_ar = null } = body;
+  const { decision, reason = null, reason_ar = null, editable_sections = null } = body;
   if (!decision || !['approve', 'reject', 'return'].includes(decision)) {
     return NextResponse.json({ error: 'invalid_decision' }, { status: 400 });
+  }
+  // For 'return', require at least one section so the innovator has a concrete
+  // scope of changes to make (the UI enforces this too, but the API must not
+  // trust the client).
+  const ALLOWED_SECTIONS = new Set([
+    'title',
+    'problem_statement',
+    'proposed_solution',
+    'expected_benefits',
+    'attachments',
+    'team',
+  ]);
+  const cleanedSections =
+    decision === 'return' && Array.isArray(editable_sections)
+      ? editable_sections.filter((s) => ALLOWED_SECTIONS.has(s))
+      : null;
+  if (decision === 'return' && (!cleanedSections || cleanedSections.length === 0)) {
+    return NextResponse.json({ error: 'no_sections_selected' }, { status: 400 });
   }
 
   const statusMap: Record<Decision, string> = {
@@ -53,10 +76,17 @@ export async function POST(
     status: statusMap[decision],
     updated_at: new Date().toISOString(),
   };
-  if (decision === 'approve') update.approved_at = new Date().toISOString();
+  if (decision === 'approve') {
+    update.approved_at = new Date().toISOString();
+    // Clear any prior partial-edit gate on approval.
+    update.editable_sections = null;
+  }
   if (decision !== 'approve') {
     update.rejection_reason = reason;
     update.rejection_reason_ar = reason_ar;
+  }
+  if (decision === 'return') {
+    update.editable_sections = cleanedSections;
   }
 
   const { error } = await supabase.from('ideas').update(update).eq('id', id);
