@@ -97,19 +97,19 @@ async function buildDetailed(req: ReportRequest, generatedBy: string): Promise<R
     stage: (i as unknown as { current_stage?: number }).current_stage ?? '',
   }));
   const kpis: ReportKpi[] = [
-    { label_ar: 'إجمالي الصفوف', label_en: 'Total Rows', value: String(rows.length) },
+    { label_ar: 'إجمالي الأفكار المشمولة', label_en: 'Ideas Included', value: String(rows.length) },
   ];
   const section: ReportSection = {
-    title_ar: 'قائمة الأفكار الكاملة',
-    title_en: 'Full Ideas Listing',
+    title_ar: 'السجل التفصيلي للأفكار',
+    title_en: 'Detailed Ideas Register',
     columns: [
-      { key: 'code', label_ar: 'الكود', label_en: 'Code', width: 14 },
-      { key: 'title', label_ar: 'العنوان', label_en: 'Title', width: 46 },
+      { key: 'code', label_ar: 'الرمز المرجعي', label_en: 'Reference', width: 14 },
+      { key: 'title', label_ar: 'عنوان الفكرة', label_en: 'Idea Title', width: 46 },
       { key: 'status', label_ar: 'الحالة', label_en: 'Status', width: 16 },
-      { key: 'theme', label_ar: 'المسار', label_en: 'Theme', width: 24 },
-      { key: 'submitter', label_ar: 'المُقدِّم', label_en: 'Submitter', width: 22 },
+      { key: 'theme', label_ar: 'المسار الاستراتيجي', label_en: 'Strategic Theme', width: 24 },
+      { key: 'submitter', label_ar: 'مُقدَّم الفكرة', label_en: 'Submitted By', width: 22 },
       { key: 'stage', label_ar: 'المرحلة', label_en: 'Stage', width: 8 },
-      { key: 'created_at', label_ar: 'تاريخ الإنشاء', label_en: 'Created', width: 12 },
+      { key: 'created_at', label_ar: 'تاريخ التقديم', label_en: 'Submitted On', width: 12 },
     ],
     rows,
   };
