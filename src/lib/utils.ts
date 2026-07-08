@@ -19,10 +19,12 @@ export function formatNumber(value: number, opts?: Intl.NumberFormatOptions) {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0, ...opts }).format(value);
 }
 
+// Dates are always Gregorian (ميلادي) with Latin digits, even in Arabic —
+// never Hijri / Umm al-Qura. `ar-SA-u-ca-gregory-nu-latn` forces this.
 export function formatDate(value: string | null | undefined, locale: string) {
   if (!value) return '—';
   try {
-    return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA' : 'en-GB', {
+    return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

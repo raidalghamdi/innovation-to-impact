@@ -137,7 +137,7 @@ export default async function InvitationPage({
                   </div>
                   <div className="mt-0.5 font-medium">
                     {new Date(invitation.deadline_at).toLocaleDateString(
-                      isAr ? 'ar-SA' : 'en-US',
+                      isAr ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-US',
                       { year: 'numeric', month: 'long', day: 'numeric' }
                     )}
                   </div>

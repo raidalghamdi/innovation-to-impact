@@ -96,6 +96,10 @@ type Ctx = {
   fonts: Fonts;
   y: number;
   locale: 'ar' | 'en';
+  // When true (Arabic) the whole page is laid out right-to-left: every x
+  // coordinate is mirrored across the page so tables, headers, footers and
+  // text alignment flip. Numbers/dates still render with Latin digits.
+  rtl: boolean;
   // page indices where each section starts (populated during body render)
   sectionPages: number[];
   bodyStartPageIndex: number; // index at which body pages begin (skip cover + TOC)
@@ -114,6 +118,80 @@ function ensureSpace(ctx: Ctx, needed: number) {
   if (ctx.y - needed < BODY_BOTTOM) newPage(ctx);
 }
 
+// Mirror an x coordinate for RTL. `x` is the left edge of an element whose
+// horizontal extent is `w`; the mirrored element keeps the same width but is
+// reflected across the vertical centre of the page. Passing w=0 mirrors a
+// single point (e.g. a line endpoint or circle centre).
+function mirrorX(rtl: boolean, x: number, w = 0): number {
+  return rtl ? PAGE_W - x - w : x;
+}
+
+// Direction-aware primitives. Every draw call in this module goes through these
+// so a single `rtl` flag flips the entire layout. Text is anchored at its
+// leading edge (left in LTR, right in RTL); pass `align: 'end'` to anchor at the
+// trailing edge (a value that was right-aligned in LTR).
+function pText(
+  page: PDFPage,
+  rtl: boolean,
+  text: string,
+  x: number,
+  y: number,
+  font: PDFFont,
+  size: number,
+  color: ReturnType<typeof rgb>,
+  align: 'start' | 'end' = 'start'
+) {
+  const w = font.widthOfTextAtSize(text, size);
+  // For an 'end'-anchored element, x is the trailing edge; convert to a left edge.
+  const left = align === 'end' ? x - w : x;
+  page.drawText(text, { x: mirrorX(rtl, left, w), y, size, font, color });
+}
+
+function pRect(
+  page: PDFPage,
+  rtl: boolean,
+  opts: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    color?: ReturnType<typeof rgb>;
+    borderColor?: ReturnType<typeof rgb>;
+    borderWidth?: number;
+  }
+) {
+  page.drawRectangle({ ...opts, x: mirrorX(rtl, opts.x, opts.width) });
+}
+
+function pLine(
+  page: PDFPage,
+  rtl: boolean,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  thickness: number,
+  color: ReturnType<typeof rgb>
+) {
+  page.drawLine({
+    start: { x: mirrorX(rtl, x1), y: y1 },
+    end: { x: mirrorX(rtl, x2), y: y2 },
+    thickness,
+    color,
+  });
+}
+
+function pCircle(
+  page: PDFPage,
+  rtl: boolean,
+  x: number,
+  y: number,
+  size: number,
+  color: ReturnType<typeof rgb>
+) {
+  page.drawCircle({ x: mirrorX(rtl, x), y, size, color });
+}
+
 function drawText(
   ctx: Ctx,
   text: string,
@@ -123,16 +201,10 @@ function drawText(
 ) {
   const size = opts.size ?? 10;
   const font = pickFont(text, ctx.fonts, !!opts.bold);
-  ctx.page.drawText(text, {
-    x,
-    y,
-    size,
-    font,
-    color: opts.color ?? TEXT,
-  });
+  pText(ctx.page, ctx.rtl, text, x, y, font, size, opts.color ?? TEXT);
 }
 
-// Right-align helper for RTL layouts.
+// Anchor text at the trailing edge (right in LTR, left in RTL).
 function drawTextRight(
   ctx: Ctx,
   text: string,
@@ -142,14 +214,7 @@ function drawTextRight(
 ) {
   const size = opts.size ?? 10;
   const font = pickFont(text, ctx.fonts, !!opts.bold);
-  const w = font.widthOfTextAtSize(text, size);
-  ctx.page.drawText(text, {
-    x: rightX - w,
-    y,
-    size,
-    font,
-    color: opts.color ?? TEXT,
-  });
+  pText(ctx.page, ctx.rtl, text, rightX, y, font, size, opts.color ?? TEXT, 'end');
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -160,7 +225,7 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
   const desc = ctx.locale === 'ar' ? meta.desc_ar : meta.desc_en;
 
   // Top brand block (full-bleed)
-  ctx.page.drawRectangle({
+  pRect(ctx.page, ctx.rtl, {
     x: 0,
     y: PAGE_H - 220,
     width: PAGE_W,
@@ -168,7 +233,7 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
     color: PRIMARY,
   });
   // Thin darker band under the block for depth
-  ctx.page.drawRectangle({
+  pRect(ctx.page, ctx.rtl, {
     x: 0,
     y: PAGE_H - 226,
     width: PAGE_W,
@@ -179,31 +244,14 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
   const brandName =
     ctx.locale === 'ar' ? 'منصة الابتكار للأثر' : 'Innovation-to-Impact Platform';
   const brandFont = pickFont(brandName, ctx.fonts, true);
-  ctx.page.drawText(brandName, {
-    x: MARGIN,
-    y: PAGE_H - 60,
-    size: 12,
-    font: brandFont,
-    color: rgb(0.9, 0.97, 0.96),
-  });
+  pText(ctx.page, ctx.rtl, brandName, MARGIN, PAGE_H - 60, brandFont, 12, rgb(0.9, 0.97, 0.96));
 
   // Rule under brand
-  ctx.page.drawLine({
-    start: { x: MARGIN, y: PAGE_H - 74 },
-    end: { x: MARGIN + 40, y: PAGE_H - 74 },
-    thickness: 2,
-    color: WHITE,
-  });
+  pLine(ctx.page, ctx.rtl, MARGIN, PAGE_H - 74, MARGIN + 40, PAGE_H - 74, 2, WHITE);
 
   const kicker =
     ctx.locale === 'ar' ? 'تقرير رسمي · جاهز للنشر' : 'Official Report · Ready for Distribution';
-  ctx.page.drawText(kicker, {
-    x: MARGIN,
-    y: PAGE_H - 100,
-    size: 10,
-    font: pickFont(kicker, ctx.fonts, false),
-    color: rgb(0.85, 0.94, 0.93),
-  });
+  pText(ctx.page, ctx.rtl, kicker, MARGIN, PAGE_H - 100, pickFont(kicker, ctx.fonts, false), 10, rgb(0.85, 0.94, 0.93));
 
   // Big title — wrap over up to 3 lines if needed
   const titleFont = pickFont(title, ctx.fonts, true);
@@ -212,13 +260,7 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
   const titleLines = wrap(title, titleFont, titleSize, titleMaxWidth, 3);
   let ty = PAGE_H - 140;
   for (const line of titleLines) {
-    ctx.page.drawText(line, {
-      x: MARGIN,
-      y: ty,
-      size: titleSize,
-      font: titleFont,
-      color: WHITE,
-    });
+    pText(ctx.page, ctx.rtl, line, MARGIN, ty, titleFont, titleSize, WHITE);
     ty -= titleSize + 4;
   }
 
@@ -227,13 +269,7 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
   const descLines = wrap(desc, descFont, 11, PAGE_W - MARGIN * 2, 4);
   let dy = PAGE_H - 260;
   for (const line of descLines) {
-    ctx.page.drawText(line, {
-      x: MARGIN,
-      y: dy,
-      size: 11,
-      font: descFont,
-      color: TEXT,
-    });
+    pText(ctx.page, ctx.rtl, line, MARGIN, dy, descFont, 11, TEXT);
     dy -= 16;
   }
 
@@ -243,7 +279,7 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
   const cardX = MARGIN;
   const cardW = PAGE_W - MARGIN * 2;
 
-  ctx.page.drawRectangle({
+  pRect(ctx.page, ctx.rtl, {
     x: cardX,
     y: cardTop,
     width: cardW,
@@ -253,8 +289,8 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
     borderWidth: 0.75,
   });
 
-  // Left accent bar
-  ctx.page.drawRectangle({
+  // Leading accent bar (left in LTR, right in RTL)
+  pRect(ctx.page, ctx.rtl, {
     x: cardX,
     y: cardTop,
     width: 4,
@@ -295,23 +331,13 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
     });
     // divider
     if (ry - rowH > cardTop + 8) {
-      ctx.page.drawLine({
-        start: { x: cardX + 24, y: ry - rowH + 8 },
-        end: { x: cardX + cardW - 24, y: ry - rowH + 8 },
-        thickness: 0.5,
-        color: BORDER,
-      });
+      pLine(ctx.page, ctx.rtl, cardX + 24, ry - rowH + 8, cardX + cardW - 24, ry - rowH + 8, 0.5, BORDER);
     }
     ry -= rowH;
   }
 
   // Bottom footer strip (confidential + brand)
-  ctx.page.drawLine({
-    start: { x: MARGIN, y: 50 },
-    end: { x: PAGE_W - MARGIN, y: 50 },
-    thickness: 0.5,
-    color: BORDER,
-  });
+  pLine(ctx.page, ctx.rtl, MARGIN, 50, PAGE_W - MARGIN, 50, 0.5, BORDER);
   const confidential =
     ctx.locale === 'ar' ? 'وثيقة داخلية · للاستخدام الرسمي' : 'Internal Document · For Official Use';
   drawText(ctx, confidential, MARGIN, 30, { size: 8, color: MUTED });
@@ -319,15 +345,7 @@ function drawCover(ctx: Ctx, bundle: ReportBundle) {
     ctx.locale === 'ar'
       ? `مرجع: I2I-${bundle.type.toUpperCase()}-${formatDateOnly(bundle.generatedAt)}`
       : `Ref: I2I-${bundle.type.toUpperCase()}-${formatDateOnly(bundle.generatedAt)}`;
-  const refFont = pickFont(ref, ctx.fonts, false);
-  const refW = refFont.widthOfTextAtSize(ref, 8);
-  ctx.page.drawText(ref, {
-    x: PAGE_W - MARGIN - refW,
-    y: 30,
-    size: 8,
-    font: refFont,
-    color: MUTED,
-  });
+  drawTextRight(ctx, ref, PAGE_W - MARGIN, 30, { size: 8, color: MUTED });
 }
 
 // Naive word-wrap that returns at most maxLines lines. Long lines get ellipsised
@@ -364,7 +382,7 @@ function formatDateTime(iso: string, locale: 'ar' | 'en'): string {
     minute: '2-digit',
     timeZone: 'UTC',
   };
-  return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA' : 'en-GB', opts).format(d) + ' UTC';
+  return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', opts).format(d) + ' UTC';
 }
 
 function formatDateOnly(iso: string): string {
@@ -380,15 +398,9 @@ function drawToc(page: PDFPage, ctx: Ctx, bundle: ReportBundle) {
   const heading =
     ctx.locale === 'ar' ? 'المحتويات' : 'Table of Contents';
   const headingFont = pickFont(heading, ctx.fonts, true);
-  page.drawText(heading, {
-    x: MARGIN,
-    y: PAGE_H - 90,
-    size: 22,
-    font: headingFont,
-    color: TEXT,
-  });
+  pText(page, ctx.rtl, heading, MARGIN, PAGE_H - 90, headingFont, 22, TEXT);
   // Underline
-  page.drawRectangle({
+  pRect(page, ctx.rtl, {
     x: MARGIN,
     y: PAGE_H - 100,
     width: 60,
@@ -398,13 +410,7 @@ function drawToc(page: PDFPage, ctx: Ctx, bundle: ReportBundle) {
 
   const meta = REPORT_META[bundle.type];
   const subtitle = ctx.locale === 'ar' ? meta.name_ar : meta.name_en;
-  page.drawText(subtitle, {
-    x: MARGIN,
-    y: PAGE_H - 122,
-    size: 11,
-    font: pickFont(subtitle, ctx.fonts, false),
-    color: MUTED,
-  });
+  pText(page, ctx.rtl, subtitle, MARGIN, PAGE_H - 122, pickFont(subtitle, ctx.fonts, false), 11, MUTED);
 
   // Entries (KPIs first if present, then sections)
   const entries: Array<{ label: string; page: number }> = [];
@@ -423,7 +429,7 @@ function drawToc(page: PDFPage, ctx: Ctx, bundle: ReportBundle) {
     const rowY = y;
     // Row background (alt banding)
     if (idx % 2 === 0) {
-      page.drawRectangle({
+      pRect(page, ctx.rtl, {
         x: MARGIN,
         y: rowY - 8,
         width: PAGE_W - MARGIN * 2,
@@ -431,50 +437,27 @@ function drawToc(page: PDFPage, ctx: Ctx, bundle: ReportBundle) {
         color: SURFACE_ALT,
       });
     }
-    // Number chip
+    // Number chip (leading edge)
     const chipLabel = String(idx + 1).padStart(2, '0');
     const chipFont = pickFont(chipLabel, ctx.fonts, true);
-    page.drawText(chipLabel, {
-      x: MARGIN + 8,
-      y: rowY,
-      size: 10,
-      font: chipFont,
-      color: PRIMARY,
-    });
+    pText(page, ctx.rtl, chipLabel, MARGIN + 8, rowY, chipFont, 10, PRIMARY);
     // Label
     const labelFont = pickFont(e.label, ctx.fonts, false);
     const labelSize = 11;
     const labelMaxW = PAGE_W - MARGIN * 2 - 90;
     const shown = fitText(e.label, labelFont, labelSize, labelMaxW);
-    page.drawText(shown, {
-      x: MARGIN + 40,
-      y: rowY,
-      size: labelSize,
-      font: labelFont,
-      color: TEXT,
-    });
-    // Dot leader + page number (right-aligned)
+    pText(page, ctx.rtl, shown, MARGIN + 40, rowY, labelFont, labelSize, TEXT);
+    // Page number, anchored at the trailing edge
     const pageStr = String(e.page);
+    pText(page, ctx.rtl, pageStr, PAGE_W - MARGIN, rowY, ctx.fonts.reg, 11, TEXT, 'end');
+    // dotted leader between label and page number
     const pw = ctx.fonts.reg.widthOfTextAtSize(pageStr, 11);
     const pageX = PAGE_W - MARGIN - pw;
-    page.drawText(pageStr, {
-      x: pageX,
-      y: rowY,
-      size: 11,
-      font: ctx.fonts.reg,
-      color: TEXT,
-    });
-    // dotted leader
     const dotsStart = MARGIN + 40 + labelFont.widthOfTextAtSize(shown, labelSize) + 8;
     const dotsEnd = pageX - 8;
     if (dotsEnd > dotsStart) {
       for (let x = dotsStart; x < dotsEnd; x += 4) {
-        page.drawCircle({
-          x,
-          y: rowY + 3,
-          size: 0.6,
-          color: FAINT,
-        });
+        pCircle(page, ctx.rtl, x, rowY + 3, 0.6, FAINT);
       }
     }
     y -= rowH;
@@ -489,7 +472,7 @@ function drawKpis(ctx: Ctx, bundle: ReportBundle) {
   const sectionLabel = ctx.locale === 'ar' ? 'المؤشرات الرئيسية' : 'Key Indicators';
   ensureSpace(ctx, 30);
   drawText(ctx, sectionLabel, MARGIN, ctx.y - 12, { size: 14, bold: true });
-  ctx.page.drawRectangle({
+  pRect(ctx.page, ctx.rtl, {
     x: MARGIN,
     y: ctx.y - 20,
     width: 36,
@@ -508,7 +491,7 @@ function drawKpis(ctx: Ctx, bundle: ReportBundle) {
     const row = Math.floor(i / 3);
     const x = MARGIN + col * (cardW + 8);
     const y = startY - row * (cardH + 8);
-    ctx.page.drawRectangle({
+    pRect(ctx.page, ctx.rtl, {
       x,
       y,
       width: cardW,
@@ -517,8 +500,8 @@ function drawKpis(ctx: Ctx, bundle: ReportBundle) {
       borderColor: BORDER,
       borderWidth: 0.5,
     });
-    // Left accent
-    ctx.page.drawRectangle({
+    // Leading accent (left in LTR, right in RTL)
+    pRect(ctx.page, ctx.rtl, {
       x,
       y,
       width: 3,
@@ -527,20 +510,8 @@ function drawKpis(ctx: Ctx, bundle: ReportBundle) {
     });
     const label = ctx.locale === 'ar' ? kpi.label_ar : kpi.label_en;
     const labelFont = pickFont(label, ctx.fonts, false);
-    ctx.page.drawText(fitText(label, labelFont, 8.5, cardW - 20), {
-      x: x + 12,
-      y: y + cardH - 16,
-      size: 8.5,
-      font: labelFont,
-      color: MUTED,
-    });
-    ctx.page.drawText(kpi.value, {
-      x: x + 12,
-      y: y + 14,
-      size: 20,
-      font: pickFont(kpi.value, ctx.fonts, true),
-      color: PRIMARY_DARK,
-    });
+    pText(ctx.page, ctx.rtl, fitText(label, labelFont, 8.5, cardW - 20), x + 12, y + cardH - 16, labelFont, 8.5, MUTED);
+    pText(ctx.page, ctx.rtl, kpi.value, x + 12, y + 14, pickFont(kpi.value, ctx.fonts, true), 20, PRIMARY_DARK);
   });
   ctx.y = startY - (rows - 1) * (cardH + 8) - 24;
 }
@@ -560,14 +531,14 @@ function drawSection(
   // Section header
   drawText(ctx, title, MARGIN, ctx.y - 12, { size: 13, bold: true });
   // Accent underline
-  ctx.page.drawRectangle({
+  pRect(ctx.page, ctx.rtl, {
     x: MARGIN,
     y: ctx.y - 18,
     width: 32,
     height: 2,
     color: PRIMARY,
   });
-  // Right-side row count chip
+  // Row count chip (trailing side)
   const chip = `${section.rows.length} ${ctx.locale === 'ar' ? 'سجل' : 'records'}`;
   drawTextRight(ctx, chip, PAGE_W - MARGIN, ctx.y - 12, {
     size: 9,
@@ -582,7 +553,7 @@ function drawSection(
   // Header row
   const headerH = 20;
   ensureSpace(ctx, headerH + 4);
-  ctx.page.drawRectangle({
+  pRect(ctx.page, ctx.rtl, {
     x: MARGIN,
     y: ctx.y - headerH,
     width: availableWidth,
@@ -594,13 +565,7 @@ function drawSection(
     const c = section.columns[i];
     const label = ctx.locale === 'ar' ? c.label_ar : c.label_en;
     const font = pickFont(label, ctx.fonts, true);
-    ctx.page.drawText(fitText(label, font, 8.5, colWidths[i] - 10), {
-      x: cx + 7,
-      y: ctx.y - 14,
-      size: 8.5,
-      font,
-      color: WHITE,
-    });
+    pText(ctx.page, ctx.rtl, fitText(label, font, 8.5, colWidths[i] - 10), cx + 7, ctx.y - 14, font, 8.5, WHITE);
     cx += colWidths[i];
   }
   ctx.y -= headerH + 2;
@@ -608,7 +573,7 @@ function drawSection(
   // Empty state
   if (!section.rows.length) {
     const empty = ctx.locale === 'ar' ? 'لا توجد سجلات ضمن هذا النطاق.' : 'No records within the selected range.';
-    ctx.page.drawRectangle({
+    pRect(ctx.page, ctx.rtl, {
       x: MARGIN,
       y: ctx.y - 24,
       width: availableWidth,
@@ -632,7 +597,7 @@ function drawSection(
     if (ctx.y - rowH < BODY_BOTTOM) {
       newPage(ctx);
       // repeat table header
-      ctx.page.drawRectangle({
+      pRect(ctx.page, ctx.rtl, {
         x: MARGIN,
         y: ctx.y - headerH,
         width: availableWidth,
@@ -644,20 +609,14 @@ function drawSection(
         const c = section.columns[i];
         const label = ctx.locale === 'ar' ? c.label_ar : c.label_en;
         const font = pickFont(label, ctx.fonts, true);
-        ctx.page.drawText(fitText(label, font, 8.5, colWidths[i] - 10), {
-          x: hx + 7,
-          y: ctx.y - 14,
-          size: 8.5,
-          font,
-          color: WHITE,
-        });
+        pText(ctx.page, ctx.rtl, fitText(label, font, 8.5, colWidths[i] - 10), hx + 7, ctx.y - 14, font, 8.5, WHITE);
         hx += colWidths[i];
       }
       ctx.y -= headerH + 2;
     }
 
     if (ri % 2 === 1) {
-      ctx.page.drawRectangle({
+      pRect(ctx.page, ctx.rtl, {
         x: MARGIN,
         y: ctx.y - rowH,
         width: availableWidth,
@@ -666,12 +625,7 @@ function drawSection(
       });
     }
     // Bottom hairline
-    ctx.page.drawLine({
-      start: { x: MARGIN, y: ctx.y - rowH },
-      end: { x: MARGIN + availableWidth, y: ctx.y - rowH },
-      thickness: 0.25,
-      color: BORDER,
-    });
+    pLine(ctx.page, ctx.rtl, MARGIN, ctx.y - rowH, MARGIN + availableWidth, ctx.y - rowH, 0.25, BORDER);
 
     let ccx = MARGIN;
     for (let i = 0; i < section.columns.length; i++) {
@@ -679,13 +633,7 @@ function drawSection(
       const raw = row[c.key];
       const text = raw === null || raw === undefined ? '' : String(raw);
       const font = pickFont(text, ctx.fonts, false);
-      ctx.page.drawText(fitText(text, font, 8.5, colWidths[i] - 10), {
-        x: ccx + 7,
-        y: ctx.y - 11,
-        size: 8.5,
-        font,
-        color: TEXT,
-      });
+      pText(ctx.page, ctx.rtl, fitText(text, font, 8.5, colWidths[i] - 10), ccx + 7, ctx.y - 11, font, 8.5, TEXT);
       ccx += colWidths[i];
     }
     ctx.y -= rowH;
@@ -717,90 +665,41 @@ function drawFooters(ctx: Ctx, bundle: ReportBundle, coverIndex: number, tocInde
     const p = ctx.doc.getPage(i);
 
     // Top hairline
-    p.drawLine({
-      start: { x: MARGIN, y: PAGE_H - 20 },
-      end: { x: PAGE_W - MARGIN, y: PAGE_H - 20 },
-      thickness: 0.4,
-      color: BORDER,
-    });
-    // Header meta (title left, range right)
+    pLine(p, ctx.rtl, MARGIN, PAGE_H - 20, PAGE_W - MARGIN, PAGE_H - 20, 0.4, BORDER);
+    // Header meta (title leading, range trailing)
     const titleFont = pickFont(title, ctx.fonts, true);
-    p.drawText(fitText(title, titleFont, 9, PAGE_W / 2), {
-      x: MARGIN,
-      y: PAGE_H - 32,
-      size: 9,
-      font: titleFont,
-      color: PRIMARY_DARK,
-    });
+    pText(p, ctx.rtl, fitText(title, titleFont, 9, PAGE_W / 2), MARGIN, PAGE_H - 32, titleFont, 9, PRIMARY_DARK);
     const rangeFont = pickFont(rangeLabel, ctx.fonts, false);
-    const rw = rangeFont.widthOfTextAtSize(rangeLabel, 8.5);
-    p.drawText(rangeLabel, {
-      x: PAGE_W - MARGIN - rw,
-      y: PAGE_H - 32,
-      size: 8.5,
-      font: rangeFont,
-      color: MUTED,
-    });
+    pText(p, ctx.rtl, rangeLabel, PAGE_W - MARGIN, PAGE_H - 32, rangeFont, 8.5, MUTED, 'end');
 
     // Bottom hairline
-    p.drawLine({
-      start: { x: MARGIN, y: 40 },
-      end: { x: PAGE_W - MARGIN, y: 40 },
-      thickness: 0.4,
-      color: BORDER,
-    });
+    pLine(p, ctx.rtl, MARGIN, 40, PAGE_W - MARGIN, 40, 0.4, BORDER);
 
-    // Left footer: brand + generatedBy
+    // Leading footer: brand + generatedBy
     const leftFooter =
       ctx.locale === 'ar'
         ? `منصة الابتكار للأثر  ·  ${genBy}`
         : `Innovation-to-Impact  ·  ${genBy}`;
     const leftFont = pickFont(leftFooter, ctx.fonts, false);
-    p.drawText(leftFooter, {
-      x: MARGIN,
-      y: 24,
-      size: 8,
-      font: leftFont,
-      color: MUTED,
-    });
+    pText(p, ctx.rtl, leftFooter, MARGIN, 24, leftFont, 8, MUTED);
 
-    // Center footer: timestamp
+    // Center footer: timestamp (stays centred in both directions)
     const centerFont = pickFont(stamp, ctx.fonts, false);
     const cw = centerFont.widthOfTextAtSize(stamp, 8);
-    p.drawText(stamp, {
-      x: (PAGE_W - cw) / 2,
-      y: 24,
-      size: 8,
-      font: centerFont,
-      color: MUTED,
-    });
+    pText(p, ctx.rtl, stamp, (PAGE_W - cw) / 2, 24, centerFont, 8, MUTED);
 
-    // Right footer: page N of M (body-only numbering)
+    // Trailing footer: page N of M (body-only numbering)
     if (bodyPageCount > 0 && !isToc) {
       const pageLabel =
         ctx.locale === 'ar'
           ? `صفحة ${bodyPageNum} من ${bodyPageCount}`
           : `Page ${bodyPageNum} of ${bodyPageCount}`;
       const pFont = pickFont(pageLabel, ctx.fonts, false);
-      const pw = pFont.widthOfTextAtSize(pageLabel, 8);
-      p.drawText(pageLabel, {
-        x: PAGE_W - MARGIN - pw,
-        y: 24,
-        size: 8,
-        font: pFont,
-        color: MUTED,
-      });
+      pText(p, ctx.rtl, pageLabel, PAGE_W - MARGIN, 24, pFont, 8, MUTED, 'end');
     } else if (isToc) {
       const tocLabel = ctx.locale === 'ar' ? 'المحتويات' : 'Contents';
       const tFont = pickFont(tocLabel, ctx.fonts, false);
-      const tw = tFont.widthOfTextAtSize(tocLabel, 8);
-      p.drawText(tocLabel, {
-        x: PAGE_W - MARGIN - tw,
-        y: 24,
-        size: 8,
-        font: tFont,
-        color: MUTED,
-      });
+      pText(p, ctx.rtl, tocLabel, PAGE_W - MARGIN, 24, tFont, 8, MUTED, 'end');
     }
   }
 }
@@ -834,6 +733,7 @@ export async function renderPdf(
     fonts,
     y: BODY_TOP,
     locale,
+    rtl: locale === 'ar',
     sectionPages: new Array(bundle.sections.length).fill(-1),
     bodyStartPageIndex: 2,
   };

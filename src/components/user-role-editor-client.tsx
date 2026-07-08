@@ -61,7 +61,13 @@ export function UserRoleEditorClient({
       });
       if (res.ok) {
         setSaved(true);
-        router.refresh();
+        // Save then go back to where the admin came from; fall back to the
+        // users list if this page was opened directly (no history to pop).
+        if (typeof window !== 'undefined' && window.history.length > 1) {
+          router.back();
+        } else {
+          router.push('/admin/users');
+        }
       }
     } finally {
       setSaving(false);

@@ -283,7 +283,7 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                       <div className="mt-auto flex items-center justify-between pt-2 text-xs text-muted-foreground">
                         <span>
                           {i.submitted_at
-                            ? new Date(i.submitted_at).toLocaleDateString(isAr ? 'ar-SA' : 'en-US')
+                            ? new Date(i.submitted_at).toLocaleDateString(isAr ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-US')
                             : ''}
                         </span>
                         <span className="font-medium text-teal-700">
@@ -372,7 +372,7 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                     {viewIdea.submitted_at && (
                       <span className="text-xs text-muted-foreground">
                         {isAr ? 'قُدّمت في' : 'Submitted'}{' '}
-                        {new Date(viewIdea.submitted_at).toLocaleDateString(isAr ? 'ar-SA' : 'en-US')}
+                        {new Date(viewIdea.submitted_at).toLocaleDateString(isAr ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-US')}
                       </span>
                     )}
                   </div>

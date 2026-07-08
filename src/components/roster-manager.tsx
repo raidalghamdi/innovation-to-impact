@@ -213,7 +213,7 @@ export function RosterManager({
   const fmtDate = (s: string | null) => {
     if (!s) return '—';
     try {
-      return new Date(s).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', {
+      return new Date(s).toLocaleDateString(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',

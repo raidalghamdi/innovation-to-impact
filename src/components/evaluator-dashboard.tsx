@@ -76,7 +76,7 @@ function formatDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-GB', {
+  return d.toLocaleDateString(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

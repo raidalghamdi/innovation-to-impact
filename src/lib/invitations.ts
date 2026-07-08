@@ -188,7 +188,7 @@ function inviteLink(token: string): string {
 function formatDate(iso: string | null, locale: 'ar' | 'en'): string {
   if (!iso) return locale === 'ar' ? 'غير محدد' : 'Not set';
   const d = new Date(iso);
-  return d.toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', {
+  return d.toLocaleDateString(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

@@ -132,7 +132,7 @@ export function SubmissionsLineChart({
   // Show ~6 x-axis labels evenly spaced
   const nLabels = 6;
   const labelStep = Math.max(1, Math.floor(rows.length / nLabels));
-  const dateFmt = new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', {
+  const dateFmt = new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-US', {
     month: 'short',
     day: 'numeric',
   });

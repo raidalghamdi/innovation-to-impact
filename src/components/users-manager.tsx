@@ -119,7 +119,7 @@ export function UsersManager({ users, roles, kpi, locale }: Props) {
   const fmtDate = (s: string | null) => {
     if (!s) return '—';
     try {
-      return new Date(s).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', {
+      return new Date(s).toLocaleDateString(isAr ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
