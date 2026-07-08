@@ -1880,5 +1880,9 @@
     "status_declined": "مرفوضة",
     "status_expired": "منتهية",
     "status_withdrawn": "مسحوبة"
+  },
+  "supervisor": {
+    "title": "لوحة المشرف",
+    "subtitle": "فحص الأفكار وتعيين المقيّمين على المسارات"
   }
 }

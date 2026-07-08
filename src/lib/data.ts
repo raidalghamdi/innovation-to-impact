@@ -691,8 +691,9 @@ export type EvaluatorDashboard = {
 };
 
 export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<EvaluatorDashboard> {
-  // Pull assignments (both pending + completed) so we can show progress. Then
-  // enrich each row with idea + theme + team + evaluation state.
+  // Pull direct assignments AND track-level assignments so evaluator sees
+  // every idea in the tracks they're assigned to. Idea data is anonymized:
+  // no submitter, no team, no attachments identifying the innovator.
   let assignments: Assignment[] = [];
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -705,6 +706,38 @@ export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<Eval
         .order('due_at', { ascending: true });
       logSupabaseError('fetchEvaluatorDashboard.assignments', error);
       assignments = (data as Assignment[]) ?? [];
+
+      // Track-level: pull all ideas in the tracks this evaluator is assigned to
+      // and synthesize virtual assignment rows for any not already covered.
+      const { data: trackRows } = await supabase
+        .from('track_assignments')
+        .select('theme_id')
+        .eq('evaluator_id', evaluatorId)
+        .eq('status', 'active');
+      const themeIdsForEval = ((trackRows as any[]) ?? []).map((r) => r.theme_id).filter(Boolean);
+      if (themeIdsForEval.length) {
+        const { data: trackIdeas } = await supabase
+          .from('ideas')
+          .select('id, strategic_theme_id, status')
+          .in('strategic_theme_id', themeIdsForEval)
+          .in('status', ['approved', 'assigned', 'evaluation']);
+        const existingIdeaIds = new Set(assignments.map((a) => a.idea_id));
+        for (const ti of ((trackIdeas as any[]) ?? [])) {
+          if (!existingIdeaIds.has(ti.id)) {
+            assignments.push({
+              id: `track:${ti.id}:${evaluatorId}`,
+              idea_id: ti.id,
+              evaluator_id: evaluatorId,
+              assigned_by: null,
+              assigned_at: null,
+              due_at: null,
+              status: 'pending',
+              notes: null,
+              created_at: null,
+            } as any);
+          }
+        }
+      }
 
       const ideaIds = Array.from(new Set(assignments.map((a) => a.idea_id)));
 
@@ -729,16 +762,9 @@ export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<Eval
         for (const t of (themes as any[]) ?? []) themeById.set(t.id, t);
       }
 
-      // Team names
-      const teamIds = Array.from(new Set([...ideaById.values()].map((i: any) => i.team_id).filter(Boolean)));
-      const teamById = new Map<string, { name_ar: string | null; name_en: string | null }>();
-      if (teamIds.length) {
-        const { data: teams } = await supabase
-          .from('teams')
-          .select('id, name_ar, name_en')
-          .in('id', teamIds);
-        for (const tm of (teams as any[]) ?? []) teamById.set(tm.id, tm);
-      }
+      // Team names are intentionally NOT fetched — evaluator must see ideas
+      // as anonymous. Submitter identity (name, email, team, department) is
+      // stripped from every EvaluatorQueueItem below.
 
       // Evaluations by this evaluator for these ideas
       const evalByIdea = new Map<string, any>();
@@ -764,7 +790,6 @@ export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<Eval
       const queue: EvaluatorQueueItem[] = assignments.map((a) => {
         const idea = ideaById.get(a.idea_id) ?? {};
         const theme = idea.strategic_theme_id ? themeById.get(idea.strategic_theme_id) : null;
-        const team = idea.team_id ? teamById.get(idea.team_id) : null;
         const ev = evalByIdea.get(a.idea_id);
         const innovationScore = ev?.criteria_scores?.innovation ?? ev?.criteria_scores?.innovation_score ?? null;
         let evalStatus: EvaluatorQueueItem['eval_status'] = 'not_started';
@@ -785,9 +810,10 @@ export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<Eval
           theme_id: idea.strategic_theme_id ?? null,
           theme_ar: theme?.title_ar ?? null,
           theme_en: theme?.title_en ?? null,
-          team_id: idea.team_id ?? null,
-          team_ar: team?.name_ar ?? null,
-          team_en: team?.name_en ?? null,
+          // Team info intentionally blanked — anonymization requirement.
+          team_id: null,
+          team_ar: null,
+          team_en: null,
           submitted_at: idea.submitted_at ?? null,
           due_at: a.due_at,
           assignment_status: a.status,

@@ -1880,5 +1880,9 @@
     "status_declined": "Declined",
     "status_expired": "Expired",
     "status_withdrawn": "Withdrawn"
+  },
+  "supervisor": {
+    "title": "Supervisor Console",
+    "subtitle": "Screen ideas and assign evaluators to tracks"
   }
 }

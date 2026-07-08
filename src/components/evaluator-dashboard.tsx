@@ -98,6 +98,7 @@ export function EvaluatorDashboardView({
 }) {
   const t = useTranslations('evaluation');
   const router = useRouter();
+  const isAr = locale === 'ar';
 
   // Selected idea starts at the first non-submitted item (evaluator's next
   // actual work) rather than blindly index 0.
@@ -156,6 +157,13 @@ export function EvaluatorDashboardView({
 
   return (
     <div className="space-y-6">
+      {/* Anonymization notice */}
+      <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        {isAr
+          ? 'تنويه: تظهر الأفكار مجهولة المصدر — لا يمكنك رؤية المبتكر، الفريق، أو تقييمات المقيّمين الآخرين.'
+          : 'Notice: ideas are anonymized — innovator identity, team, and other evaluators’ scores are hidden.'}
+      </div>
+
       {/* Notification banner */}
       {allDone ? (
         <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
@@ -433,7 +441,9 @@ function IdeaDetailCard({
   const Icon = meta.icon;
   const title = pickFromRow(item, 'title', locale) || t('untitled');
   const theme = pickFromRow({ title_ar: item.theme_ar ?? '', title_en: item.theme_en ?? '' }, 'title', locale);
-  const team = pickFromRow({ name_ar: item.team_ar ?? '', name_en: item.team_en ?? '' }, 'name', locale);
+  // Team info is intentionally hidden from evaluators to preserve anonymity —
+  // the backend also strips it, this is the second line of defense.
+  const team = '';
 
   return (
     <Card>
@@ -462,9 +472,7 @@ function IdeaDetailCard({
           {theme && (
             <MetaCell icon={<Target className="h-4 w-4" />} label={t('meta.track')} value={theme} />
           )}
-          {team && (
-            <MetaCell icon={<Users className="h-4 w-4" />} label={t('meta.team')} value={team} />
-          )}
+          {/* Team cell removed — evaluator sees ideas anonymously. */}
           <MetaCell icon={<Paperclip className="h-4 w-4" />} label={t('meta.attachments')} value={String(item.attachments_count)} />
           <MetaCell icon={<Video className="h-4 w-4" />} label={t('meta.video')} value={item.has_video ? t('meta.videoYes') : t('meta.videoNo')} />
         </div>
