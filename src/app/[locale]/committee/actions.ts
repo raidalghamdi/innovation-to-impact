@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
-import { createNotification, fanOut, type NotificationType } from '@/lib/notifications';
+import { createNotification, fanOut, getSupervisorIds, type NotificationType } from '@/lib/notifications';
 import { closeSlaTracker } from '@/lib/sla';
 import {
   assertApprovalComplete,
@@ -132,15 +132,19 @@ export async function recordDecision(input: DecideInput): Promise<DecisionResult
     evaluatorsByIdea.set(row.idea_id, list);
   }
 
+  const supervisorIds = await getSupervisorIds(supabase);
   await Promise.all(
     input.ideaIds.flatMap((ideaId) => {
       const payload = { ideaId, decision: input.decision };
+      const link = `/ideas/${ideaId}`;
       const submitter = submitterByIdea.get(ideaId);
       const evaluators = evaluatorsByIdea.get(ideaId) ?? [];
       const tasks: Promise<void>[] = [closeSlaTracker('committee', ideaId)];
-      if (submitter) tasks.push(createNotification(submitter, notifType, payload, { email: true }));
+      if (submitter) tasks.push(createNotification(submitter, notifType, payload, { email: true, link }));
       if (evaluators.length)
-        tasks.push(fanOut(evaluators, 'committee_decision', payload));
+        tasks.push(fanOut(evaluators, 'committee_decision', payload, { link }));
+      if (supervisorIds.length)
+        tasks.push(fanOut(supervisorIds, 'committee_decision', payload, { link: '/supervisor' }));
       return tasks;
     })
   );
@@ -244,7 +248,11 @@ export async function bulkCommitteeDecide(input: BulkDecideInput): Promise<BulkD
       const tasks: Promise<void>[] = [closeSlaTracker('committee', ideaId)];
       const submitter = submitterByIdea.get(ideaId);
       const payload = { ideaId, decision: input.decision };
-      if (submitter) tasks.push(createNotification(submitter, notifType, payload, { email: true }));
+      const link = `/ideas/${ideaId}`;
+      if (submitter) tasks.push(createNotification(submitter, notifType, payload, { email: true, link }));
+      const supervisorIds = await getSupervisorIds(supabase);
+      if (supervisorIds.length)
+        tasks.push(fanOut(supervisorIds, 'committee_decision', payload, { link: '/supervisor' }));
       await Promise.all(tasks);
 
       succeeded += 1;

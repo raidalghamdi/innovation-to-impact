@@ -9,7 +9,6 @@ import { StatsBlock } from '@/components/stats-block';
 import { GamificationPanel } from '@/components/gamification-panel';
 import { BackToTop } from '@/components/back-to-top';
 import { QuickActions } from '@/components/quick-actions';
-import { LandingNav } from '@/components/landing-nav';
 import { DashboardRoleHeader } from '@/components/dashboard-role-header';
 import { InnovatorDashboard } from '@/components/dashboards/innovator-dashboard';
 import { JudgeDashboard } from '@/components/dashboards/judge-dashboard';
@@ -79,28 +78,31 @@ export default async function DashboardPage({
     }));
 
     return (
-      <div className="min-h-screen bg-background">
-        <LandingNav locale={locale} hideLoginCta hideAnchors />
-        <DashboardRoleHeader roles={roleOptions} activeRole={activeRole} displayName={displayName} />
-        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-          {isValidRoleCode(activeRole) && activeRole === 'innovator' && (
-            <InnovatorDashboard userId={userId} locale={locale} />
-          )}
-          {isValidRoleCode(activeRole) && activeRole === 'judge' && (
-            <JudgeDashboard userId={userId} locale={locale} />
-          )}
-          {isValidRoleCode(activeRole) && activeRole === 'committee' && (
-            <CommitteeDashboard locale={locale} />
-          )}
-          {isValidRoleCode(activeRole) && activeRole === 'admin' && (
-            <AdminDashboard locale={locale} />
-          )}
-          {isValidRoleCode(activeRole) && activeRole === 'supervisor' && (
-            <SupervisorDashboard userId={userId} locale={locale} />
-          )}
-        </main>
+      <AppShell>
+        {/* Breadcrumb + role switcher for multi-role users. The full app nav
+            (logo, submit CTA, bell, language, user menu) is provided by
+            AppShell so the header is identical across every authenticated
+            page (fix: persistent nav everywhere). */}
+        <div className="-mx-3 -mt-6 mb-6 sm:-mx-6 lg:-mx-8">
+          <DashboardRoleHeader roles={roleOptions} activeRole={activeRole} displayName={displayName} />
+        </div>
+        {isValidRoleCode(activeRole) && activeRole === 'innovator' && (
+          <InnovatorDashboard userId={userId} locale={locale} />
+        )}
+        {isValidRoleCode(activeRole) && activeRole === 'judge' && (
+          <JudgeDashboard userId={userId} locale={locale} />
+        )}
+        {isValidRoleCode(activeRole) && activeRole === 'committee' && (
+          <CommitteeDashboard locale={locale} />
+        )}
+        {isValidRoleCode(activeRole) && activeRole === 'admin' && (
+          <AdminDashboard locale={locale} />
+        )}
+        {isValidRoleCode(activeRole) && activeRole === 'supervisor' && (
+          <SupervisorDashboard userId={userId} locale={locale} />
+        )}
         <BackToTop label={tc('backToTop')} />
-      </div>
+      </AppShell>
     );
   }
 

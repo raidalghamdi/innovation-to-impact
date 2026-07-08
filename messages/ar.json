@@ -1162,6 +1162,10 @@
       "approval_requested": {
         "title": "طلب موافقة",
         "body": "هناك عنصر ينتظر موافقتك."
+      },
+      "idea_submitted": {
+        "title": "تم تقديم فكرة جديدة",
+        "body": "تم تقديم فكرة جديدة ({ideaCode}) وهي بانتظار الفرز."
       }
     }
   },
@@ -1554,6 +1558,10 @@
     "teamMemberAdd": "إضافة عضو",
     "teamMemberRemove": "إزالة العضو",
     "descriptionTemplate": "تحميل قالب الوصف",
+    "eventLabel": "الفعالية",
+    "templateUploadLabel": "رفع القالب بعد تعبئته",
+    "templateUploadHint": "اختر ملف القالب المعبّأ (PDF أو Word).",
+    "termsDeclaration": "أوافق على شروط وأحكام الهاكاثون.",
     "ipDeclaration": "أقر بأنني صاحب الفكرة والمسؤول عنها، وأوافق على"
   },
   "roles": {

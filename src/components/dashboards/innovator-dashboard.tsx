@@ -6,7 +6,7 @@ import { NotificationsList } from '@/components/notifications-list';
 import { fetchIdeas } from '@/lib/data';
 import { getUserPoints } from '@/lib/gamification';
 import { formatDate } from '@/lib/utils';
-import { Lightbulb, Clock, CheckCircle2, Award, PlusCircle, ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
+import { Lightbulb, Clock, CheckCircle2, Award, PlusCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 
 // src/components/dashboards/innovator-dashboard.tsx
 // Overview-only innovator dashboard.
@@ -58,7 +58,7 @@ export async function InnovatorDashboard({ userId, locale }: { userId: string; l
                 : 'Submit your idea now and follow it up in "My Ideas".'}
             </p>
           </div>
-          <Button asChild size="lg" className="w-full sm:w-auto">
+          <Button asChild size="lg" variant="gold" className="w-full sm:w-auto">
             <Link href="/ideas/new">
               <PlusCircle className="h-5 w-5" />
               {isAr ? 'قدّم فكرة' : 'Submit an idea'}
@@ -99,44 +99,6 @@ export async function InnovatorDashboard({ userId, locale }: { userId: string; l
           </Link>
         </div>
         <NotificationsList compact limit={3} />
-      </div>
-
-      {/* Quick links row */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Link
-          href="/my-ideas"
-          className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 transition hover:border-brand-teal/40 hover:shadow-md"
-        >
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-brand-teal/10 p-2 text-brand-teal">
-              <Lightbulb className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">{isAr ? 'أفكاري' : 'My Ideas'}</p>
-              <p className="text-[11px] text-muted-foreground">
-                {isAr ? 'عرض جميع أفكاري وحالتها' : 'View all my ideas and their status'}
-              </p>
-            </div>
-          </div>
-          <ArrowIcon className="h-4 w-4 text-muted-foreground transition group-hover:text-brand-teal" />
-        </Link>
-        <Link
-          href="/profile/level"
-          className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 transition hover:border-brand-teal/40 hover:shadow-md"
-        >
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-brand-gold/10 p-2 text-brand-gold">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">{isAr ? 'مستواي' : 'My Level'}</p>
-              <p className="text-[11px] text-muted-foreground">
-                {isAr ? 'النقاط والشارات والتقدم' : 'Points, badges & progress'}
-              </p>
-            </div>
-          </div>
-          <ArrowIcon className="h-4 w-4 text-muted-foreground transition group-hover:text-brand-gold" />
-        </Link>
       </div>
 
       {/* Latest activity — brief list, not full status cards */}

@@ -19,7 +19,6 @@ import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard } from 'lucide-react';
 import { RoleSwitcher, type RoleOption } from '@/components/role-switcher';
-import { RoleUserMenu } from '@/components/role-user-menu';
 
 type CrumbKey =
   | 'dashboard'
@@ -61,11 +60,10 @@ function detectCrumb(pathname: string): CrumbKey {
 export function DashboardRoleHeader({
   roles,
   activeRole,
-  displayName,
 }: {
   roles: RoleOption[];
   activeRole: string;
-  displayName: string;
+  displayName?: string;
 }) {
   const locale = useLocale();
   const isAr = locale === 'ar';
@@ -83,9 +81,10 @@ export function DashboardRoleHeader({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Only rendered when the user actually holds 2+ roles. */}
+          {/* Only rendered when the user actually holds 2+ roles. The user
+              menu lives in the AppShell header now (persistent app nav), so it
+              is intentionally not duplicated here. */}
           <RoleSwitcher roles={roles} activeRole={activeRole} />
-          <RoleUserMenu displayName={displayName} activeRole={activeRole} />
         </div>
       </div>
     </div>

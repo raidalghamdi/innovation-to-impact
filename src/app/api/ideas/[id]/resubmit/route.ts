@@ -130,7 +130,7 @@ export async function POST(
           ids,
           'idea_feedback_requested',
           { ideaId: id, ideaCode: row.code ?? id, reason: 'resubmitted_by_innovator' },
-          { link: `/supervisor/ideas/${id}` }
+          { link: `/supervisor` }
         );
       }
     }

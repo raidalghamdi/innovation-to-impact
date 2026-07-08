@@ -15,13 +15,25 @@ import { WithdrawIdeaButton } from '@/components/withdraw-idea-button';
 import { Lightbulb, Plus, ChevronLeft, ChevronRight, Calendar, Clock, MessageSquareWarning } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
+// Status groups shared with the dashboard KPI cards — the "In Review" and
+// "Accepted" KPI tiles deep-link here with ?status=in_review / ?status=approved
+// and must resolve to the exact same set of ideas they counted.
+const STATUS_GROUPS: Record<string, string[]> = {
+  in_review: ['submitted', 'screening', 'evaluation', 'committee', 'needs_completion'],
+  approved: ['approved', 'assigned', 'in_pilot', 'in_implementation', 'benefits_tracking', 'closed'],
+};
+
 export default async function MyIdeasPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ status?: string }>;
 }) {
   const { locale } = await params;
+  const { status: statusParam } = await searchParams;
   setRequestLocale(locale);
+  const isAr = locale === 'ar';
   const t = await getTranslations('ideas');
   const tc = await getTranslations('common');
   const te = await getTranslations('emptyStates');
@@ -38,9 +50,24 @@ export default async function MyIdeasPage({
 
   // Fetch ideas - if user identified, filter by submitter_id; otherwise show empty.
   const allIdeas = await fetchIdeas();
-  const myIdeas = userId
+  const allMine = userId
     ? allIdeas.filter((i) => i.submitter_id === userId)
     : [];
+
+  // Preselect the status chip from the KPI deep-link. Unknown values fall back
+  // to "all" so a stale/bad query param never renders an empty list.
+  const activeStatus =
+    statusParam && STATUS_GROUPS[statusParam] ? statusParam : 'all';
+  const myIdeas =
+    activeStatus === 'all'
+      ? allMine
+      : allMine.filter((i) => STATUS_GROUPS[activeStatus].includes(i.status));
+
+  const STATUS_CHIPS: { key: string; label: string; href: string }[] = [
+    { key: 'all', label: isAr ? 'الكل' : 'All', href: '/my-ideas' },
+    { key: 'in_review', label: isAr ? 'قيد المراجعة' : 'In Review', href: '/my-ideas?status=in_review' },
+    { key: 'approved', label: isAr ? 'مقبولة' : 'Accepted', href: '/my-ideas?status=approved' },
+  ];
 
   // Feedback counts — empty map when unauthenticated. Never one-query-per-idea.
   const feedbackCounts = userId ? await getFeedbackCountsForSubmitter(userId) : {};
@@ -52,13 +79,32 @@ export default async function MyIdeasPage({
         subtitle={t('myIdeasSubtitle')}
         action={
           <Link href="/ideas/new">
-            <Button>
+            <Button variant="gold">
               <Plus className="h-4 w-4" />
               {t('new')}
             </Button>
           </Link>
         }
       />
+
+      {/* Status filter chips — preselected when arriving from a dashboard KPI. */}
+      <div className="mb-4 flex flex-wrap gap-2" role="tablist">
+        {STATUS_CHIPS.map((chip) => (
+          <Link
+            key={chip.key}
+            href={chip.href as any}
+            role="tab"
+            aria-selected={activeStatus === chip.key}
+            className={
+              activeStatus === chip.key
+                ? 'rounded-full bg-brand-teal px-4 py-1.5 text-sm font-medium text-white'
+                : 'rounded-full border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-muted'
+            }
+          >
+            {chip.label}
+          </Link>
+        ))}
+      </div>
 
       {myIdeas.length === 0 ? (
         <EmptyState

@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         submitterId,
         'committee_decision',
         { ideaId: idea_id, ideaCode, decision },
-        { email: true, link: `/my-ideas/${idea_id}` }
+        { email: true, link: `/ideas/${idea_id}` }
       );
     }
     // Ping supervisors so they can track final outcomes. Use v_user_roles

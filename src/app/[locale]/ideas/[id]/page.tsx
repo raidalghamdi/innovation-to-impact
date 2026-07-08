@@ -63,13 +63,13 @@ export default async function IdeaDetailPage({
   let teamMembers: Array<{
     id: string;
     full_name: string | null;
+    email: string | null;
     role_title: string | null;
     is_leader: boolean;
   }> = [];
   let attachments: Array<{ name: string; type: string; size?: number; url?: string }> = [];
   let submittedAt: string | null = null;
   let updatedAt: string | null = null;
-  let confidentiality: string | null = null;
   let currentStage = 0;
   let statusStr = 'draft';
   let ideaTitle = '';
@@ -80,7 +80,7 @@ export default async function IdeaDetailPage({
     const { data: ideaRow } = await supabase
       .from('ideas')
       .select(
-        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, submitter_id, team_id, attachments, submitted_at, updated_at, confidentiality'
+        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, submitter_id, team_id, attachments, submitted_at, updated_at'
       )
       .eq('id', id)
       .maybeSingle();
@@ -95,7 +95,6 @@ export default async function IdeaDetailPage({
       ideaCode = (ideaRow as any).code ?? null;
       submittedAt = (ideaRow as any).submitted_at ?? null;
       updatedAt = (ideaRow as any).updated_at ?? null;
-      confidentiality = (ideaRow as any).confidentiality ?? null;
       submitterId = (ideaRow as any).submitter_id ?? null;
       const rawAttach = (ideaRow as any).attachments;
       if (Array.isArray(rawAttach)) {
@@ -148,7 +147,7 @@ export default async function IdeaDetailPage({
         if (memberIds.length) {
           const { data: profs } = await supabase
             .from('user_profiles')
-            .select('id, full_name, full_name_ar')
+            .select('id, full_name, full_name_ar, email')
             .in('id', memberIds);
           const roleMap = new Map<string, { role: string | null; role_title: string | null }>();
           for (const m of (memberRows as any[]) ?? [])
@@ -158,6 +157,7 @@ export default async function IdeaDetailPage({
             return {
               id: p.id,
               full_name: locale === 'ar' ? p.full_name_ar || p.full_name : p.full_name || p.full_name_ar,
+              email: p.email ?? null,
               role_title: meta.role_title,
               is_leader: p.id === leaderId || meta.role === 'leader',
             };
@@ -208,7 +208,15 @@ export default async function IdeaDetailPage({
         isReturned={isReturned}
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Reviewer notes — only when the idea was returned for revision, pinned
+          to the top with an amber surface so the innovator acts on them first. */}
+      {isReturned && (
+        <div className="mt-6">
+          <FeedbackSection feedback={feedback} locale={locale} highlight />
+        </div>
+      )}
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main content — 2/3 */}
         <div className="space-y-6 lg:col-span-2">
           <Card>
@@ -254,8 +262,6 @@ export default async function IdeaDetailPage({
               </CardContent>
             </Card>
           )}
-
-          <FeedbackSection feedback={feedback} locale={locale} />
 
           {/* Attachments */}
           {attachments.length > 0 && (
@@ -321,6 +327,11 @@ export default async function IdeaDetailPage({
                         </div>
                         <div className="min-w-0">
                           <div className="truncate text-sm font-medium">{m.full_name ?? '—'}</div>
+                          {m.email && (
+                            <div className="truncate text-xs text-muted-foreground" dir="ltr">
+                              {m.email}
+                            </div>
+                          )}
                           {m.role_title && (
                             <div className="truncate text-xs text-muted-foreground">
                               {m.role_title}
@@ -356,9 +367,6 @@ export default async function IdeaDetailPage({
                 label={locale === 'ar' ? 'آخر تحديث' : 'Last updated'}
                 value={updatedAt ? formatDate(updatedAt, locale) : '—'}
               />
-              {confidentiality && (
-                <Row label={t('confidentiality')} value={confidentiality} />
-              )}
             </CardContent>
           </Card>
 

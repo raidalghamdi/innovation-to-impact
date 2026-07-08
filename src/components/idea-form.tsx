@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
 import { uploadEvidence } from '@/lib/storage';
+import { notifySupervisorsOfNewIdea } from '@/app/[locale]/ideas/new/actions';
 import { getTrackChallenges } from '@/lib/tracks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,6 @@ import {
   ChevronRight,
   Paperclip,
   CheckCircle2,
-  AlertTriangle,
   Plus,
   Download,
   X,
@@ -60,15 +60,6 @@ function smartTitle(text: string, locale: string): string {
   return kept.slice(0, 6).join(' ');
 }
 
-type SimilarIdea = {
-  id: string;
-  code: string;
-  title_ar: string | null;
-  title_en: string | null;
-  status: string | null;
-  similarity: number;
-};
-
 type TeamMember = { email: string; name: string };
 
 const MAX_TEAM_MEMBERS = 5;
@@ -91,7 +82,6 @@ const ATTACH_ALLOWED_EXT = /\.(pdf|jpe?g|png|docx)$/i;
 
 type Draft = {
   title: string;
-  summary: string;
   description: string;
   theme: string;
   activity: string;
@@ -109,7 +99,6 @@ export function IdeaForm({
   const t = useTranslations('ideas');
   const tf = useTranslations('ideaForm');
   const tc = useTranslations('common');
-  const ts = useTranslations('similarity');
   const router = useRouter();
   const isAr = locale === 'ar';
   const Chevron = isAr ? ChevronLeft : ChevronRight;
@@ -117,7 +106,6 @@ export function IdeaForm({
 
   const [step, setStep] = useState(0);
   const [title, setTitle] = useState('');
-  const [summary, setSummary] = useState('');
   const [description, setDescription] = useState('');
   const [theme, setTheme] = useState(themes[0]?.id ?? '');
   const [activity, setActivity] = useState(activities[0]?.id ?? '');
@@ -125,15 +113,15 @@ export function IdeaForm({
   const [participation, setParticipation] = useState<'individual' | 'team'>('individual');
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([{ email: '', name: '' }]);
   const [ack, setAck] = useState(false);
+  const [terms, setTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedNote, setSavedNote] = useState<string | null>(null);
-  // Attachments selected on step 3. Held in memory until the idea row is
-  // created — uploads happen post-insert so we know the linked_entity_id.
+  // Attachments selected on step 3 (plus the filled template uploaded on
+  // step 2). Held in memory until the idea row is created — uploads happen
+  // post-insert so we know the linked_entity_id.
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [attachError, setAttachError] = useState<string | null>(null);
-  const [similar, setSimilar] = useState<SimilarIdea[]>([]);
-  const [checkingSimilar, setCheckingSimilar] = useState(false);
   const restored = useRef(false);
 
   // Challenges are static per track (see lib/tracks.ts). Reset the selection
@@ -165,11 +153,10 @@ export function IdeaForm({
       if (raw) {
         const d = JSON.parse(raw) as Draft;
         if (d.title) setTitle(d.title.slice(0, LIMITS.title));
-        if (d.summary) setSummary(d.summary.slice(0, LIMITS.summary));
         if (d.description) setDescription(d.description.slice(0, LIMITS.description));
         if (d.theme) setTheme(d.theme);
         if (d.activity) setActivity(d.activity);
-        if (d.title || d.summary || d.description) {
+        if (d.title || d.description) {
           setSavedNote(tf('autosaveRestored'));
         }
       }
@@ -185,7 +172,7 @@ export function IdeaForm({
     if (!restored.current) return;
     const id = setTimeout(() => {
       try {
-        const draft: Draft = { title, summary, description, theme, activity };
+        const draft: Draft = { title, description, theme, activity };
         localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
         setSavedNote(tf('autosaveSaved'));
       } catch {
@@ -194,39 +181,7 @@ export function IdeaForm({
     }, 700);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, summary, description, theme, activity]);
-
-  // Debounced AI-similarity check as the user types the title.
-  useEffect(() => {
-    const query = title.trim();
-    if (query.length < 4) {
-      setSimilar([]);
-      setCheckingSimilar(false);
-      return;
-    }
-    const supabase = createClient();
-    if (!supabase) return;
-    setCheckingSimilar(true);
-    const id = setTimeout(async () => {
-      try {
-        const { data } = await supabase.rpc('find_similar_ideas', {
-          query_text: query,
-          exclude_id: null,
-          similarity_threshold: 0.2,
-          max_results: 5,
-        });
-        setSimilar((data as SimilarIdea[]) ?? []);
-      } catch {
-        setSimilar([]);
-      } finally {
-        setCheckingSimilar(false);
-      }
-    }, 400);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title]);
-
-  const strongMatches = similar.filter((s) => s.similarity > 0.5).length;
+  }, [title, description, theme, activity]);
 
   function updateMember(idx: number, patch: Partial<TeamMember>) {
     setTeamMembers((prev) => prev.map((m, i) => (i === idx ? { ...m, ...patch } : m)));
@@ -243,22 +198,49 @@ export function IdeaForm({
   const validTeamMembers = teamMembers.filter((m) => /\S+@\S+\.\S+/.test(m.email.trim()));
 
   function suggestTitle() {
-    const suggestion = smartTitle(summary || description, locale);
+    const suggestion = smartTitle(description, locale);
     if (suggestion) setTitle(suggestion.slice(0, LIMITS.title));
+  }
+
+  // Shared file intake for the step-2 filled-template upload and the step-3
+  // attachments dropzone. All uploaded files land in a single queue that is
+  // flushed post-insert. Mirrors the server guard in lib/storage.ts.
+  function ingestFiles(incoming: File[]) {
+    setAttachError(null);
+    if (incoming.length === 0) return;
+    const rejected: string[] = [];
+    const accepted: File[] = [];
+    for (const f of incoming) {
+      const mimeOk = ATTACH_ALLOWED_MIME.has(f.type);
+      const extOk = ATTACH_ALLOWED_EXT.test(f.name);
+      if (!mimeOk && !extOk) {
+        rejected.push(`${f.name} — ${tf('attachmentsRejectType')}`);
+        continue;
+      }
+      if (f.size > ATTACH_MAX_BYTES) {
+        rejected.push(`${f.name} — ${tf('attachmentsRejectSize')}`);
+        continue;
+      }
+      accepted.push(f);
+    }
+    setSelectedFiles((prev) => {
+      const room = ATTACH_MAX_FILES - prev.length;
+      const clipped = accepted.slice(0, Math.max(0, room));
+      if (accepted.length > clipped.length) rejected.push(tf('attachmentsRejectCount'));
+      return [...prev, ...clipped];
+    });
+    if (rejected.length > 0) setAttachError(rejected.join(' · '));
   }
 
   function stepValid(s: number): boolean {
     if (s === 0) {
-      const basics =
-        title.trim().length > 0 &&
-        summary.trim().length > 0 &&
-        Boolean(activity) &&
-        Boolean(theme);
-      // Team participation requires at least one valid member email.
+      // Basics: Event (activity) is required; Track preselected. Team
+      // participation requires at least one valid member email.
+      const basics = Boolean(activity) && Boolean(theme);
       const teamOk = participation === 'individual' || validTeamMembers.length >= 1;
       return basics && teamOk;
     }
-    if (s === 1) return description.trim().length > 0;
+    if (s === 1) return title.trim().length > 0 && description.trim().length > 0;
     return true;
   }
 
@@ -288,7 +270,7 @@ export function IdeaForm({
       next();
       return;
     }
-    if (!ack) return;
+    if (!ack || !terms) return;
     setError(null);
     setSubmitting(true);
     const supabase = createClient();
@@ -303,10 +285,12 @@ export function IdeaForm({
       router.push('/login');
       return;
     }
+    // Summary was removed from the form (folded into the single description
+    // field per the 4-page re-order). The long description is stored as the
+    // idea's main body in proposed_solution, matching the prior mapping.
     const payload: Record<string, any> = {
       title_ar: isAr ? title : null,
       title_en: !isAr ? title : null,
-      problem_statement: summary,
       proposed_solution: description,
       strategic_theme_id: theme || null,
       activity_id: activity || null,
@@ -334,6 +318,15 @@ export function IdeaForm({
         return;
       }
       newIdeaId = (inserted as { id?: string } | null)?.id ?? null;
+    }
+    // Alert supervisors that a new idea is awaiting screening. Best-effort —
+    // the server action swallows its own errors, so this never blocks submit.
+    if (newIdeaId) {
+      try {
+        await notifySupervisorsOfNewIdea(newIdeaId);
+      } catch {
+        /* non-blocking */
+      }
     }
     // Upload any queued attachments now that we have an idea id. Uploads are
     // best-effort: a failed attachment doesn't roll back the idea — the author
@@ -372,7 +365,7 @@ export function IdeaForm({
     // right after they submit. A hard navigation forces a full round-trip
     // so middleware reads the fresh cookies from the request.
     if (newIdeaId) {
-      window.location.assign(`/${locale}/ideas/${newIdeaId}?submitted=1`);
+      window.location.assign(`/${locale}/ideas/${newIdeaId}/submitted`);
     } else {
       window.location.assign(`/${locale}/my-ideas`);
     }
@@ -446,54 +439,17 @@ export function IdeaForm({
           {/* ---- Step 1: Basics ---- */}
           {step === 0 && (
             <div className="space-y-5">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="title">{tf('titleLabel')}</Label>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={suggestTitle}
-                    className="text-brand-teal"
-                    disabled={!summary && !description}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {title ? t('aiTitleRegenerate') : t('aiTitleAssist')}
-                  </Button>
-                </div>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value.slice(0, LIMITS.title))}
-                  maxLength={LIMITS.title}
-                  required
-                  dir={isAr ? 'rtl' : 'ltr'}
-                />
-                <div className="flex justify-end">{counter(title, LIMITS.title)}</div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="summary">{tf('summaryLabel')}</Label>
-                <Textarea
-                  id="summary"
-                  value={summary}
-                  onChange={(e) => setSummary(e.target.value.slice(0, LIMITS.summary))}
-                  maxLength={LIMITS.summary}
-                  required
-                  rows={3}
-                  dir={isAr ? 'rtl' : 'ltr'}
-                />
-                <div className="flex justify-end">{counter(summary, LIMITS.summary)}</div>
-              </div>
-
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="activity">{t('activity')}</Label>
+                  <Label htmlFor="activity">
+                    {tf('eventLabel')} <span className="text-red-500">*</span>
+                  </Label>
                   <select
                     id="activity"
                     value={activity}
                     onChange={(e) => setActivity(e.target.value)}
                     className={selectClass}
+                    required
                   >
                     {activities.map((a) => (
                       <option key={a.id} value={a.id}>
@@ -617,52 +573,38 @@ export function IdeaForm({
                   )}
                 </div>
               )}
-
-              {/* AI similarity suggestions */}
-              {(checkingSimilar || similar.length > 0) && (
-                <div className="rounded-2xl border border-brand-cyan/30 bg-brand-cyan-light/20 p-4">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-brand-teal">
-                    <Sparkles className="h-4 w-4 text-brand-cyan" />
-                    {checkingSimilar ? ts('checking') : ts('title')}
-                  </div>
-
-                  {strongMatches >= 3 && (
-                    <div className="mt-2 flex items-start gap-2 rounded-lg bg-brand-gold-light/60 p-2.5 text-xs text-brand-teal">
-                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-gold" />
-                      <span>
-                        <strong>{ts('nudgeTitle')}</strong> — {ts('nudge')}
-                      </span>
-                    </div>
-                  )}
-
-                  {similar.length > 0 && (
-                    <ul className="mt-3 space-y-1.5">
-                      {similar.map((s) => (
-                        <li key={s.id}>
-                          <Link
-                            href={`/ideas/${s.id}` as any}
-                            target="_blank"
-                            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm transition hover:border-brand-teal/40"
-                          >
-                            <span className="line-clamp-1 flex-1" dir={isAr ? 'rtl' : 'ltr'}>
-                              {pickFromRow(s, 'title', locale) || s.code}
-                            </span>
-                            <span className="shrink-0 rounded-full bg-brand-teal-light px-2 py-0.5 text-[11px] font-medium text-brand-teal">
-                              {ts('match', { pct: Math.round(s.similarity * 100) })}
-                            </span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
           {/* ---- Step 2: Details ---- */}
           {step === 1 && (
             <div className="space-y-5">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="title">{tf('titleLabel')}</Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={suggestTitle}
+                    className="text-brand-teal"
+                    disabled={!description}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {title ? t('aiTitleRegenerate') : t('aiTitleAssist')}
+                  </Button>
+                </div>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value.slice(0, LIMITS.title))}
+                  maxLength={LIMITS.title}
+                  required
+                  dir={isAr ? 'rtl' : 'ltr'}
+                />
+                <div className="flex justify-end">{counter(title, LIMITS.title)}</div>
+              </div>
+
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Label htmlFor="description">{tf('descriptionLabel')}</Label>
@@ -685,6 +627,30 @@ export function IdeaForm({
                   dir={isAr ? 'rtl' : 'ltr'}
                 />
                 <div className="flex justify-end">{counter(description, LIMITS.description)}</div>
+              </div>
+
+              {/* Filled-template upload — the innovator downloads the template
+                  above, fills it, and re-uploads it here. It joins the same
+                  attachment queue flushed after the idea row is created. */}
+              <div className="space-y-1.5">
+                <Label htmlFor="filled-template">{tf('templateUploadLabel')}</Label>
+                <label
+                  htmlFor="filled-template"
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground transition hover:border-brand-teal/40"
+                >
+                  <Paperclip className="h-4 w-4 text-brand-teal" aria-hidden="true" />
+                  {tf('templateUploadHint')}
+                  <Input
+                    id="filled-template"
+                    type="file"
+                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={(e) => {
+                      ingestFiles(Array.from(e.target.files ?? []));
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
               </div>
             </div>
           )}
@@ -711,35 +677,7 @@ export function IdeaForm({
                   accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   className="hidden"
                   onChange={(e) => {
-                    setAttachError(null);
-                    const incoming = Array.from(e.target.files ?? []);
-                    if (incoming.length === 0) return;
-                    // Client-side validation. The server also enforces size +
-                    // uploader auth via lib/storage.ts; this is a UX guard.
-                    const rejected: string[] = [];
-                    const accepted: File[] = [];
-                    for (const f of incoming) {
-                      const mimeOk = ATTACH_ALLOWED_MIME.has(f.type);
-                      const extOk = ATTACH_ALLOWED_EXT.test(f.name);
-                      if (!mimeOk && !extOk) {
-                        rejected.push(`${f.name} — ${tf('attachmentsRejectType')}`);
-                        continue;
-                      }
-                      if (f.size > ATTACH_MAX_BYTES) {
-                        rejected.push(`${f.name} — ${tf('attachmentsRejectSize')}`);
-                        continue;
-                      }
-                      accepted.push(f);
-                    }
-                    setSelectedFiles((prev) => {
-                      const room = ATTACH_MAX_FILES - prev.length;
-                      const clipped = accepted.slice(0, Math.max(0, room));
-                      if (accepted.length > clipped.length) {
-                        rejected.push(tf('attachmentsRejectCount'));
-                      }
-                      return [...prev, ...clipped];
-                    });
-                    if (rejected.length > 0) setAttachError(rejected.join(' · '));
+                    ingestFiles(Array.from(e.target.files ?? []));
                     // Reset the input so re-selecting the same file re-fires onChange.
                     e.target.value = '';
                   }}
@@ -796,10 +734,6 @@ export function IdeaForm({
                   <dd className="text-sm text-foreground sm:col-span-2">{title || '—'}</dd>
                 </div>
                 <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('summaryLabel')}</dt>
-                  <dd className="text-sm text-foreground sm:col-span-2">{summary || '—'}</dd>
-                </div>
-                <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
                   <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('descriptionLabel')}</dt>
                   <dd className="whitespace-pre-wrap text-sm text-foreground sm:col-span-2">
                     {description || '—'}
@@ -812,7 +746,7 @@ export function IdeaForm({
                   </dd>
                 </div>
                 <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{t('activity')}</dt>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('eventLabel')}</dt>
                   <dd className="text-sm text-foreground sm:col-span-2">
                     {activeActivity ? pickFromRow(activeActivity, 'name', locale) : '—'}
                   </dd>
@@ -833,27 +767,40 @@ export function IdeaForm({
                 </div>
               </dl>
 
-              {/* IP declaration — required. Replaces the former /ip-sign step;
-                  the author confirms authorship inline before submitting. */}
-              <label className="flex items-start gap-2 rounded-2xl border border-border bg-muted/40 p-3 text-sm">
-                <input
-                  type="checkbox"
-                  checked={ack}
-                  onChange={(e) => setAck(e.target.checked)}
-                  required
-                  className="mt-0.5 h-4 w-4 accent-brand-teal"
-                />
-                <span>
-                  {tf('ipDeclaration')}{' '}
-                  <Link
-                    href="/ip-terms"
-                    target="_blank"
-                    className="font-medium text-brand-teal underline-offset-2 hover:underline"
-                  >
-                    {t('ownershipAckLink')}
-                  </Link>
-                </span>
-              </label>
+              {/* IP + Terms declarations — both required. Replaces the former
+                  /ip-sign step; the author confirms authorship and agrees to
+                  the hackathon terms inline before submitting. */}
+              <div className="space-y-3">
+                <label className="flex items-start gap-2 rounded-2xl border border-border bg-muted/40 p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={ack}
+                    onChange={(e) => setAck(e.target.checked)}
+                    required
+                    className="mt-0.5 h-4 w-4 accent-brand-teal"
+                  />
+                  <span>
+                    {tf('ipDeclaration')}{' '}
+                    <Link
+                      href="/ip-terms"
+                      target="_blank"
+                      className="font-medium text-brand-teal underline-offset-2 hover:underline"
+                    >
+                      {t('ownershipAckLink')}
+                    </Link>
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 rounded-2xl border border-border bg-muted/40 p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={terms}
+                    onChange={(e) => setTerms(e.target.checked)}
+                    required
+                    className="mt-0.5 h-4 w-4 accent-brand-teal"
+                  />
+                  <span>{tf('termsDeclaration')}</span>
+                </label>
+              </div>
             </div>
           )}
 
@@ -893,7 +840,7 @@ export function IdeaForm({
                   <Chevron className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={submitting || !ack}>
+                <Button type="submit" disabled={submitting || !ack || !terms}>
                   {tf('submit')}
                 </Button>
               )}

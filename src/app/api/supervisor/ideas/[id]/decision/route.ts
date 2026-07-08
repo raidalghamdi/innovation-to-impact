@@ -114,7 +114,10 @@ export async function POST(
         : decision === 'reject'
           ? 'idea_rejected'
           : 'idea_feedback_requested';
-    const link = `/my-ideas/${id}`;
+    // Locale-less path — the i18n <Link> prepends the active locale. Returned
+    // ideas deep-link into the edit page so the innovator lands on the form
+    // they must act on; approvals/rejections go to the idea details page.
+    const link = decision === 'return' ? `/ideas/${id}/edit` : `/ideas/${id}`;
 
     if (submitterId) {
       await createNotification(

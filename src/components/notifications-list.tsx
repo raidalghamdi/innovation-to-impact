@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { Link } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
+import { normalizeNotificationLink } from '@/lib/notification-link';
 import { useNotificationsStream, type RealtimeNotification } from '@/lib/realtime/use-notifications-stream';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +17,7 @@ type Notif = {
   title_en: string | null;
   body_ar: string | null;
   body_en: string | null;
+  link: string | null;
   read_at: string | null;
   created_at: string;
 };
@@ -115,12 +118,15 @@ export function NotificationsList({
               const title = locale === 'ar' ? n.title_ar : n.title_en;
               return (
                 <li key={n.id}>
-                  <div className="flex items-center justify-between gap-2 rounded-xl border border-brand-teal/30 bg-brand-teal-light/20 px-3 py-2">
+                  <Link
+                    href={normalizeNotificationLink(n.link) as any}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-brand-teal/30 bg-brand-teal-light/20 px-3 py-2 transition hover:bg-brand-teal-light/40"
+                  >
                     <p className="line-clamp-1 text-sm font-medium text-foreground">{title}</p>
                     <span className="shrink-0 text-[11px] text-muted-foreground" dir="ltr">
                       {n.created_at?.slice(0, 10)}
                     </span>
-                  </div>
+                  </Link>
                 </li>
               );
             })}
@@ -169,17 +175,23 @@ export function NotificationsList({
           const body = locale === 'ar' ? n.body_ar : n.body_en;
           return (
             <li key={n.id}>
-              <Card className={n.read_at ? '' : 'border-brand-teal/40 bg-brand-teal-light/20'}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-foreground">{title}</p>
-                    <span className="text-xs text-muted-foreground" dir="ltr">
-                      {n.created_at?.slice(0, 10)}
-                    </span>
-                  </div>
-                  {body && <p className="mt-1 text-sm text-muted-foreground">{body}</p>}
-                </CardContent>
-              </Card>
+              <Link href={normalizeNotificationLink(n.link) as any} className="block">
+                <Card
+                  className={`transition hover:border-brand-teal/60 ${
+                    n.read_at ? '' : 'border-brand-teal/40 bg-brand-teal-light/20'
+                  }`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-foreground">{title}</p>
+                      <span className="text-xs text-muted-foreground" dir="ltr">
+                        {n.created_at?.slice(0, 10)}
+                      </span>
+                    </div>
+                    {body && <p className="mt-1 text-sm text-muted-foreground">{body}</p>}
+                  </CardContent>
+                </Card>
+              </Link>
             </li>
           );
         })}

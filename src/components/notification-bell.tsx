@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
+import { normalizeNotificationLink } from '@/lib/notification-link';
 import { useNotificationsStream, type RealtimeNotification } from '@/lib/realtime/use-notifications-stream';
 import { useToastStack, ToastStack } from '@/components/ui/toast';
 import { Bell } from 'lucide-react';
@@ -59,7 +60,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       setItems((prev) => (prev.some((i) => i.id === row.id) ? prev : [row as unknown as Notif, ...prev]));
       const title = (locale === 'ar' ? row.title_ar : row.title_en) ?? t('title');
       const body = locale === 'ar' ? row.body_ar : row.body_en;
-      push({ title, description: body, href: row.link });
+      push({ title, description: body, href: normalizeNotificationLink(row.link) });
     },
   });
 
@@ -110,7 +111,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               return (
                 <li key={n.id} className={n.read_at ? '' : 'bg-brand-teal-light/30'}>
                   <Link
-                    href={(n.link as any) || '/notifications'}
+                    href={normalizeNotificationLink(n.link) as any}
                     onClick={() => setOpen(false)}
                     className="block px-4 py-3 hover:bg-muted/50"
                   >

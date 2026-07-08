@@ -1162,6 +1162,10 @@
       "approval_requested": {
         "title": "Approval requested",
         "body": "An item is waiting on your approval."
+      },
+      "idea_submitted": {
+        "title": "New idea submitted",
+        "body": "A new idea ({ideaCode}) was submitted and is awaiting screening."
       }
     }
   },
@@ -1554,6 +1558,10 @@
     "teamMemberAdd": "Add member",
     "teamMemberRemove": "Remove member",
     "descriptionTemplate": "Download description template",
+    "eventLabel": "Event",
+    "templateUploadLabel": "Upload filled template",
+    "templateUploadHint": "Choose the completed template file (PDF or Word).",
+    "termsDeclaration": "I agree to the hackathon terms and conditions.",
     "ipDeclaration": "I confirm I am the author of this idea and responsible for it, and I accept the"
   },
   "roles": {

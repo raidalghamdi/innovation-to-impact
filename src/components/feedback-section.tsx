@@ -9,13 +9,18 @@ import { MessageSquare, Star, Scale, ShieldCheck } from 'lucide-react';
 export async function FeedbackSection({
   feedback,
   locale,
+  highlight = false,
 }: {
   feedback: ReviewerFeedback[];
   locale: string;
+  // When true (idea returned for revision) the card is emphasised with an
+  // amber/yellow surface so the innovator immediately sees the reviewer notes
+  // they must act on.
+  highlight?: boolean;
 }) {
   const t = await getTranslations('feedback');
   return (
-    <Card>
+    <Card className={highlight ? 'border-amber-400 bg-amber-50' : undefined}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-brand-teal">
           <MessageSquare className="h-4 w-4 text-brand-teal" />

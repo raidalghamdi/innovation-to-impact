@@ -8,6 +8,7 @@ import type { Role } from '@/lib/roles';
 // Notification kinds. Bilingual copy for each lives in messages/*.json under
 // `notifications.types.<type>.{title,body}` and is resolved via next-intl.
 export type NotificationType =
+  | 'idea_submitted'
   | 'evaluation_assigned'
   | 'evaluation_completed'
   | 'committee_decision'
@@ -159,6 +160,67 @@ export async function fanOut(
   await Promise.all(
     unique.map((id) => createNotification(id, type, payload, { ...opts, client: supabase }))
   );
+}
+
+/**
+ * Resolve the user_ids of everyone holding the `supervisor` role.
+ *
+ * Supervisors live in the canonical multi-role source (`v_user_roles`), NOT
+ * reliably in `user_profiles.role` (which is frequently stale/'member' for
+ * supervisors). We read the view first and fall back to the legacy column so
+ * the helper still returns recipients on installs where the view is empty.
+ */
+export async function getSupervisorIds(client?: Client): Promise<string[]> {
+  const supabase = await resolveClient(client);
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from('v_user_roles')
+    .select('user_id')
+    .eq('role_code', 'supervisor')
+    .eq('role_active', true);
+  let ids = ((data as { user_id: string }[] | null) ?? [])
+    .map((r) => r.user_id)
+    .filter(Boolean);
+  if (ids.length === 0) {
+    const { data: legacy } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('role', 'supervisor');
+    ids = ((legacy as { id: string }[] | null) ?? []).map((r) => r.id).filter(Boolean);
+  }
+  return Array.from(new Set(ids));
+}
+
+// Events that concern the supervisor(s) overseeing screening. Every one of
+// these should always reach supervisors in addition to their primary audience.
+const SUPERVISOR_EVENTS = new Set<NotificationType>([
+  'idea_submitted',
+  'idea_approved',
+  'idea_rejected',
+  'idea_feedback_requested',
+  'committee_decision',
+  'evaluation_completed',
+  'escalation',
+  'sla_breached',
+]);
+
+/**
+ * Return the set of user_ids that should receive a notification for an event.
+ *
+ * `primary` is the event's direct audience (e.g. the idea submitter, assigned
+ * evaluators). Supervisors are appended automatically for the events in
+ * SUPERVISOR_EVENTS so no call site can forget them. De-duplicated.
+ */
+export async function getNotificationRecipients(
+  type: NotificationType,
+  primary: string[],
+  client?: Client
+): Promise<string[]> {
+  const ids = [...primary.filter(Boolean)];
+  if (SUPERVISOR_EVENTS.has(type)) {
+    ids.push(...(await getSupervisorIds(client)));
+  }
+  return Array.from(new Set(ids));
 }
 
 /**

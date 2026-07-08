@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
-import { notifyByRole } from '@/lib/notifications';
+import { notifyByRole, fanOut, getSupervisorIds } from '@/lib/notifications';
 import { openSlaTracker, closeSlaTracker } from '@/lib/sla';
 import { computeTotal, type CriteriaScores } from '@/lib/evaluation';
 
@@ -77,6 +77,10 @@ export async function saveEvaluation(input: SaveInput): Promise<EvaluationResult
     if (assignmentId) await closeSlaTracker('evaluation', assignmentId);
     await openSlaTracker('committee', input.ideaId, 'submitted', 'decided');
     await notifyByRole('judge', 'evaluation_completed', { ideaId: input.ideaId });
+    // Supervisors overseeing screening must also learn an evaluation landed.
+    const supervisorIds = await getSupervisorIds(supabase);
+    if (supervisorIds.length)
+      await fanOut(supervisorIds, 'evaluation_completed', { ideaId: input.ideaId }, { link: '/supervisor' });
   }
 
   revalidatePath(`/[locale]/evaluation`, 'page');

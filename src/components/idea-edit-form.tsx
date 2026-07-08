@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertTriangle, Lock, Save, X } from 'lucide-react';
+import { uploadEvidence } from '@/lib/storage';
+import { AlertTriangle, Lock, Save, X, Paperclip, FileText, CheckCircle2 } from 'lucide-react';
+
+const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10MB — mirrors lib/storage.ts.
+const ATTACH_ALLOWED_EXT = /\.(pdf|jpe?g|png|docx)$/i;
 
 type Section = 'title' | 'problem_statement' | 'proposed_solution' | 'expected_benefits' | 'attachments' | 'team';
 
@@ -57,6 +61,50 @@ export function IdeaEditForm({
   const [problem, setProblem] = useState(initial.problem_statement ?? '');
   const [solution, setSolution] = useState(initial.proposed_solution ?? '');
   const [benefits, setBenefits] = useState(initial.expected_benefits ?? '');
+
+  // Attachment uploads (only relevant when 'attachments' is editable). Files
+  // upload immediately to the evidence bucket linked to this idea; there is no
+  // deferred insert because the idea already exists.
+  const [uploads, setUploads] = useState<
+    Array<{ id: string; name: string; status: 'uploading' | 'done' | 'error'; error?: string }>
+  >([]);
+
+  function onAttachmentsSelected(files: File[]) {
+    if (files.length === 0) return;
+    for (const file of files) {
+      const key = `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const extOk = ATTACH_ALLOWED_EXT.test(file.name);
+      if (!extOk) {
+        setUploads((prev) => [...prev, { id: key, name: file.name, status: 'error', error: isAr ? 'نوع ملف غير مسموح' : 'File type not allowed' }]);
+        continue;
+      }
+      if (file.size > ATTACH_MAX_BYTES) {
+        setUploads((prev) => [...prev, { id: key, name: file.name, status: 'error', error: isAr ? 'الحجم أكبر من 10 ميجابايت' : 'Larger than 10MB' }]);
+        continue;
+      }
+      setUploads((prev) => [...prev, { id: key, name: file.name, status: 'uploading' }]);
+      startTransition(async () => {
+        try {
+          const res = await uploadEvidence(file, 'idea_submission', {
+            ideaId,
+            entityType: 'idea',
+            entityId: ideaId,
+          });
+          setUploads((prev) =>
+            prev.map((u) =>
+              u.id === key
+                ? { ...u, status: res.ok ? 'done' : 'error', error: res.ok ? undefined : res.error }
+                : u
+            )
+          );
+        } catch (err) {
+          setUploads((prev) =>
+            prev.map((u) => (u.id === key ? { ...u, status: 'error', error: String(err) } : u))
+          );
+        }
+      });
+    }
+  }
 
   function save() {
     startTransition(async () => {
@@ -196,19 +244,61 @@ export function IdeaEditForm({
         />
       </SectionCard>
 
-      {/* ATTACHMENTS + TEAM stubs — placeholders for now.
-          Attachments require the existing evidence-upload flow which lives
-          in idea-form.tsx and needs a dedicated integration effort. To keep
-          this partial-edit route safe, we redirect the innovator to the
-          existing team page + attachments upload page when those sections
-          are checked. */}
+      {/* ATTACHMENTS — real upload input, wired to the evidence bucket.
+          Files upload immediately (the idea already exists) linked to this
+          idea id, matching the submit-form upload path. */}
       {isEditable('attachments') && (
         <SectionCard title={isAr ? sectionLabels.ar.attachments : sectionLabels.en.attachments} isAr={isAr}>
-          <p className="text-sm text-muted-foreground">
-            {isAr
-              ? 'لإدارة المرفقات الحالية أو رفع مرفقات جديدة، افتح صفحة الفكرة ثم قسم المرفقات.'
-              : 'To manage or upload attachments, open the idea page and use the attachments section.'}
-          </p>
+          <div className="space-y-3">
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 p-6 text-center transition hover:border-brand-teal/40">
+              <Paperclip className="h-6 w-6 text-brand-teal" aria-hidden="true" />
+              <span className="text-sm text-muted-foreground">
+                {isAr ? 'اسحب الملفات هنا أو اضغط للاختيار' : 'Drag files here or click to choose'}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {isAr ? 'PDF أو صور أو Word — حتى 10 ميجابايت لكل ملف' : 'PDF, images, or Word — up to 10MB each'}
+              </span>
+              <Input
+                type="file"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={(e) => {
+                  onAttachmentsSelected(Array.from(e.target.files ?? []));
+                  e.target.value = '';
+                }}
+              />
+            </label>
+            {uploads.length > 0 && (
+              <ul className="space-y-2">
+                {uploads.map((u) => (
+                  <li
+                    key={u.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border bg-white p-2.5 text-sm"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <FileText className="h-4 w-4 shrink-0 text-brand-teal" aria-hidden="true" />
+                      <span className="truncate">{u.name}</span>
+                    </span>
+                    {u.status === 'uploading' && (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {isAr ? 'جارٍ الرفع…' : 'Uploading…'}
+                      </span>
+                    )}
+                    {u.status === 'done' && (
+                      <span className="inline-flex shrink-0 items-center gap-1 text-xs text-green-700">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {isAr ? 'تم' : 'Done'}
+                      </span>
+                    )}
+                    {u.status === 'error' && (
+                      <span className="shrink-0 text-xs text-red-700">{u.error || (isAr ? 'فشل' : 'Failed')}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </SectionCard>
       )}
       {isEditable('team') && (
