@@ -61,3 +61,62 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   return NextResponse.json({ ok: true });
 }
+
+/**
+ * PUT /api/admin/users/[id] — update profile fields.
+ * Body: { full_name?, full_name_ar?, department?, phone?, organization?,
+ *         user_category?, language_preference?, escalation_tier?, allowed_themes? }
+ */
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const actor = await getCurrentUser();
+  if (!actor || !(await isCurrentUserAdmin(actor.role))) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+  const admin = createAdminClient();
+  if (!admin) return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object') {
+    return NextResponse.json({ error: 'invalid_input' }, { status: 400 });
+  }
+
+  const allowed = [
+    'full_name',
+    'full_name_ar',
+    'department',
+    'phone',
+    'organization',
+    'user_category',
+    'language_preference',
+    'escalation_tier',
+    'allowed_themes',
+  ];
+  const update: Record<string, unknown> = {};
+  for (const k of allowed) if (k in body) update[k] = body[k];
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: 'no_fields' }, { status: 400 });
+  }
+
+  const { error } = await admin
+    .schema('innovation')
+    .from('user_profiles')
+    .update(update)
+    .eq('id', id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  await admin
+    .schema('innovation')
+    .from('audit_logs')
+    .insert({
+      user_id: actor.id,
+      action: 'user.profile_updated',
+      resource_type: 'user',
+      resource_id: id,
+      metadata: update,
+    })
+    .then(() => null, () => null);
+
+  return NextResponse.json({ ok: true });
+}
