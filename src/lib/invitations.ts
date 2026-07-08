@@ -344,6 +344,188 @@ export async function sendReminder(invitationId: string): Promise<{ ok: boolean 
   return { ok: result.ok };
 }
 
+// ---------- Template-based direct send (Round 3) -----------------------------
+
+export type TemplateRecipient = {
+  email: string;
+  name?: string | null;
+  variable_overrides?: Record<string, string>;
+};
+
+export type SendTemplatedResult = {
+  ok: boolean;
+  campaign_id: string | null;
+  sent: number;
+  queued: number;
+  failed: Array<{ email: string; error: string }>;
+};
+
+export async function getTemplateByCode(code: string): Promise<EmailTemplate | null> {
+  const supabase = createServiceRoleClient();
+  const { data } = await supabase
+    .schema('innovation')
+    .from('email_templates')
+    .select('*')
+    .eq('code', code)
+    .maybeSingle();
+  return (data as EmailTemplate | null) ?? null;
+}
+
+/**
+ * Resolve recipient rows from innovation.user_profiles. When `role` is null all
+ * profiles are returned (broadcast). `is_active` is intentionally NOT filtered:
+ * that column is not guaranteed to exist on user_profiles, and the brief allows
+ * skipping the filter when absent.
+ */
+export async function resolveProfileRecipients(
+  role: RoleCode | null
+): Promise<TemplateRecipient[]> {
+  const supabase = createServiceRoleClient();
+  let query = supabase
+    .schema('innovation')
+    .from('user_profiles')
+    .select('email, full_name, role');
+  if (role) query = query.eq('role', role);
+  const { data } = await query;
+  const rows = (data as Array<{ email: string | null; full_name: string | null }> | null) ?? [];
+  const seen = new Set<string>();
+  const out: TemplateRecipient[] = [];
+  for (const r of rows) {
+    const email = String(r.email ?? '').trim().toLowerCase();
+    if (!email || seen.has(email)) continue;
+    seen.add(email);
+    out.push({ email, name: r.full_name ?? null });
+  }
+  return out;
+}
+
+/**
+ * Send a template to an explicit list of recipients (or all users of a role /
+ * everyone). Persists one innovation.invitations row per recipient sharing a
+ * campaign_id when bulk (>1). Template-specific fields (template_code, subject,
+ * rendered body) are stored in the invitations.metadata JSONB — the repo schema
+ * has no dedicated columns for them.
+ */
+export async function sendTemplatedInvitations(input: {
+  template: EmailTemplate;
+  recipients: TemplateRecipient[];
+  locale?: 'ar' | 'en';
+  campaign_id?: string | null;
+  sent_by?: string | null;
+  subject_override?: string | null;
+  body_override?: string | null;
+}): Promise<SendTemplatedResult> {
+  const supabase = createServiceRoleClient();
+  const locale = input.locale ?? 'ar';
+  const template = input.template;
+
+  const recipients = input.recipients
+    .map((r) => ({
+      email: String(r.email ?? '').trim().toLowerCase(),
+      name: r.name ?? null,
+      variable_overrides: r.variable_overrides ?? {},
+    }))
+    .filter((r) => r.email);
+
+  if (recipients.length === 0) {
+    return { ok: false, campaign_id: null, sent: 0, queued: 0, failed: [] };
+  }
+
+  const campaignId =
+    recipients.length > 1
+      ? input.campaign_id ?? (globalThis.crypto?.randomUUID?.() ?? null)
+      : null;
+
+  const defaults = await getAdminSetting<{
+    program_name_ar: string;
+    program_name_en: string;
+    expires_days: number;
+  }>('invitation_defaults');
+  const programName =
+    locale === 'ar'
+      ? defaults?.program_name_ar ?? 'برنامج ابتكر لمنافس'
+      : defaults?.program_name_en ?? 'Innovation-to-Impact Program';
+  const expiresDays = defaults?.expires_days ?? 14;
+  const deadline = new Date(Date.now() + expiresDays * 24 * 3600 * 1000).toISOString();
+
+  // template_options may be an array (open-options) or a key/value object; only
+  // a plain object contributes {{key}} substitutions.
+  const optionVars: Record<string, string> = {};
+  const opts = (template as unknown as { template_options?: unknown }).template_options;
+  if (opts && typeof opts === 'object' && !Array.isArray(opts)) {
+    for (const [k, v] of Object.entries(opts as Record<string, unknown>)) {
+      if (v !== null && v !== undefined) optionVars[k] = String(v);
+    }
+  }
+
+  const subjectTpl =
+    input.subject_override ?? (locale === 'ar' ? template.subject_ar : template.subject_en);
+  const bodyTpl =
+    input.body_override ?? (locale === 'ar' ? template.body_ar : template.body_en);
+
+  const attachmentRows = await getTemplateAttachments(template.id);
+  const attachments = await downloadAttachments(attachmentRows);
+
+  const failed: Array<{ email: string; error: string }> = [];
+  let sent = 0;
+  let queued = 0;
+
+  for (const rec of recipients) {
+    const vars: Record<string, string> = {
+      name: rec.name ?? rec.email,
+      email: rec.email,
+      role: template.role,
+      program: programName,
+      deadline: formatDate(deadline, locale),
+      ...optionVars,
+      ...rec.variable_overrides,
+    };
+    const subject = renderTemplate(subjectTpl, vars);
+    const bodyText = renderTemplate(bodyTpl, vars);
+    const html = renderMailHtml({ subject, body: bodyText, locale });
+
+    const result = await sendMail({
+      to: rec.email,
+      subject,
+      html,
+      text: bodyText,
+      attachments,
+    });
+
+    const status = result.ok ? 'sent' : 'queued';
+    if (result.ok) sent += 1;
+    else queued += 1;
+    if (result.provider === 'resend' && !result.ok && result.error) {
+      failed.push({ email: rec.email, error: result.error });
+    }
+
+    await supabase
+      .schema('innovation')
+      .from('invitations')
+      .insert({
+        role: template.role,
+        target_email: rec.email,
+        target_name: rec.name,
+        deadline_at: deadline,
+        sent_by: input.sent_by ?? null,
+        campaign_id: campaignId,
+        status,
+        sent_at: result.ok ? new Date().toISOString() : null,
+        metadata: {
+          template_code: template.code,
+          kind: template.kind,
+          subject,
+          body_rendered: bodyText,
+          created_by: input.sent_by ?? null,
+          variable_overrides: rec.variable_overrides,
+          provider: result.provider,
+        },
+      });
+  }
+
+  return { ok: sent > 0, campaign_id: campaignId, sent, queued, failed };
+}
+
 // ---------- Bulk helpers -----------------------------------------------------
 
 export async function listInvitationsForRole(role: RoleCode): Promise<Invitation[]> {

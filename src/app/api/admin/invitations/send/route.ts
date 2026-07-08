@@ -1,9 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/user';
-import { createInvitations, sendInvitationEmail, type RoleCode } from '@/lib/invitations';
+import {
+  createInvitations,
+  sendInvitationEmail,
+  getTemplateByCode,
+  resolveProfileRecipients,
+  sendTemplatedInvitations,
+  type RoleCode,
+  type TemplateRecipient,
+} from '@/lib/invitations';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * GET /api/admin/invitations/send?role=expert  → preview recipients for a role
+ * GET /api/admin/invitations/send?broadcast=1   → preview all active users
+ * Admin-only. Used by the "Send now" modal to preview By-role / Everyone counts.
+ */
+export async function GET(req: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'admin') {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+  const { searchParams } = new URL(req.url);
+  const broadcast = searchParams.get('broadcast') === '1';
+  const role = searchParams.get('role') as RoleCode | null;
+  const recipients = await resolveProfileRecipients(broadcast ? null : role);
+  return NextResponse.json({ recipients, count: recipients.length });
+}
 
 /**
  * POST /api/admin/invitations/send
@@ -22,9 +47,52 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null);
+  const locale = (body?.locale === 'en' ? 'en' : 'ar') as 'ar' | 'en';
+
+  // --- Round 3: template-based direct send -----------------------------------
+  if (body?.template_code) {
+    const template = await getTemplateByCode(String(body.template_code));
+    if (!template || !template.is_active) {
+      return NextResponse.json({ error: 'template_not_found' }, { status: 404 });
+    }
+
+    let recipients: TemplateRecipient[] = Array.isArray(body?.recipients)
+      ? body.recipients
+      : [];
+
+    if (body?.broadcast === true) {
+      if (!(template as any).is_broadcast) {
+        return NextResponse.json({ error: 'template_not_broadcast' }, { status: 400 });
+      }
+      recipients = await resolveProfileRecipients(null);
+    } else if (body?.send_to_all_role) {
+      recipients = await resolveProfileRecipients(body.send_to_all_role as RoleCode);
+    }
+
+    if (recipients.length === 0) {
+      return NextResponse.json({ error: 'no_recipients' }, { status: 400 });
+    }
+
+    try {
+      const result = await sendTemplatedInvitations({
+        template,
+        recipients,
+        locale,
+        campaign_id: body?.campaign_id ?? null,
+        sent_by: user.id,
+        subject_override: typeof body?.subject === 'string' ? body.subject : null,
+        body_override: typeof body?.body === 'string' ? body.body : null,
+      });
+      return NextResponse.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  }
+
+  // --- Legacy role/targets flow ----------------------------------------------
   const role = body?.role as RoleCode | undefined;
   const targets = Array.isArray(body?.targets) ? body.targets : [];
-  const locale = (body?.locale === 'en' ? 'en' : 'ar') as 'ar' | 'en';
   const deadline_at = body?.deadline_at ?? null;
 
   if (!role || targets.length === 0) {

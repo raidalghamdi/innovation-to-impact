@@ -20,12 +20,14 @@ import {
   Unlock,
   ListChecks,
   Plus,
+  Send,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { InvitationSendModal } from '@/components/invitation-send-modal';
 
 // `open` / `open_options` and `is_broadcast` / `template_options` are Round-2
 // additions. They require DB changes before they are fully functional (see
@@ -93,6 +95,7 @@ export function InvitationTemplatesManager({
   const [activeRole, setActiveRole] = useState<string>(roles[0]?.code ?? 'innovator');
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null);
+  const [showSend, setShowSend] = useState(false);
 
   const showToast = (kind: 'ok' | 'err', msg: string) => {
     setToast({ kind, msg });
@@ -297,8 +300,20 @@ export function InvitationTemplatesManager({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardContent className="space-y-4 p-5">
-              <div className="text-xs uppercase tracking-wide text-slate-500">
-                {currentTpl.code}
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs uppercase tracking-wide text-slate-500">
+                  {currentTpl.code}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowSend(true)}
+                  className="gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  {isAr ? 'أرسل الآن' : 'Send now'}
+                </Button>
               </div>
 
               <div>
@@ -499,6 +514,16 @@ export function InvitationTemplatesManager({
         <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
           {isAr ? 'لا يوجد قالب لهذا الدور.' : 'No template for this role.'}
         </div>
+      )}
+
+      {showSend && currentTpl && (
+        <InvitationSendModal
+          template={currentTpl}
+          roles={roles}
+          locale={locale}
+          onClose={() => setShowSend(false)}
+          onToast={showToast}
+        />
       )}
     </div>
   );

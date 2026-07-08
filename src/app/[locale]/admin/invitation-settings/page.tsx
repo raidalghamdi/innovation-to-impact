@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/user';
 import { isCurrentUserAdmin } from '@/lib/db-roles';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { InvitationSettingsForm } from '@/components/invitation-settings-form';
+import { InvitationComposeForm } from '@/components/invitation-compose-form';
 
 export default async function InvitationSettingsPage({
   params,
@@ -31,6 +32,19 @@ export default async function InvitationSettingsPage({
   const map: Record<string, any> = {};
   for (const row of settings ?? []) map[(row as any).key] = (row as any).value;
 
+  const { data: templates } = await admin!
+    .schema('innovation')
+    .from('email_templates')
+    .select('*')
+    .order('role')
+    .order('kind');
+  const { data: roles } = await admin!
+    .schema('innovation')
+    .from('roles')
+    .select('code, name_ar, name_en')
+    .eq('is_active', true)
+    .order('code');
+
   return (
     <AppShell>
       <div className="mx-auto max-w-3xl px-4 py-8">
@@ -41,6 +55,11 @@ export default async function InvitationSettingsPage({
               ? 'اضبط جدولة التذكيرات الآلية والقيم الافتراضية لرسائل الدعوة.'
               : 'Configure automatic reminders and default sender / expiry values.'
           }
+        />
+        <InvitationComposeForm
+          templates={(templates ?? []) as any[]}
+          roles={(roles ?? []) as any[]}
+          locale={isAr ? 'ar' : 'en'}
         />
         <InvitationSettingsForm
           reminder={map.reminder_schedule ?? {}}
