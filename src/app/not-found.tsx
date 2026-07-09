@@ -17,7 +17,7 @@ export default function RootNotFound() {
         style={{
           fontFamily:
             'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
-          background: '#F7F5EF',
+          background: '#FFFFFF',
           color: '#232529',
           margin: 0,
           minHeight: '100vh',

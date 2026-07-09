@@ -16,25 +16,28 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          // Competition Innovation Program identity
-          // Moon Raker (primary navy) + Swans Down (cyan) + Humming Bird (gold)
-          // NOTE: the `teal` key is Moon Raker navy — used as the primary dark
-          // brand color. It is NOT actual teal (real teal lives in brand-cyan /
-          // brand-gold). Historical name kept for backward compat with usages.
-          teal: '#1C4854',
-          'teal-dark': '#0F2D36',
-          'teal-light': '#D8EFE5',
+          // Competition Innovation Program — OFFICIAL guideline palette only
+          // (Style Guide p.8). Moon Raker is the single strong color; Swans Down
+          // and Humming Bird are soft supporting tints; Shark is body text.
+          'moon-raker': '#1C4854', // primary — dark surfaces, headers, big numbers
+          'swans-down': '#D8EFE5', // soft accent tint — rules, labels, KPI top rule
+          'humming-bird': '#CFEDF8', // support tint — alt table rows, hairlines
+          shark: '#232529', // body text
+          // Deprecated aliases retained so existing class names keep compiling;
+          // all remapped onto the guideline palette (no gold/cream/#0F2D36 hex).
+          teal: '#1C4854', // Moon Raker
+          'teal-dark': '#1C4854', // was #0F2D36 → Moon Raker
+          'teal-light': '#D8EFE5', // Swans Down
           moon: '#1C4854',
-          'moon-dark': '#0F2D36',
-          cyan: '#3FBAC8',
-          'cyan-alt': '#4ABFCD',
-          'cyan-light': '#7ED5DE',
-          gold: '#E0A82E',
-          'gold-light': '#F5EDD6',
-          cream: '#F7F5EF',
-          ink: '#232529',
-          shark: '#232529',
-          'muted-dark': '#8FA9B4',
+          'moon-dark': '#1C4854', // was #0F2D36 → Moon Raker
+          cyan: '#CFEDF8', // was #3FBAC8 → Humming Bird
+          'cyan-alt': '#CFEDF8',
+          'cyan-light': '#D8EFE5',
+          gold: '#1C4854', // was #E0A82E → Moon Raker (accents become the strong color)
+          'gold-light': '#D8EFE5', // was #F5EDD6 → Swans Down
+          cream: '#FFFFFF', // was #F7F5EF → white content background
+          ink: '#232529', // Shark
+          'muted-dark': '#5C5F66',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

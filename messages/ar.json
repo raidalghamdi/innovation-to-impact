@@ -180,7 +180,11 @@
       "programMark": "برنامج ابتكار المنافسة — الهيئة العامة للمنافسة",
       "wordmarkAr": "برنامج ابتكار المنافسة",
       "gacAuthority": "الهيئة العامة للمنافسة"
-    }
+    },
+    "programName": "برنامج ابتكار المنافسة",
+    "programNameShort": "ابتكار المنافسة",
+    "authority": "الهيئة العامة للمنافسة",
+    "platformName": "الابتكار إلى أثر"
   },
   "landing": {
     "heroTitle": "فكرتك قد تغيّر طريقة عمل المنافسة في السعودية. ابدأ من هنا.",
@@ -1986,5 +1990,20 @@
   "supervisor": {
     "title": "لوحة المشرف",
     "subtitle": "فحص الأفكار وتعيين المقيّمين على المسارات"
+  },
+  "reports": {
+    "keyIndicators": "المؤشرات الرئيسية",
+    "section": "القسم",
+    "records": "{count} سجل",
+    "empty": "لا توجد سجلات ضمن النطاق المحدد.",
+    "period": "الفترة",
+    "allPeriods": "جميع الفترات",
+    "preparedBy": "إعداد",
+    "systemAdmin": "إدارة النظام",
+    "issued": "تاريخ الإصدار",
+    "pageOf": "{page} / {total}",
+    "thankYou": "شكراً لكم",
+    "backLine": "{platform} · {program}",
+    "localeLabel": "عربي"
   }
 }

@@ -180,7 +180,11 @@
       "programMark": "Innovation to Impact — General Authority for Competition",
       "wordmarkAr": "Competition Innovation Program (Arabic wordmark)",
       "gacAuthority": "General Authority for Competition"
-    }
+    },
+    "programName": "Competition Innovation Program",
+    "programNameShort": "CIP",
+    "authority": "General Authority for Competition",
+    "platformName": "Innovation to Impact"
   },
   "landing": {
     "heroTitle": "Your idea could change how competition works in Saudi Arabia. Start here.",
@@ -1986,5 +1990,20 @@
   "supervisor": {
     "title": "Supervisor Console",
     "subtitle": "Screen ideas and assign evaluators to tracks"
+  },
+  "reports": {
+    "keyIndicators": "KEY INDICATORS",
+    "section": "SECTION",
+    "records": "{count} records",
+    "empty": "No records within the selected range.",
+    "period": "PERIOD",
+    "allPeriods": "All periods",
+    "preparedBy": "PREPARED BY",
+    "systemAdmin": "System Administration",
+    "issued": "ISSUED",
+    "pageOf": "{page} / {total}",
+    "thankYou": "THANK YOU",
+    "backLine": "{platform} · {program}",
+    "localeLabel": "EN"
   }
 }

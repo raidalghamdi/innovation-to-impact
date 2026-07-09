@@ -128,7 +128,7 @@ export function TimelineModern({
         className="absolute inset-y-0 start-6 w-[3px] -translate-x-1/2 rounded-full rtl:translate-x-1/2 md:start-1/2"
         style={{
           background:
-            'linear-gradient(180deg, #3FBAC8 0%, #3FBAC8 57%, #E0A82E 57%, #E0A82E 100%)',
+            'linear-gradient(180deg, #CFEDF8 0%, #CFEDF8 57%, #1C4854 57%, #1C4854 100%)',
         }}
       />
 
@@ -152,8 +152,8 @@ export function TimelineModern({
                 className={cn(
                   'absolute start-6 top-6 z-10 h-4 w-4 -translate-x-1/2 rounded-full rtl:translate-x-1/2 md:start-1/2 md:top-1/2 md:h-5 md:w-5 md:-translate-y-1/2',
                   gold
-                    ? 'bg-brand-gold shadow-[0_0_0_4px_#F7F5EF,0_0_16px_rgba(224,168,46,0.7)]'
-                    : 'bg-brand-cyan shadow-[0_0_0_4px_#F7F5EF,0_0_16px_rgba(63,186,200,0.6)]'
+                    ? 'bg-brand-moon-raker shadow-[0_0_0_4px_#FFFFFF,0_0_16px_rgba(28,72,84,0.7)]'
+                    : 'bg-brand-humming-bird shadow-[0_0_0_4px_#FFFFFF,0_0_16px_rgba(207,237,248,0.6)]'
                 )}
               />
 
