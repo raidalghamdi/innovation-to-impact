@@ -7,7 +7,7 @@ import { fanOut } from '@/lib/notifications';
  * POST /api/ideas/[id]/resubmit
  *
  * Innovator submits partial edits after a supervisor returned their idea.
- * Body: { title_ar?, title_en?, problem_statement?, proposed_solution?, expected_benefits? }
+ * Body: { title_ar?, title_en?, proposed_solution? }
  *
  * Server-side gate (defense in depth against a client hack):
  *  1) Caller must be the idea's submitter.
@@ -69,9 +69,7 @@ export async function POST(
   const SECTION_FOR_KEY: Record<string, string> = {
     title_ar: 'title',
     title_en: 'title',
-    problem_statement: 'problem_statement',
     proposed_solution: 'proposed_solution',
-    expected_benefits: 'expected_benefits',
   };
 
   // editable_sections === null → legacy behavior, all sections editable.

@@ -2,12 +2,10 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from '@/i18n/routing';
 import { fetchIdeas } from '@/lib/data';
-import { findSimilarIdeas } from '@/lib/similarity';
 import { ideas as demoIdeas } from '@/lib/demo-data';
 import { formatDate } from '@/lib/utils';
-import { CheckCircle2, Paperclip, Sparkles, Download } from 'lucide-react';
+import { CheckCircle2, Download } from 'lucide-react';
 import { getFeedbackForIdea } from '@/lib/feedback';
 import { FeedbackSection } from '@/components/feedback-section';
 import { IdeaHero } from '@/components/idea-hero';
@@ -20,9 +18,8 @@ import { getCurrentUser } from '@/lib/user';
  * Layout (matches design reference):
  *   1. Dark Hero with title, chips, team strip, export actions, 9-stage
  *      horizontal timeline, and (when returned) a banner + Edit CTA.
- *   2. Two-column body: main content (problem / solution / benefits /
- *      attachments) + side rail (team members, submission metadata,
- *      related + similar ideas, evaluator feedback for the innovator).
+ *   2. Two-column body: main content (idea description + attachments) + side
+ *      rail (team members, submission metadata, evaluator feedback).
  *
  * Team information now lives INSIDE this page (per user clarification —
  * previously in the my-ideas list card, moved here to declutter).
@@ -40,15 +37,10 @@ export default async function IdeaDetailPage({
   setRequestLocale(locale);
   const t = await getTranslations('ideas');
   const tc = await getTranslations('common');
-  const tsim = await getTranslations('similarity');
 
   const allIdeas = await fetchIdeas();
   const idea = allIdeas.find((i) => i.id === id) ?? demoIdeas.find((i) => i.id === id);
   if (!idea) notFound();
-
-  const similarQuery =
-    idea.problem_statement || (locale === 'ar' ? idea.title_ar : idea.title_en) || '';
-  const similarIdeas = await findSimilarIdeas(similarQuery, idea.id, 0.2, 5);
 
   const feedback = await getFeedbackForIdea(idea.id);
 
@@ -233,47 +225,12 @@ export default async function IdeaDetailPage({
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-brand-teal">
-                {t('problemStatement')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm leading-relaxed">
-              <p>{idea.problem_statement || '—'}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-brand-teal">{t('proposedSolution')}</CardTitle>
+              <CardTitle className="text-brand-teal">{t('ideaDescription')}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm leading-relaxed text-muted-foreground">
               <p>{idea.proposed_solution || '—'}</p>
             </CardContent>
           </Card>
-
-          {idea.expected_benefits && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-brand-teal">
-                  {locale === 'ar' ? 'المنافع المتوقعة' : 'Expected Benefits'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  {idea.expected_benefits.split(/[\n·•]+/).map((line, i) => {
-                    const trimmed = line.trim();
-                    if (!trimmed) return null;
-                    return (
-                      <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                        <span>{trimmed}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Attachments */}
           {attachments.length > 0 && (
@@ -381,39 +338,6 @@ export default async function IdeaDetailPage({
               />
             </CardContent>
           </Card>
-
-          {similarIdeas.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-brand-teal">
-                  <Sparkles className="h-4 w-4 text-brand-cyan" />
-                  {tsim('relatedTitle')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {similarIdeas.map((r) => (
-                    <li key={r.id}>
-                      <Link
-                        href={`/ideas/${r.id}`}
-                        className="flex items-center justify-between gap-3 rounded-md border border-border p-2 text-sm hover:bg-muted/50"
-                      >
-                        <span className="line-clamp-1" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-                          {(locale === 'ar' ? r.title_ar : r.title_en) ||
-                            r.title_en ||
-                            r.title_ar ||
-                            r.code}
-                        </span>
-                        <span className="shrink-0 rounded-full bg-brand-teal-light px-2 py-0.5 text-[11px] font-medium text-brand-teal">
-                          {Math.round(r.similarity * 100)}%
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </AppShell>

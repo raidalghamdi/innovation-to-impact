@@ -13,7 +13,7 @@ import { AlertTriangle, Lock, Save, X, Paperclip, FileText, CheckCircle2 } from 
 const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10MB — mirrors lib/storage.ts.
 const ATTACH_ALLOWED_EXT = /\.(pdf|jpe?g|png|docx)$/i;
 
-type Section = 'title' | 'problem_statement' | 'proposed_solution' | 'expected_benefits' | 'attachments' | 'team';
+type Section = 'title' | 'proposed_solution' | 'attachments' | 'team';
 
 type Props = {
   locale: string;
@@ -21,9 +21,7 @@ type Props = {
   initial: {
     title_ar: string | null;
     title_en: string | null;
-    problem_statement: string | null;
     proposed_solution: string | null;
-    expected_benefits: string | null;
   };
   editableSections: Section[]; // supervisor-selected editable sections
   reason: string | null; // supervisor notes shown at top
@@ -58,9 +56,7 @@ export function IdeaEditForm({
 
   const [titleAr, setTitleAr] = useState(initial.title_ar ?? '');
   const [titleEn, setTitleEn] = useState(initial.title_en ?? '');
-  const [problem, setProblem] = useState(initial.problem_statement ?? '');
   const [solution, setSolution] = useState(initial.proposed_solution ?? '');
-  const [benefits, setBenefits] = useState(initial.expected_benefits ?? '');
 
   // Attachment uploads (only relevant when 'attachments' is editable). Files
   // upload immediately to the evidence bucket linked to this idea; there is no
@@ -113,9 +109,7 @@ export function IdeaEditForm({
         patch.title_ar = titleAr;
         patch.title_en = titleEn;
       }
-      if (isEditable('problem_statement')) patch.problem_statement = problem;
       if (isEditable('proposed_solution')) patch.proposed_solution = solution;
-      if (isEditable('expected_benefits')) patch.expected_benefits = benefits;
 
       const res = await fetch(`/api/ideas/${ideaId}/resubmit`, {
         method: 'POST',
@@ -202,21 +196,7 @@ export function IdeaEditForm({
         </div>
       </SectionCard>
 
-      {/* PROBLEM */}
-      <SectionCard
-        title={isAr ? sectionLabels.ar.problem_statement : sectionLabels.en.problem_statement}
-        locked={!isEditable('problem_statement')}
-        isAr={isAr}
-      >
-        <Textarea
-          value={problem}
-          onChange={(e) => setProblem(e.target.value)}
-          rows={5}
-          disabled={!isEditable('problem_statement')}
-        />
-      </SectionCard>
-
-      {/* SOLUTION */}
+      {/* IDEA DESCRIPTION */}
       <SectionCard
         title={isAr ? sectionLabels.ar.proposed_solution : sectionLabels.en.proposed_solution}
         locked={!isEditable('proposed_solution')}
@@ -225,22 +205,8 @@ export function IdeaEditForm({
         <Textarea
           value={solution}
           onChange={(e) => setSolution(e.target.value)}
-          rows={5}
+          rows={6}
           disabled={!isEditable('proposed_solution')}
-        />
-      </SectionCard>
-
-      {/* BENEFITS */}
-      <SectionCard
-        title={isAr ? sectionLabels.ar.expected_benefits : sectionLabels.en.expected_benefits}
-        locked={!isEditable('expected_benefits')}
-        isAr={isAr}
-      >
-        <Textarea
-          value={benefits}
-          onChange={(e) => setBenefits(e.target.value)}
-          rows={4}
-          disabled={!isEditable('expected_benefits')}
         />
       </SectionCard>
 
@@ -364,17 +330,13 @@ function SectionCard({
 const sectionLabels = {
   ar: {
     title: 'عنوان الفكرة',
-    problem_statement: 'بيان المشكلة',
-    proposed_solution: 'الحل المقترح',
-    expected_benefits: 'المنافع المتوقعة',
+    proposed_solution: 'وصف الفكرة',
     attachments: 'المرفقات',
     team: 'بيانات الفريق',
   },
   en: {
     title: 'Idea title',
-    problem_statement: 'Problem statement',
-    proposed_solution: 'Proposed solution',
-    expected_benefits: 'Expected benefits',
+    proposed_solution: 'Idea description',
     attachments: 'Attachments',
     team: 'Team details',
   },

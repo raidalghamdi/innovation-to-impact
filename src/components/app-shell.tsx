@@ -19,7 +19,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { resolveRoleSync, type Role } from '@/lib/roles';
-import { Menu, X, Plus } from 'lucide-react';
+import { Menu, X, Plus, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Labels for the admin BackNav — kept here (not on the server layout) so the
@@ -139,6 +139,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/" className="flex min-w-0 shrink items-center gap-2.5 overflow-hidden" aria-label={t('nav.home')}>
             {/* Matches LandingNav sizing exactly (see logo.tsx sizing notes). */}
             <CoBrand className="h-8 sm:h-10 xl:h-12" locale={locale} />
+          </Link>
+
+          {/* Persistent Home link back to the public landing page — always
+              available, even on authenticated app routes where the marketing
+              anchor nav is hidden. */}
+          <Link
+            href="/"
+            className="hidden shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal sm:inline-flex"
+          >
+            <Home className="h-4 w-4" />
+            <span className="hidden lg:inline">{t('nav.homePage')}</span>
           </Link>
 
           {/* Desktop anchor nav (≥xl) — same links as LandingNav. Hidden on

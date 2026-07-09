@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { ChevronDown, User, Users, Star, Bell, Settings, LogOut, LayoutDashboard, Lightbulb, PlusCircle } from 'lucide-react';
+import { ChevronDown, User, Star, Bell, Settings, LogOut, LayoutDashboard, Lightbulb, PlusCircle } from 'lucide-react';
 import { signOutAction } from '@/app/[locale]/actions/auth';
 import { useLocale } from 'next-intl';
 
@@ -33,7 +33,6 @@ export function UserMenu({ displayName }: { displayName: string }) {
     { href: '/dashboard', icon: LayoutDashboard, ar: 'لوحة أعمالي', en: 'My Dashboard' },
     { href: '/my-ideas', icon: Lightbulb, ar: 'أفكاري', en: 'My Ideas' },
     { href: '/ideas/new', icon: PlusCircle, ar: 'قدّم فكرة', en: 'Submit Idea' },
-    { href: '/team', icon: Users, ar: 'فريقي', en: 'My Team' },
     { href: '/profile/level', icon: Star, ar: 'مستواي', en: 'My Level' },
     { href: '/notifications', icon: Bell, ar: 'الإشعارات', en: 'Notifications' },
     { href: '/settings', icon: Settings, ar: 'الإعدادات', en: 'Settings' },

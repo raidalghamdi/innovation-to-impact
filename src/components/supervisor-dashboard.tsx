@@ -15,9 +15,7 @@ type Idea = {
   code: string | null;
   title_ar: string | null;
   title_en: string | null;
-  problem_statement: string | null;
   proposed_solution: string | null;
-  expected_benefits: string | null;
   strategic_theme_id: string | null;
   status: string;
   submitted_at: string | null;
@@ -57,9 +55,7 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
   // are editable and the rest are locked.
   const RETURN_SECTIONS = [
     'title',
-    'problem_statement',
     'proposed_solution',
-    'expected_benefits',
     'attachments',
     'team',
   ] as const;
@@ -137,9 +133,7 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
 
   const sectionLabels = {
     title: isAr ? 'عنوان الفكرة' : 'Idea title',
-    problem_statement: isAr ? 'بيان المشكلة' : 'Problem statement',
-    proposed_solution: isAr ? 'الحل المقترح' : 'Proposed solution',
-    expected_benefits: isAr ? 'المنافع المتوقعة' : 'Expected benefits',
+    proposed_solution: isAr ? 'وصف الفكرة' : 'Idea description',
     attachments: isAr ? 'المرفقات' : 'Attachments',
     team: isAr ? 'بيانات الفريق' : 'Team details',
   } as const;
@@ -272,12 +266,12 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                       </div>
                     </CardHeader>
                     <CardContent className="flex flex-1 flex-col gap-3 pt-0">
-                      {i.problem_statement && (
+                      {i.proposed_solution && (
                         <div>
                           <div className="text-xs font-medium text-muted-foreground">
-                            {isAr ? 'المشكلة' : 'Problem'}
+                            {isAr ? 'وصف الفكرة' : 'Idea description'}
                           </div>
-                          <p className="line-clamp-2 text-sm">{i.problem_statement}</p>
+                          <p className="line-clamp-2 text-sm">{i.proposed_solution}</p>
                         </div>
                       )}
                       <div className="mt-auto flex items-center justify-between pt-2 text-xs text-muted-foreground">
@@ -389,19 +383,10 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
 
             <div className="max-h-[60vh] overflow-y-auto">
               <CardContent className="space-y-5 py-5">
-                {viewIdea.problem_statement && (
-                  <ReviewSection label={isAr ? 'المشكلة' : 'Problem statement'} value={viewIdea.problem_statement} />
-                )}
                 {viewIdea.proposed_solution && (
                   <ReviewSection
-                    label={isAr ? 'الحل المقترح' : 'Proposed solution'}
+                    label={isAr ? 'وصف الفكرة' : 'Idea description'}
                     value={viewIdea.proposed_solution}
-                  />
-                )}
-                {viewIdea.expected_benefits && (
-                  <ReviewSection
-                    label={isAr ? 'الفوائد المتوقعة' : 'Expected benefits'}
-                    value={viewIdea.expected_benefits}
                   />
                 )}
                 {(viewIdea.rejection_reason_ar || viewIdea.rejection_reason) && (

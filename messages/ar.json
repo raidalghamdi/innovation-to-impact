@@ -97,6 +97,7 @@
   },
   "nav": {
     "home": "الرئيسية",
+    "homePage": "الصفحة الرئيسية",
     "dashboard": "لوحة المعلومات",
     "strategy": "الاستراتيجية",
     "ideas": "الأفكار",
@@ -472,6 +473,7 @@
     "confidentiality": "السرية",
     "problemStatement": "بيان المشكلة",
     "proposedSolution": "الحل المقترح",
+    "ideaDescription": "وصف الفكرة",
     "expectedBenefits": "المنافع المتوقعة",
     "similarityHint": "توجد بالفعل أفكار في موضوع مشابه",
     "relationships": "العلاقات",

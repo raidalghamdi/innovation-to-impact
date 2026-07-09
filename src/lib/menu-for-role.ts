@@ -73,7 +73,6 @@ const TAIL_ITEMS: MenuItem[] = [
 const SUBMITTER_ITEMS: MenuItem[] = [
   { href: '/my-ideas', labelAr: 'أفكاري', labelEn: 'My Ideas', icon: Lightbulb },
   { href: '/ideas/new', labelAr: 'قدّم فكرة', labelEn: 'Submit Idea', icon: PlusCircle },
-  { href: '/team', labelAr: 'فريقي', labelEn: 'My Team', icon: Users2 },
   { href: '/profile/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
 ];
 

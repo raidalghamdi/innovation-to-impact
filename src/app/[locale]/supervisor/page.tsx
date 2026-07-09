@@ -38,7 +38,7 @@ export default async function SupervisorPage({
   const { data: ideas } = await supabase!
     .from('ideas')
     .select(
-      'id, code, title_ar, title_en, problem_statement, proposed_solution, expected_benefits, strategic_theme_id, status, submitted_at, created_at, rejection_reason, rejection_reason_ar'
+      'id, code, title_ar, title_en, proposed_solution, strategic_theme_id, status, submitted_at, created_at, rejection_reason, rejection_reason_ar'
     )
     .in('status', ['submitted', 'screening', 'returned', 'approved', 'assigned', 'evaluation', 'rejected'])
     .order('submitted_at', { ascending: false, nullsFirst: false });

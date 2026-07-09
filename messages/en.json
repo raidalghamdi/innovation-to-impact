@@ -97,6 +97,7 @@
   },
   "nav": {
     "home": "Home",
+    "homePage": "Home",
     "dashboard": "Dashboard",
     "strategy": "Strategy",
     "ideas": "Ideas",
@@ -472,6 +473,7 @@
     "confidentiality": "Confidentiality",
     "problemStatement": "Problem statement",
     "proposedSolution": "Proposed solution",
+    "ideaDescription": "Idea description",
     "expectedBenefits": "Expected benefits",
     "similarityHint": "Some ideas on a similar theme already exist",
     "relationships": "Relationships",

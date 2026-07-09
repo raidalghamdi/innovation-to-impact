@@ -68,17 +68,17 @@ export async function InnovatorDashboard({ userId, locale }: { userId: string; l
       </div>
 
       {/* KPI overview — no "prize position". Each card links to a filtered list. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Link href={'/my-ideas' as any} className="rounded-2xl transition hover:opacity-90">
+      <div className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-4">
+        <Link href={'/my-ideas' as any} className="block h-full rounded-2xl transition hover:opacity-90">
           <KpiCard label={isAr ? 'أفكاري' : 'My Ideas'} value={myIdeas.length} icon={Lightbulb} />
         </Link>
-        <Link href={'/my-ideas?status=in_review' as any} className="rounded-2xl transition hover:opacity-90">
+        <Link href={'/my-ideas?status=in_review' as any} className="block h-full rounded-2xl transition hover:opacity-90">
           <KpiCard label={isAr ? 'قيد المراجعة' : 'In Review'} value={inReview} icon={Clock} />
         </Link>
-        <Link href={'/my-ideas?status=approved' as any} className="rounded-2xl transition hover:opacity-90">
+        <Link href={'/my-ideas?status=approved' as any} className="block h-full rounded-2xl transition hover:opacity-90">
           <KpiCard label={isAr ? 'مقبولة' : 'Accepted'} value={accepted} icon={CheckCircle2} />
         </Link>
-        <Link href={'/profile/level' as any} className="rounded-2xl transition hover:opacity-90">
+        <Link href={'/profile/level' as any} className="block h-full rounded-2xl transition hover:opacity-90">
           <KpiCard
             label={isAr ? 'مستواي' : 'My Level'}
             value={`L${level}`}

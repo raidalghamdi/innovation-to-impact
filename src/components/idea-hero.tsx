@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Download, FileText, Pencil, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { StageTimelineHorizontal } from '@/components/stage-timeline-horizontal';
 
 type TeamMember = {
@@ -65,14 +65,6 @@ export function IdeaHero({
 
   return (
     <section className="relative -mt-4 mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F2E33] via-[#122E33] to-[#1B474D] text-white shadow-xl">
-      {/* HITL banner */}
-      <div className="border-b border-white/10 bg-white/5 px-6 py-2.5 text-center text-xs text-white/80 sm:text-sm">
-        <AlertTriangle className="mx-1 inline h-3.5 w-3.5 text-amber-300" />
-        {isAr
-          ? 'قد تحتاج النتائج المدعومة بالذكاء الاصطناعي إلى مراجعة بشرية — يُرجى التحقق قبل اتخاذ أي إجراء.'
-          : 'AI-supported results may need human review — verify before taking action.'}
-      </div>
-
       <div className="px-6 pb-8 pt-8 sm:px-10 sm:pt-10">
         {/* Top row: code + status chip */}
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -107,35 +99,9 @@ export function IdeaHero({
           )}
         </div>
 
-        {/* Team strip + actions */}
+        {/* Team strip */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
           <TeamStrip members={teamMembers} teamName={teamName} isAr={isAr} />
-
-          <div className="flex flex-wrap items-center gap-2">
-            {canEdit && (
-              <Link
-                href={`/ideas/${ideaId}/edit`}
-                className="inline-flex items-center gap-1.5 rounded-md bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-amber-300"
-              >
-                <Pencil className="h-4 w-4" />
-                {isAr ? 'تعديل' : 'Edit'}
-              </Link>
-            )}
-            <a
-              href={`/api/exports/idea-brief.pdf?ideaId=${ideaId}&locale=${locale}`}
-              className="inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/15"
-            >
-              <Download className="h-4 w-4" />
-              {isAr ? 'تصدير موجز (PDF)' : 'Export brief (PDF)'}
-            </a>
-            <a
-              href={`/api/exports/idea.docx?ideaId=${ideaId}&locale=${locale}`}
-              className="inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/15"
-            >
-              <FileText className="h-4 w-4" />
-              {isAr ? 'تصدير DOCX' : 'Export DOCX'}
-            </a>
-          </div>
         </div>
 
         {/* Horizontal timeline */}

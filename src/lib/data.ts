@@ -746,7 +746,7 @@ export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<Eval
       if (ideaIds.length) {
         const { data: ideas } = await supabase
           .from('ideas')
-          .select('id, code, title_ar, title_en, problem_statement, proposed_solution, expected_benefits, strategic_theme_id, team_id, submitted_at, attachments')
+          .select('id, code, title_ar, title_en, problem_statement, proposed_solution, strategic_theme_id, team_id, submitted_at, attachments')
           .in('id', ideaIds);
         for (const i of (ideas as any[]) ?? []) ideaById.set(i.id, i);
       }

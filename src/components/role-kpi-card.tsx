@@ -18,7 +18,7 @@ export function RoleKpiCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
         {Icon && (

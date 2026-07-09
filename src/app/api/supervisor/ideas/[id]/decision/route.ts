@@ -49,9 +49,7 @@ export async function POST(
   // trust the client).
   const ALLOWED_SECTIONS = new Set([
     'title',
-    'problem_statement',
     'proposed_solution',
-    'expected_benefits',
     'attachments',
     'team',
   ]);

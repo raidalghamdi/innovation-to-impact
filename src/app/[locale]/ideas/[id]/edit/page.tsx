@@ -36,7 +36,7 @@ export default async function IdeaEditPage({
   const { data: idea } = await supabase
     .from('ideas')
     .select(
-      'id, submitter_id, status, title_ar, title_en, problem_statement, proposed_solution, expected_benefits, editable_sections, rejection_reason, rejection_reason_ar'
+      'id, submitter_id, status, title_ar, title_en, proposed_solution, editable_sections, rejection_reason, rejection_reason_ar'
     )
     .eq('id', id)
     .maybeSingle();
@@ -52,7 +52,7 @@ export default async function IdeaEditPage({
   const editableSections = Array.isArray(row.editable_sections)
     ? (row.editable_sections as string[])
     : [];
-  const validSections = ['title', 'problem_statement', 'proposed_solution', 'expected_benefits', 'attachments', 'team'] as const;
+  const validSections = ['title', 'proposed_solution', 'attachments', 'team'] as const;
   const cleaned = editableSections.filter((s) => (validSections as readonly string[]).includes(s)) as Array<
     (typeof validSections)[number]
   >;
@@ -78,9 +78,7 @@ export default async function IdeaEditPage({
         initial={{
           title_ar: row.title_ar,
           title_en: row.title_en,
-          problem_statement: row.problem_statement,
           proposed_solution: row.proposed_solution,
-          expected_benefits: row.expected_benefits,
         }}
         editableSections={cleaned}
         reason={reason}
