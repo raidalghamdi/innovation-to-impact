@@ -1,6 +1,7 @@
 /**
  * Invitations service — CRUD + email flow for role-based invitations.
  */
+import { randomUUID } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
@@ -227,8 +228,8 @@ export async function sendInvitationEmail(
   }>('invitation_defaults');
   const programName =
     locale === 'ar'
-      ? defaults?.program_name_ar ?? 'برنامج ابتكر لمنافس'
-      : defaults?.program_name_en ?? 'Innovation-to-Impact Program';
+      ? defaults?.program_name_ar ?? 'برنامج ابتكار المنافسة'
+      : defaults?.program_name_en ?? 'Competition Innovation Program';
 
   const links = invitationLinks(invitation.token);
   const inviteeName = invitation.target_name ?? invitation.target_email;
@@ -472,7 +473,7 @@ export async function sendTemplatedInvitations(input: {
 
   const campaignId =
     recipients.length > 1
-      ? input.campaign_id ?? (globalThis.crypto?.randomUUID?.() ?? null)
+      ? input.campaign_id ?? randomUUID()
       : null;
 
   const defaults = await getAdminSetting<{
@@ -482,8 +483,8 @@ export async function sendTemplatedInvitations(input: {
   }>('invitation_defaults');
   const programName =
     locale === 'ar'
-      ? defaults?.program_name_ar ?? 'برنامج ابتكر لمنافس'
-      : defaults?.program_name_en ?? 'Innovation-to-Impact Program';
+      ? defaults?.program_name_ar ?? 'برنامج ابتكار المنافسة'
+      : defaults?.program_name_en ?? 'Competition Innovation Program';
   const expiresDays = defaults?.expires_days ?? 14;
   const deadline = new Date(Date.now() + expiresDays * 24 * 3600 * 1000).toISOString();
 
@@ -514,8 +515,8 @@ export async function sendTemplatedInvitations(input: {
   for (const rec of recipients) {
     // Generate the token up-front so {{accept_link}}/{{reject_link}} can be
     // substituted in the body BEFORE the row is inserted.
-    const token = globalThis.crypto?.randomUUID?.() ?? null;
-    const links = token ? invitationLinks(token) : { accept: '', reject: '' };
+    const token = randomUUID();
+    const links = invitationLinks(token);
     const inviteeName = rec.name ?? rec.email;
     const vars: Record<string, string> = {
       name: inviteeName,

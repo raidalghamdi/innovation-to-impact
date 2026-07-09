@@ -22,7 +22,6 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { Resend } from 'resend';
 
 export type EmailCategory =
   | 'notification'
@@ -97,15 +96,34 @@ async function markStatus(id: string, status: 'sent' | 'failed', lastError?: str
 }
 
 async function sendViaResend(row: EnqueueEmailInput): Promise<void> {
+  // Plain fetch against the Resend REST API (mirrors src/lib/mailer.ts). The
+  // `resend` npm SDK swallows API errors and reports false success, so we call
+  // the endpoint directly and only treat a genuine 2xx as sent — any non-2xx
+  // throws with the response body verbatim so enqueueEmail() marks 'failed'.
   const key = process.env.RESEND_API_KEY!;
-  const resend = new Resend(key);
-  await resend.emails.send({
-    from: FROM,
-    to: row.to,
-    subject: row.subject,
-    html: row.bodyHtml,
-    text: row.bodyText,
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: FROM,
+      to: row.to,
+      subject: row.subject,
+      html: row.bodyHtml,
+      text: row.bodyText,
+    }),
   });
+
+  const bodyText = await res.text();
+
+  if (!res.ok) {
+    // eslint-disable-next-line no-console
+    console.error(`[email-outbox] Resend error ${res.status}: ${bodyText}`);
+    throw new Error(`Resend ${res.status}: ${bodyText}`.slice(0, 500));
+  }
 }
 
 async function sendViaSmtp(row: EnqueueEmailInput): Promise<void> {
