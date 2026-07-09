@@ -10,10 +10,10 @@ import { resolveLevel } from '@/lib/evaluator-levels';
 import { formatDate } from '@/lib/utils';
 import {
   ListChecks,
-  SlidersHorizontal,
-  CalendarClock,
+  Bell,
   Trophy,
-  LifeBuoy,
+  History,
+  Settings,
   ClipboardCheck,
   CalendarCheck,
   Timer,
@@ -96,10 +96,10 @@ export default async function EvaluatorDashboardPage({
 
   const quickActions = [
     { icon: ListChecks, title: t('qaEvaluate'), sub: t('qaEvaluateSub'), href: '/evaluator/ideas' },
-    { icon: SlidersHorizontal, title: t('qaCriteria'), sub: t('qaCriteriaSub'), href: '/evaluator/criteria' },
-    { icon: CalendarClock, title: t('qaSchedule'), sub: t('qaScheduleSub'), href: '/evaluator/schedule' },
+    { icon: Bell, title: t('qaNotifications'), sub: t('qaNotificationsSub'), href: '/evaluator/notifications' },
     { icon: Trophy, title: t('qaLevel'), sub: t('qaLevelSub'), href: '/evaluator/level' },
-    { icon: LifeBuoy, title: t('qaSupport'), sub: t('qaSupportSub'), href: '/support' },
+    { icon: History, title: t('qaMyEvals'), sub: t('qaMyEvalsSub'), href: '/evaluator/my-evaluations' },
+    { icon: Settings, title: t('qaSettings'), sub: t('qaSettingsSub'), href: '/evaluator/settings' },
   ] as const;
 
   const kpis = [
