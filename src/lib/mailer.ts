@@ -272,6 +272,11 @@ export function renderMailHtml(opts: {
   extraInfoBody?: string;
   greetingName?: string;
   deadlineText?: string;
+  // Optional CTA button labels. Default to the invitation wording
+  // ("قبول الدعوة" / "اعتذار") so existing callers are unaffected; other
+  // flows (e.g. idea-submission confirmation) can override with their own copy.
+  acceptLabel?: string;
+  rejectLabel?: string;
 }): string {
   const rtl = opts.locale !== 'en';
   const dir = rtl ? 'rtl' : 'ltr';
@@ -340,15 +345,24 @@ export function renderMailHtml(opts: {
   let ctaBlock = '';
   if (hasAccept || hasReject) {
     const btns: string[] = [];
+    const acceptLabel = !isBlank(opts.acceptLabel) ? opts.acceptLabel!.trim() : 'قبول الدعوة';
+    const rejectLabel = !isBlank(opts.rejectLabel) ? opts.rejectLabel!.trim() : 'اعتذار';
+    // Single-CTA layout: when only the accept button is present it spans the
+    // full width instead of hugging half the row.
+    const btnWidth = hasAccept && hasReject ? '50%' : '100%';
     if (hasAccept) {
-      btns.push(`<td style="padding:0 6px;" width="50%"><a href="${escapeHtml(
+      btns.push(`<td style="padding:0 6px;" width="${btnWidth}"><a href="${escapeHtml(
         opts.acceptUrl!.trim()
-      )}" style="display:block;text-align:center;padding:14px 20px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;background:#1C4854;color:#ffffff;">قبول الدعوة</a></td>`);
+      )}" style="display:block;text-align:center;padding:14px 20px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;background:#1C4854;color:#ffffff;">${escapeHtml(
+        acceptLabel
+      )}</a></td>`);
     }
     if (hasReject) {
-      btns.push(`<td style="padding:0 6px;" width="50%"><a href="${escapeHtml(
+      btns.push(`<td style="padding:0 6px;" width="${btnWidth}"><a href="${escapeHtml(
         opts.rejectUrl!.trim()
-      )}" style="display:block;text-align:center;padding:14px 20px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;background:#ffffff;color:#1C4854;border:1px solid #1C4854;">اعتذار</a></td>`);
+      )}" style="display:block;text-align:center;padding:14px 20px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;background:#ffffff;color:#1C4854;border:1px solid #1C4854;">${escapeHtml(
+        rejectLabel
+      )}</a></td>`);
     }
     ctaBlock = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0;"><tr>${btns.join(
       ''

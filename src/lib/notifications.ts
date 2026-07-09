@@ -9,6 +9,7 @@ import type { Role } from '@/lib/roles';
 // `notifications.types.<type>.{title,body}` and is resolved via next-intl.
 export type NotificationType =
   | 'idea_submitted'
+  | 'idea_submitted_confirmation'
   | 'evaluation_assigned'
   | 'evaluation_completed'
   | 'committee_decision'

@@ -1184,6 +1184,10 @@
       "idea_submitted": {
         "title": "New idea submitted",
         "body": "A new idea ({ideaCode}) was submitted and is awaiting screening."
+      },
+      "idea_submitted_confirmation": {
+        "title": "Your idea has been submitted: {ideaTitle}",
+        "body": "We've received your idea. You'll be notified once a supervisor reviews it."
       }
     }
   },
