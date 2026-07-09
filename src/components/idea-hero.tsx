@@ -19,6 +19,7 @@ type Props = {
   title: string;
   currentStage: number;
   status: string;
+  campaignName: string | null;
   themeName: string | null;
   challengeName: string | null;
   teamMembers: TeamMember[];
@@ -44,6 +45,7 @@ export function IdeaHero({
   title,
   currentStage,
   status,
+  campaignName,
   themeName,
   challengeName,
   teamMembers,
@@ -89,15 +91,20 @@ export function IdeaHero({
           {title}
         </h1>
 
-        {/* Chips row: challenge + track */}
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {challengeName && (
-            <ChipCard label={isAr ? 'التحدي' : 'Challenge'} value={challengeName} />
-          )}
-          {themeName && (
-            <ChipCard label={isAr ? 'المسار' : 'Track'} value={themeName} />
-          )}
-        </div>
+        {/* Campaign (الفعالية) — labeled row */}
+        {campaignName && (
+          <div className="mt-6">
+            <ChipCard label={t('campaign')} value={campaignName} />
+          </div>
+        )}
+
+        {/* Chips row: track + challenge, side by side */}
+        {(themeName || challengeName) && (
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {themeName && <ChipCard label={t('trackLabel')} value={themeName} />}
+            {challengeName && <ChipCard label={t('challengeLabel')} value={challengeName} />}
+          </div>
+        )}
 
         {/* Team strip */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
@@ -143,8 +150,8 @@ export function IdeaHero({
 function ChipCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3">
-      <span className="text-xs uppercase tracking-wider text-white/60">{label}</span>
-      <span className="text-sm font-medium">{value}</span>
+      <span className="shrink-0 text-xs uppercase tracking-wider text-white/60">{label}</span>
+      <span className="min-w-0 break-words text-end text-sm font-medium">{value}</span>
     </div>
   );
 }

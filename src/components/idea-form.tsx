@@ -327,6 +327,10 @@ export function IdeaForm({
       team_members: isTeam
         ? validTeamMembers.map((m) => ({ name: m.name.trim(), email: m.email.trim() }))
         : [],
+      // The chosen challenge is free text (per track) with no dedicated column,
+      // so it rides along in the metadata JSONB and is surfaced on the detail
+      // page as the "التحدي" chip.
+      original_source_metadata: { challenge: challenge || null },
     };
     // Persist to innovation.ideas. Do NOT swallow errors silently — if the
       // insert fails (RLS, missing columns, offline) we must surface the message
@@ -757,35 +761,35 @@ export function IdeaForm({
               <dl className="divide-y divide-border rounded-xl border border-border">
                 <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
                   <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('titleLabel')}</dt>
-                  <dd className="text-sm text-foreground sm:col-span-2">{title || '—'}</dd>
+                  <dd className="min-w-0 max-w-full whitespace-pre-wrap break-words text-sm text-foreground sm:col-span-2">{title || '—'}</dd>
                 </div>
                 <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
                   <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('descriptionLabel')}</dt>
-                  <dd className="whitespace-pre-wrap text-sm text-foreground sm:col-span-2">
+                  <dd className="min-w-0 max-w-full whitespace-pre-wrap break-words text-sm text-foreground sm:col-span-2">
                     {description || '—'}
                   </dd>
                 </div>
                 <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
                   <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('themeLabel')}</dt>
-                  <dd className="text-sm text-foreground sm:col-span-2">
+                  <dd className="min-w-0 max-w-full whitespace-pre-wrap break-words text-sm text-foreground sm:col-span-2">
                     {activeTheme ? pickFromRow(activeTheme, 'name', locale) : '—'}
                   </dd>
                 </div>
                 <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
                   <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('eventLabel')}</dt>
-                  <dd className="text-sm text-foreground sm:col-span-2">
+                  <dd className="min-w-0 max-w-full whitespace-pre-wrap break-words text-sm text-foreground sm:col-span-2">
                     {activeActivity ? pickFromRow(activeActivity, 'name', locale) : '—'}
                   </dd>
                 </div>
                 {challenge && (
                   <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
                     <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('challengeLabel')}</dt>
-                    <dd className="text-sm text-foreground sm:col-span-2">{challenge}</dd>
+                    <dd className="min-w-0 max-w-full whitespace-pre-wrap break-words text-sm text-foreground sm:col-span-2">{challenge}</dd>
                   </div>
                 )}
                 <div className="grid grid-cols-1 gap-1 p-3 sm:grid-cols-3 sm:gap-2">
                   <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{tf('participationLabel')}</dt>
-                  <dd className="text-sm text-foreground sm:col-span-2">
+                  <dd className="min-w-0 max-w-full whitespace-pre-wrap break-words text-sm text-foreground sm:col-span-2">
                     {participation === 'team'
                       ? `${tf('participationTeam')} (${validTeamMembers.length})`
                       : tf('participationIndividual')}

@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchIdeas } from '@/lib/data';
 import { ideas as demoIdeas } from '@/lib/demo-data';
 import { formatDate } from '@/lib/utils';
-import { CheckCircle2, Download } from 'lucide-react';
+import { CheckCircle2, Download, FileText } from 'lucide-react';
 import { getFeedbackForIdea } from '@/lib/feedback';
 import { FeedbackSection } from '@/components/feedback-section';
 import { IdeaHero } from '@/components/idea-hero';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
+import { listEvidence } from '@/lib/storage';
+import type { EvidenceWithUrl } from '@/lib/evidence-types';
 
 /**
  * /ideas/[id] — Idea details page.
@@ -48,7 +50,8 @@ export default async function IdeaDetailPage({
   const supabase = await createClient();
   const currentUser = await getCurrentUser();
 
-  // Track / challenge names
+  // Campaign / track / challenge names
+  let campaignName: string | null = null;
   let themeName: string | null = null;
   let challengeName: string | null = null;
   let teamName: string | null = null;
@@ -59,7 +62,6 @@ export default async function IdeaDetailPage({
     role_title: string | null;
     is_leader: boolean;
   }> = [];
-  let attachments: Array<{ name: string; type: string; size?: number; url?: string }> = [];
   let submittedAt: string | null = null;
   let updatedAt: string | null = null;
   let currentStage = 0;
@@ -67,12 +69,21 @@ export default async function IdeaDetailPage({
   let ideaTitle = '';
   let ideaCode: string | null = null;
   let submitterId: string | null = null;
+  let submitterName: string | null = null;
+  let submitterEmail: string | null = null;
+  // Participation type is derived: a populated team → 'team', otherwise 'individual'.
+  let participationType: 'individual' | 'team' = 'individual';
+
+  // Attachments come from the evidence ledger (bucket + evidence_attachments),
+  // which is where the submission wizard actually uploads files — not the
+  // legacy ideas.attachments JSONB column.
+  const evidenceAttachments: EvidenceWithUrl[] = await listEvidence('idea', id);
 
   if (supabase) {
     const { data: ideaRow } = await supabase
       .from('ideas')
       .select(
-        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, submitter_id, team_id, team_name, team_members, attachments, submitted_at, updated_at'
+        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, submitter_id, team_id, team_name, team_members, original_source_metadata, submitted_at, updated_at'
       )
       .eq('id', id)
       .maybeSingle();
@@ -88,9 +99,12 @@ export default async function IdeaDetailPage({
       submittedAt = (ideaRow as any).submitted_at ?? null;
       updatedAt = (ideaRow as any).updated_at ?? null;
       submitterId = (ideaRow as any).submitter_id ?? null;
-      const rawAttach = (ideaRow as any).attachments;
-      if (Array.isArray(rawAttach)) {
-        attachments = rawAttach as any;
+
+      // Challenge — free-text value chosen in the wizard, stored in the
+      // source-metadata JSONB (no dedicated column).
+      const meta = (ideaRow as any).original_source_metadata;
+      if (meta && typeof meta === 'object' && meta.challenge) {
+        challengeName = String(meta.challenge);
       }
 
       // Theme
@@ -107,7 +121,7 @@ export default async function IdeaDetailPage({
               : (th as any).name_en || (th as any).name_ar;
         }
       }
-      // Activity / challenge
+      // Activity → campaign / event (الفعالية)
       if ((ideaRow as any).activity_id) {
         const { data: act } = await supabase
           .from('activities')
@@ -115,7 +129,7 @@ export default async function IdeaDetailPage({
           .eq('id', (ideaRow as any).activity_id)
           .maybeSingle();
         if (act) {
-          challengeName =
+          campaignName =
             locale === 'ar'
               ? (act as any).name_ar || (act as any).title_ar || (act as any).name_en || (act as any).title_en
               : (act as any).name_en || (act as any).title_en || (act as any).name_ar || (act as any).title_ar;
@@ -170,6 +184,24 @@ export default async function IdeaDetailPage({
           teamMembers.sort((a, b) => (a.is_leader === b.is_leader ? 0 : a.is_leader ? -1 : 1));
         }
       }
+
+      participationType = teamMembers.length > 0 || teamName ? 'team' : 'individual';
+
+      // Submitter profile — shown on the individual participation card.
+      if (submitterId) {
+        const { data: prof } = await supabase
+          .from('user_profiles')
+          .select('full_name, full_name_ar, email')
+          .eq('id', submitterId)
+          .maybeSingle();
+        if (prof) {
+          submitterName =
+            locale === 'ar'
+              ? (prof as any).full_name_ar || (prof as any).full_name
+              : (prof as any).full_name || (prof as any).full_name_ar;
+          submitterEmail = (prof as any).email ?? null;
+        }
+      }
     }
   }
 
@@ -204,6 +236,7 @@ export default async function IdeaDetailPage({
         title={ideaTitle}
         currentStage={currentStage}
         status={statusStr}
+        campaignName={campaignName}
         themeName={themeName}
         challengeName={challengeName}
         teamMembers={teamMembers}
@@ -228,46 +261,23 @@ export default async function IdeaDetailPage({
               <CardTitle className="text-brand-teal">{t('ideaDescription')}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm leading-relaxed text-muted-foreground">
-              <p>{idea.proposed_solution || '—'}</p>
+              <p className="max-w-full whitespace-pre-wrap break-words">
+                {idea.proposed_solution || '—'}
+              </p>
             </CardContent>
           </Card>
 
-          {/* Attachments */}
-          {attachments.length > 0 && (
+          {/* Attachments — inline preview (images + PDF) plus download. Hidden
+              entirely when there are none. */}
+          {evidenceAttachments.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-brand-teal">{t('attachments')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
-                  {attachments.map((a, i) => (
-                    <li
-                      key={i}
-                      className="flex items-center justify-between gap-3 rounded-md border border-border p-3 text-sm"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-teal/10 text-xs font-bold uppercase text-brand-teal">
-                          {(a.type || 'FILE').split('/').pop()?.slice(0, 4) || 'FILE'}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="truncate font-medium">{a.name}</div>
-                          {a.size !== undefined && (
-                            <div className="text-xs text-muted-foreground">
-                              {(a.size / 1024 / 1024).toFixed(1)} MB
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {a.url && (
-                        <a
-                          href={a.url}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-brand-teal hover:underline"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          {tc('download')}
-                        </a>
-                      )}
-                    </li>
+                <ul className="space-y-4">
+                  {evidenceAttachments.map((a) => (
+                    <AttachmentRow key={a.id} attachment={a} downloadLabel={tc('download')} />
                   ))}
                 </ul>
               </CardContent>
@@ -278,8 +288,44 @@ export default async function IdeaDetailPage({
 
         {/* Side rail — 1/3 */}
         <div className="space-y-6">
+          {/* Participation type — sits directly above the team / individual card. */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">
+              {t('participationType')}:
+            </span>
+            <span className="rounded-full bg-brand-teal/10 px-3 py-1 text-sm font-semibold text-brand-teal">
+              {participationType === 'team'
+                ? t('participationTeamCount', { n: teamMembers.length })
+                : t('participationIndividual')}
+            </span>
+          </div>
+
+          {/* Individual — submitter info card (shown when not a team). */}
+          {participationType === 'individual' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-brand-teal">{t('submitterInfo')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-xs font-bold text-white">
+                    {(submitterName ?? '?').trim().charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{submitterName ?? '—'}</div>
+                    {submitterEmail && (
+                      <div className="truncate text-xs text-muted-foreground" dir="ltr">
+                        {submitterEmail}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Team — inside details page */}
-          {teamMembers.length > 0 && (
+          {participationType === 'team' && teamMembers.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-brand-teal">
@@ -350,5 +396,76 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="text-end font-medium">{value}</span>
     </div>
+  );
+}
+
+const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+function AttachmentRow({
+  attachment,
+  downloadLabel,
+}: {
+  attachment: EvidenceWithUrl;
+  downloadLabel: string;
+}) {
+  const { filename, content_type, size_bytes, url } = attachment;
+  const ext = (filename.split('.').pop() ?? '').toLowerCase();
+  const isImage =
+    IMAGE_EXT.includes(ext) || (content_type?.startsWith('image/') ?? false);
+  const isPdf = ext === 'pdf' || content_type === 'application/pdf';
+  const badge = (content_type?.split('/').pop() || ext || 'file').slice(0, 4).toUpperCase();
+
+  return (
+    <li className="space-y-3 rounded-md border border-border p-3 text-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {isImage || isPdf ? (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-teal/10 text-xs font-bold uppercase text-brand-teal">
+              {badge}
+            </div>
+          ) : (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-teal/10 text-brand-teal">
+              <FileText className="h-5 w-5" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <div className="truncate font-medium">{filename}</div>
+            {typeof size_bytes === 'number' && (
+              <div className="text-xs text-muted-foreground">
+                {(size_bytes / 1024 / 1024).toFixed(1)} MB
+              </div>
+            )}
+          </div>
+        </div>
+        {url && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-brand-teal hover:underline"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {downloadLabel}
+          </a>
+        )}
+      </div>
+
+      {/* Inline preview */}
+      {url && isImage && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={url}
+          alt={filename}
+          className="max-h-[300px] w-full rounded-md border border-border object-contain"
+        />
+      )}
+      {url && isPdf && (
+        <iframe
+          src={url}
+          title={filename}
+          className="h-[500px] w-full rounded-md border border-border"
+        />
+      )}
+    </li>
   );
 }

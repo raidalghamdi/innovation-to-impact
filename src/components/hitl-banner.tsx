@@ -10,11 +10,13 @@ import { Sparkles, X } from 'lucide-react';
 // so reviewers know to verify before acting. Dismissible per browser session
 // via localStorage — reappears in a new session/tab-less-storage but not on
 // every navigation within the same session.
+// Note: the innovator's own idea views (`/ideas`, `/ideas/[id]`) are
+// intentionally excluded — they surface no AI-assisted content, so the banner
+// was removed there. Evaluator/committee/admin routes keep it.
 const AI_ASSISTED_PREFIXES = [
   '/admin/analytics',
   '/evaluation',
   '/committee',
-  '/ideas',
   '/admin/change-requests',
 ];
 
