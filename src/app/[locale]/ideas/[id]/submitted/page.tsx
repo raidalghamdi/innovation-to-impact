@@ -133,9 +133,6 @@ export default async function IdeaSubmittedPage({
               <ArrowRight className="h-4 w-4 rtl:rotate-180" />
             </Link>
           </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link href="/ideas/new">{t('submitAnotherCta')}</Link>
-          </Button>
         </div>
       </div>
     </AppShell>

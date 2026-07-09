@@ -25,7 +25,8 @@ export default async function EvaluationCriteriaPage({
 
       <Card className="mt-8 overflow-hidden">
         <CardContent className="p-0">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[480px] text-sm">
             <thead className="bg-brand-teal-light/50 text-start">
               <tr>
                 <th className="p-3 text-start font-semibold text-brand-teal">{t('criteriaHeader')}</th>
@@ -47,6 +48,7 @@ export default async function EvaluationCriteriaPage({
               ))}
             </tbody>
           </table>
+          </div>
         </CardContent>
       </Card>
       <p className="mt-4 text-sm text-muted-foreground">{t('note')}</p>

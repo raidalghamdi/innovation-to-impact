@@ -310,7 +310,7 @@ export function AdminBackupPanel({ locale }: { locale: string }) {
                 <summary className="cursor-pointer text-[11px] text-muted-foreground hover:text-brand-teal">
                   {isAr ? 'تفاصيل لكل جدول' : 'Per-table details'}
                 </summary>
-                <div className="mt-2 max-h-48 overflow-y-auto">
+                <div className="mt-2 max-h-48 overflow-auto">
                   <table className="w-full text-[11px]">
                     <thead className="sticky top-0 bg-card">
                       <tr className="text-start text-muted-foreground">

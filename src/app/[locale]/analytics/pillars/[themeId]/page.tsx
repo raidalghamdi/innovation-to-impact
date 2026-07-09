@@ -80,7 +80,8 @@ export default async function PillarDetailPage({
         </CardHeader>
         <CardContent className="p-0">
           {detail.ideas.length ? (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
               <thead className="bg-brand-teal-light/50">
                 <tr>
                   <th className="p-3 text-start font-semibold text-brand-teal">{t('pillar.colCode')}</th>
@@ -100,6 +101,7 @@ export default async function PillarDetailPage({
                 ))}
               </tbody>
             </table>
+            </div>
           ) : (
             <p className="p-6 text-sm text-muted-foreground">{t('empty')}</p>
           )}

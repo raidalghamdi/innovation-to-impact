@@ -112,14 +112,14 @@ export function IdeaForm({
   const [challenge, setChallenge] = useState('');
   const [participation, setParticipation] = useState<'individual' | 'team'>('individual');
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([{ email: '', name: '' }]);
+  const [teamName, setTeamName] = useState('');
   const [ack, setAck] = useState(false);
   const [terms, setTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedNote, setSavedNote] = useState<string | null>(null);
-  // Attachments selected on step 3 (plus the filled template uploaded on
-  // step 2). Held in memory until the idea row is created — uploads happen
-  // post-insert so we know the linked_entity_id.
+  // Attachments selected on step 3. Held in memory until the idea row is
+  // created — uploads happen post-insert so we know the linked_entity_id.
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [attachError, setAttachError] = useState<string | null>(null);
   const restored = useRef(false);
@@ -195,16 +195,17 @@ export function IdeaForm({
     setTeamMembers((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)));
   }
 
-  const validTeamMembers = teamMembers.filter((m) => /\S+@\S+\.\S+/.test(m.email.trim()));
+  const validTeamMembers = teamMembers.filter(
+    (m) => /\S+@\S+\.\S+/.test(m.email.trim()) && m.name.trim().length > 0
+  );
 
   function suggestTitle() {
     const suggestion = smartTitle(description, locale);
     if (suggestion) setTitle(suggestion.slice(0, LIMITS.title));
   }
 
-  // Shared file intake for the step-2 filled-template upload and the step-3
-  // attachments dropzone. All uploaded files land in a single queue that is
-  // flushed post-insert. Mirrors the server guard in lib/storage.ts.
+  // File intake for the step-3 attachments dropzone. Uploaded files land in a
+  // queue that is flushed post-insert. Mirrors the server guard in lib/storage.ts.
   function ingestFiles(incoming: File[]) {
     setAttachError(null);
     if (incoming.length === 0) return;
@@ -234,19 +235,26 @@ export function IdeaForm({
 
   function stepValid(s: number): boolean {
     if (s === 0) {
-      // Basics: Event (activity) is required; Track preselected. Team
-      // participation requires at least one valid member email.
+      // Basics: all fields required. Event (activity) and Track must be set,
+      // a challenge must be chosen when the track defines any, and team
+      // participation requires a team name plus at least one member with both
+      // a name and a valid email.
       const basics = Boolean(activity) && Boolean(theme);
-      const teamOk = participation === 'individual' || validTeamMembers.length >= 1;
-      return basics && teamOk;
+      const challengeOk = challenges.length === 0 || Boolean(challenge);
+      const teamOk =
+        participation === 'individual' ||
+        (teamName.trim().length > 0 && validTeamMembers.length >= 1);
+      return basics && challengeOk && teamOk;
     }
     if (s === 1) return title.trim().length > 0 && description.trim().length > 0;
+    // Attachments: at least one file must be queued before proceeding.
+    if (s === 2) return selectedFiles.length >= 1;
     return true;
   }
 
   function next() {
     if (!stepValid(step)) {
-      setError(tf('required'));
+      setError(step === 2 ? tf('attachmentsRequired') : tf('required'));
       return;
     }
     setError(null);
@@ -459,7 +467,9 @@ export function IdeaForm({
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="theme">{tf('themeLabel')}</Label>
+                  <Label htmlFor="theme">
+                    {tf('themeLabel')} <span className="text-red-500">*</span>
+                  </Label>
                   <select
                     id="theme"
                     value={theme}
@@ -479,7 +489,9 @@ export function IdeaForm({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="challenge">{tf('challengeLabel')}</Label>
+                <Label htmlFor="challenge">
+                  {tf('challengeLabel')} <span className="text-red-500">*</span>
+                </Label>
                 {challenges.length === 0 ? (
                   <p className="rounded-lg bg-muted/50 p-2.5 text-xs text-muted-foreground">
                     {tf('challengeNone')}
@@ -528,14 +540,40 @@ export function IdeaForm({
               </fieldset>
 
               {participation === 'team' && (
-                <div className="space-y-2 rounded-2xl border border-border bg-muted/20 p-3">
+                <div className="space-y-3 rounded-2xl border border-border bg-muted/20 p-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="team-name">
+                      {tf('teamNameLabel')} <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="team-name"
+                      type="text"
+                      placeholder={tf('teamNamePlaceholder')}
+                      value={teamName}
+                      onChange={(e) => setTeamName(e.target.value)}
+                      dir={isAr ? 'rtl' : 'ltr'}
+                    />
+                  </div>
                   <div className="flex items-center justify-between gap-2">
-                    <Label>{tf('teamMembersLabel')}</Label>
+                    <Label>
+                      {tf('teamMembersLabel')} <span className="text-red-500">*</span>
+                    </Label>
                     <span className="text-xs text-muted-foreground">{tf('teamMembersHint')}</span>
                   </div>
                   <ul className="space-y-2">
                     {teamMembers.map((m, idx) => (
                       <li key={idx} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        {/* Name first in the DOM so that under RTL it lands on
+                            the right and the email input on the left. Order is
+                            layout-driven, not a label swap. */}
+                        <Input
+                          type="text"
+                          placeholder={tf('teamMemberName')}
+                          value={m.name}
+                          onChange={(e) => updateMember(idx, { name: e.target.value })}
+                          className="flex-1"
+                          dir={isAr ? 'rtl' : 'ltr'}
+                        />
                         <Input
                           type="email"
                           inputMode="email"
@@ -544,14 +582,6 @@ export function IdeaForm({
                           onChange={(e) => updateMember(idx, { email: e.target.value })}
                           className="flex-1"
                           dir="ltr"
-                        />
-                        <Input
-                          type="text"
-                          placeholder={tf('teamMemberName')}
-                          value={m.name}
-                          onChange={(e) => updateMember(idx, { name: e.target.value })}
-                          className="flex-1"
-                          dir={isAr ? 'rtl' : 'ltr'}
                         />
                         <button
                           type="button"
@@ -628,37 +658,15 @@ export function IdeaForm({
                 />
                 <div className="flex justify-end">{counter(description, LIMITS.description)}</div>
               </div>
-
-              {/* Filled-template upload — the innovator downloads the template
-                  above, fills it, and re-uploads it here. It joins the same
-                  attachment queue flushed after the idea row is created. */}
-              <div className="space-y-1.5">
-                <Label htmlFor="filled-template">{tf('templateUploadLabel')}</Label>
-                <label
-                  htmlFor="filled-template"
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground transition hover:border-brand-teal/40"
-                >
-                  <Paperclip className="h-4 w-4 text-brand-teal" aria-hidden="true" />
-                  {tf('templateUploadHint')}
-                  <Input
-                    id="filled-template"
-                    type="file"
-                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    className="hidden"
-                    onChange={(e) => {
-                      ingestFiles(Array.from(e.target.files ?? []));
-                      e.target.value = '';
-                    }}
-                  />
-                </label>
-              </div>
             </div>
           )}
 
           {/* ---- Step 3: Attachments ---- */}
           {step === 2 && (
             <div className="space-y-3">
-              <Label>{t('attachments')}</Label>
+              <Label>
+                {t('attachments')} <span className="text-red-500">*</span>
+              </Label>
               <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 p-8 text-center transition hover:border-brand-teal/40">
                 <Paperclip className="h-6 w-6 text-brand-teal" aria-hidden="true" />
                 <span className="text-sm text-muted-foreground">{tf('attachmentsHint')}</span>
@@ -798,7 +806,17 @@ export function IdeaForm({
                     required
                     className="mt-0.5 h-4 w-4 accent-brand-teal"
                   />
-                  <span>{tf('termsDeclaration')}</span>
+                  <span>
+                    {tf('termsAgreePrefix')}{' '}
+                    <Link
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-brand-teal underline-offset-2 hover:underline"
+                    >
+                      {tf('termsLink')}
+                    </Link>
+                  </span>
                 </label>
               </div>
             </div>
@@ -835,7 +853,11 @@ export function IdeaForm({
                 </Button>
               )}
               {step < steps.length - 1 ? (
-                <Button type="button" onClick={next}>
+                <Button
+                  type="button"
+                  onClick={next}
+                  disabled={step === 2 && selectedFiles.length === 0}
+                >
                   {tf('next')}
                   <Chevron className="h-4 w-4" />
                 </Button>
