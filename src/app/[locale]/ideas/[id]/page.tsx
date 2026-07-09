@@ -80,7 +80,7 @@ export default async function IdeaDetailPage({
     const { data: ideaRow } = await supabase
       .from('ideas')
       .select(
-        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, submitter_id, team_id, attachments, submitted_at, updated_at'
+        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, submitter_id, team_id, team_name, team_members, attachments, submitted_at, updated_at'
       )
       .eq('id', id)
       .maybeSingle();
@@ -129,8 +129,20 @@ export default async function IdeaDetailPage({
               : (act as any).name_en || (act as any).title_en || (act as any).name_ar || (act as any).title_ar;
         }
       }
-      // Team
-      if ((ideaRow as any).team_id) {
+      // Team — prefer the new inline columns (written by the submission wizard),
+      // fall back to the legacy team_id → teams/team_members lookup for older ideas.
+      const inlineTeamName = (ideaRow as any).team_name ?? null;
+      const inlineMembers = (ideaRow as any).team_members;
+      if (inlineTeamName && Array.isArray(inlineMembers) && inlineMembers.length > 0) {
+        teamName = inlineTeamName;
+        teamMembers = (inlineMembers as any[]).map((m, i) => ({
+          id: `inline-${i}`,
+          full_name: m?.name ?? null,
+          email: m?.email ?? null,
+          role_title: null,
+          is_leader: i === 0,
+        }));
+      } else if ((ideaRow as any).team_id) {
         const { data: team } = await supabase
           .from('teams')
           .select('name, leader_id')

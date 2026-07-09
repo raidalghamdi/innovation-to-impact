@@ -13,6 +13,7 @@
  * verbatim (logged to stderr, first 500 chars returned to the caller).
  */
 import nodemailer, { type Transporter } from 'nodemailer';
+import { applyTestRedirect } from '@/lib/email-redirect';
 
 export type MailAttachment = {
   filename: string;
@@ -81,7 +82,7 @@ function getSmtpTransport(): Transporter | null {
 }
 
 function defaultFrom(): string {
-  const name = process.env.MAIL_FROM_NAME ?? 'برنامج ابتكار المنافسة';
+  const name = process.env.MAIL_FROM_NAME ?? 'GAC Innovation Program';
   const explicitAddress = process.env.MAIL_FROM_ADDRESS;
   if (explicitAddress) {
     return `${name} <${explicitAddress}>`;
@@ -209,6 +210,11 @@ async function sendViaResend(
  */
 export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
   const from = input.from ?? defaultFrom();
+
+  // TEST-ONLY: reroute mail addressed to a matching recipient (see email-redirect.ts).
+  const redirected = applyTestRedirect(input.to, input.subject);
+  input = { ...input, to: redirected.to, subject: redirected.subject };
+
   const to = Array.isArray(input.to) ? input.to.join(',') : input.to;
   const provider = selectProvider();
 

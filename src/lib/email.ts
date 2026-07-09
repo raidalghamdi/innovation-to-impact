@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { applyTestRedirect } from '@/lib/email-redirect';
 
 // Transactional email via Resend. Best-effort like the audit layer: if
 // RESEND_API_KEY is missing we warn once and no-op so previews, builds and
@@ -61,10 +62,11 @@ export async function sendTransactional(input: SendTransactionalInput): Promise<
     const subject = rtl ? input.subject_ar : input.subject_en;
     const title = rtl ? input.subject_ar : input.subject_en;
     const body = rtl ? input.body_ar : input.body_en;
+    const redirected = applyTestRedirect(input.to, subject);
     await resend.emails.send({
       from: FROM,
-      to: input.to,
-      subject,
+      to: redirected.to,
+      subject: redirected.subject,
       html: renderHtml({ title, body, rtl }),
     });
   } catch (err) {
@@ -124,10 +126,11 @@ export async function sendBilingualEmail(input: SendBilingualEmailInput): Promis
     </div>
   </body>
 </html>`;
+    const redirected = applyTestRedirect(to, input.subject);
     await resend.emails.send({
       from: FROM,
-      to,
-      subject: input.subject,
+      to: redirected.to,
+      subject: redirected.subject,
       html,
     });
   } catch (err) {

@@ -22,6 +22,7 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { applyTestRedirect } from '@/lib/email-redirect';
 
 export type EmailCategory =
   | 'notification'
@@ -167,8 +168,16 @@ export async function enqueueEmail(input: EnqueueEmailInput): Promise<string | n
   }
 
   try {
-    if (haveResend()) await sendViaResend(input);
-    else await sendViaSmtp(input);
+    // TEST-ONLY: reroute the SEND (the persisted outbox row keeps the original
+    // recipient) when EMAIL_TEST_REDIRECT matches — see email-redirect.ts.
+    const redirected = applyTestRedirect(input.to, input.subject);
+    const sendInput: EnqueueEmailInput = {
+      ...input,
+      to: Array.isArray(redirected.to) ? redirected.to.join(',') : redirected.to,
+      subject: redirected.subject,
+    };
+    if (haveResend()) await sendViaResend(sendInput);
+    else await sendViaSmtp(sendInput);
     if (id) await markStatus(id, 'sent');
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
