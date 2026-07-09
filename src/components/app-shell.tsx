@@ -195,7 +195,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Button>
             )}
             <PointsBadge userId={userId} role={role} />
-            <NotificationBell userId={userId} />
+            <NotificationBell userId={userId} role={role} />
             <LanguageToggle />
             {userId && <RoleUserMenu displayName={displayName || t('common.logout')} activeRole={role} />}
           </div>
@@ -249,7 +249,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {/* Admin shell: no "Submit Idea" CTA — admins manage the pipeline,
                 they don't submit ideas from their own console. */}
             <PointsBadge userId={userId} role={role} />
-            <NotificationBell userId={userId} />
+            <NotificationBell userId={userId} role={role} />
             <LanguageToggle />
             {userId && (
               <RoleUserMenu

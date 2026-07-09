@@ -20,7 +20,11 @@ type Notif = {
   created_at: string;
 };
 
-export function NotificationBell({ userId }: { userId: string | null }) {
+export function NotificationBell({ userId, role }: { userId: string | null; role?: string }) {
+  // Route evaluators to their themed notifications page (/evaluator/notifications)
+  // so the bell's "view all" stays inside the unified evaluator design.
+  const viewAllHref =
+    role === 'evaluator' || role === 'supervisor' ? '/evaluator/notifications' : '/notifications';
   const t = useTranslations('notifications');
   const locale = useLocale();
   const router = useRouter();
@@ -92,7 +96,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
           <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
             <span className="text-sm font-semibold text-brand-teal">{t('title')}</span>
             <Link
-              href="/notifications"
+              href={viewAllHref as any}
               onClick={() => setOpen(false)}
               className="text-xs text-brand-teal hover:underline"
             >

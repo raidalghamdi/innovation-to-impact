@@ -80,7 +80,16 @@ const EVALUATOR_ITEMS: MenuItem[] = [
   { href: '/evaluator', labelAr: 'مساحة المقيّم', labelEn: 'Evaluator Workspace', icon: LayoutDashboard },
   { href: '/evaluator/my-evaluations', labelAr: 'التقييمات المخصّصة لي', labelEn: 'My Evaluations', icon: ClipboardList },
   { href: '/evaluator/my-evaluations?filter=completed', labelAr: 'التقييمات المكتملة', labelEn: 'Completed Evaluations', icon: CheckCircle2 },
-  { href: '/profile/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
+  { href: '/evaluator/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
+];
+
+// Evaluator-specific tail overrides — route Notifications and Settings to the
+// themed evaluator equivalents (/evaluator/notifications, /evaluator/settings)
+// instead of the global platform pages, so the evaluator never leaves the
+// unified evaluator design (ev-root, gold/ink tokens, EvaluatorTabs).
+const EVALUATOR_TAIL: MenuItem[] = [
+  { href: '/evaluator/notifications', labelAr: 'الإشعارات', labelEn: 'Notifications', icon: Bell },
+  { href: '/evaluator/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: SettingsIcon },
 ];
 
 const JUDGE_ITEMS: MenuItem[] = [
@@ -122,6 +131,7 @@ const ROLE_ITEMS: Record<string, MenuItem[]> = {
 /**
  * Returns the unified menu for a role:
  *   admin      → Admin Hub → admin items → Notifications → Settings
+ *   evaluator  → My Dashboard → evaluator items → /evaluator/notifications → /evaluator/settings
  *   everyone   → My Dashboard → role items → Notifications → Settings
  * Logout is appended separately by the consuming component (it's a form action,
  * not a link).
@@ -130,7 +140,8 @@ export function getMenuForRole(roleCode: string | null | undefined): MenuItem[] 
   const key = (roleCode ?? '').toLowerCase();
   const roleItems = ROLE_ITEMS[key] ?? SUBMITTER_ITEMS;
   const head = key === 'admin' ? ADMIN_HUB_ITEM : DASHBOARD_ITEM;
-  return [head, ...roleItems, ...TAIL_ITEMS];
+  const tail = (key === 'evaluator' || key === 'supervisor') ? EVALUATOR_TAIL : TAIL_ITEMS;
+  return [head, ...roleItems, ...tail];
 }
 
 export { LogOut as LogoutIcon };

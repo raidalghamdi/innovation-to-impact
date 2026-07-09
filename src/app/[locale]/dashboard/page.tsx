@@ -64,7 +64,19 @@ export default async function DashboardPage({
 
   // Phase 12.1 — Batch B multi-role dashboard routing.
   const myRoles = userId ? await getMyUserRoles() : [];
+
+  // Hard guard: if this user has ONLY the evaluator role (or has any evaluator
+  // role and the cookie is missing/stale), send them straight to /evaluator.
+  // This prevents the InnovatorDashboard (with its "Submit Idea" CTA + centered
+  // hero) from ever rendering for an evaluator, even if the i2i_active_role
+  // cookie is missing, corrupted, or contains a stale non-evaluator value.
   if (userId && myRoles.length > 0) {
+    const roleCodes = myRoles.map((r) => r.role_code);
+    const onlyEvaluator = roleCodes.length === 1 && roleCodes[0] === 'evaluator';
+    if (onlyEvaluator) {
+      redirect(`/${locale}/evaluator`);
+    }
+
     const cookieStore = await cookies();
     const cookieRole = cookieStore.get('i2i_active_role')?.value;
     const activeRole =
