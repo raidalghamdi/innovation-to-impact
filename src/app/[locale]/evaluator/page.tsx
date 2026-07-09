@@ -1,6 +1,8 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { EvaluatorRecentActivity } from '@/components/evaluator/evaluator-recent-activity';
+import { EvaluatorQueuePreview } from '@/components/evaluator/evaluator-queue-preview';
+import { EvaluatorNotificationsPreview } from '@/components/evaluator/evaluator-notifications-preview';
 import { getCurrentUser } from '@/lib/user';
 import { getUserPoints } from '@/lib/gamification';
 import { fetchEvaluatorDashboard } from '@/lib/data';
@@ -45,6 +47,17 @@ export default async function EvaluatorDashboardPage({
       when: q.submitted_evaluation_at ? formatDate(q.submitted_evaluation_at, locale) : '',
     }));
 
+  // Queue preview — first 5 ideas still awaiting this evaluator's score.
+  const queuePreview = dashboard.queue
+    .filter((q) => q.eval_status !== 'submitted')
+    .slice(0, 5)
+    .map((q) => ({
+      id: q.idea_id,
+      title: (isAr ? q.title_ar : q.title_en) || q.idea_code || (isAr ? 'فكرة مجهولة الهوية' : 'Anonymous idea'),
+      track: (isAr ? q.theme_ar : q.theme_en) || null,
+      submitted: q.submitted_at ? formatDate(q.submitted_at, locale) : '—',
+    }));
+
   const displayName = user?.fullName || user?.email || (isAr ? 'مقيّم' : 'Evaluator');
 
   return (
@@ -84,14 +97,32 @@ export default async function EvaluatorDashboardPage({
         </Link>
       </div>
 
-      {/* Recent activity */}
-      <EvaluatorRecentActivity
-        heading={t('recentActivity')}
-        emptyTitle={t('noActivityTitle')}
-        emptyHint={t('noActivityHint')}
-        submittedLabel={t('activitySubmitted')}
-        items={activity}
+      {/* Evaluation queue preview */}
+      <EvaluatorQueuePreview
+        heading={t('queuePreviewTitle')}
+        viewAllLabel={t('viewAll')}
+        evaluateLabel={t('evaluate')}
+        emptyLabel={t('queueEmptyShort')}
+        submittedOnLabel={t('submittedOn')}
+        items={queuePreview}
       />
+
+      {/* Two-column: recent notifications + recent activity */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <EvaluatorNotificationsPreview
+          locale={locale}
+          heading={t('recentNotifications')}
+          viewAllLabel={t('viewAll')}
+          emptyLabel={t('notificationsEmptyShort')}
+        />
+        <EvaluatorRecentActivity
+          heading={t('recentActivity')}
+          emptyTitle={t('noActivityTitle')}
+          emptyHint={t('noActivityHint')}
+          submittedLabel={t('activitySubmitted')}
+          items={activity}
+        />
+      </div>
     </div>
   );
 }

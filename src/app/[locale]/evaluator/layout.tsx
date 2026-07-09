@@ -1,32 +1,16 @@
 import type { ReactNode } from 'react';
 import { setRequestLocale } from 'next-intl/server';
-import { Almarai, IBM_Plex_Sans_Arabic, IBM_Plex_Mono } from 'next/font/google';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
-import { EvaluatorChrome } from '@/components/evaluator/evaluator-chrome';
+import { AppShell } from '@/components/app-shell';
+import { EvaluatorTabs } from '@/components/evaluator/evaluator-tabs';
 import './theme.css';
 
-// B0 fonts — scoped to the evaluator area via the layout wrapper only. Global
-// typography is untouched.
-const almarai = Almarai({
-  subsets: ['arabic'],
-  weight: ['400', '700', '800'],
-  variable: '--font-almarai',
-  display: 'swap',
-});
-const plexArabic = IBM_Plex_Sans_Arabic({
-  subsets: ['arabic'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-plex-ar',
-  display: 'swap',
-});
-const plexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['500', '600'],
-  variable: '--font-plex-mono',
-  display: 'swap',
-});
-
+// The evaluator area renders inside the platform-wide <AppShell> — same header
+// (logo, language toggle, notification bell, user menu), same <SiteFooter>, and
+// the same global fonts (Frutiger LT Arabic / Inter). Only the evaluator design
+// SYSTEM (cards, buttons, brand tokens under `.ev-root`) is layered on top; no
+// divergent chrome or typeface. The role-scoped tab row lives in <EvaluatorTabs>.
 export default async function EvaluatorLayout({
   children,
   params,
@@ -39,7 +23,7 @@ export default async function EvaluatorLayout({
 
   const user = await getCurrentUser();
 
-  // Unread notification count powers the red dots in the topbar + tabbar.
+  // Unread notification count powers the red dot on the notifications tab.
   let unread = 0;
   const supabase = await createClient();
   if (supabase && user) {
@@ -51,16 +35,12 @@ export default async function EvaluatorLayout({
     unread = count ?? 0;
   }
 
-  const displayName = user?.fullName || user?.email || (locale === 'ar' ? 'مقيّم' : 'Evaluator');
-
   return (
-    <div
-      className={`ev-root ${almarai.variable} ${plexArabic.variable} ${plexMono.variable}`}
-      dir={locale === 'ar' ? 'rtl' : 'ltr'}
-    >
-      <EvaluatorChrome locale={locale} userName={displayName} unread={unread}>
+    <AppShell>
+      <div className="ev-root">
+        <EvaluatorTabs unread={unread} />
         {children}
-      </EvaluatorChrome>
-    </div>
+      </div>
+    </AppShell>
   );
 }

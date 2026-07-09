@@ -1,7 +1,9 @@
 /* B0 — Evaluator-area design system. Scoped entirely under `.ev-root` so it
- * never leaks into the rest of the app (global tokens are untouched). Fonts are
- * injected by the evaluator layout via next/font and referenced through the
- * --font-* variables below. */
+ * never leaks into the rest of the app (global tokens are untouched). The brand
+ * color values below intentionally match the platform Tailwind `brand-*` scale
+ * (Moon Raker #1C4854, gold #E0A82E, cyan #3FBAC8). Typography is NOT overridden
+ * here — the evaluator area inherits the platform's global font stack
+ * (--font-body: Frutiger LT Arabic / Inter) so there is no divergent typeface. */
 
 .ev-root {
   /* Brand colors — Moon Raker navy / gold / cyan */
@@ -29,20 +31,12 @@
   --shadow-card: 0 1px 2px rgba(28, 72, 84, 0.06), 0 1px 0 rgba(28, 72, 84, 0.04);
   --shadow-pop: 0 10px 30px rgba(28, 72, 84, 0.14);
 
-  --font-display: var(--font-almarai), system-ui, sans-serif;
-  --font-body: var(--font-plex-ar), system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  /* Headings + numeric readouts reuse the inherited platform body font so the
+     evaluator area shares one typeface with the rest of the app. */
+  --font-display: var(--font-body);
+  --font-mono: ui-monospace, 'SF Mono', 'Menlo', monospace;
 
-  background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-body);
-  min-height: 100vh;
-}
-
-.ev-root h1,
-.ev-root h2,
-.ev-root h3 {
-  font-family: var(--font-display);
 }
 
 .ev-num {
