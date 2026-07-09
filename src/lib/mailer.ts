@@ -1,13 +1,18 @@
 /**
- * Mailer — unified email sender that supports:
- *   1) Custom SMTP server (preferred, controlled by SMTP_* env vars)
- *   2) Resend fallback (RESEND_API_KEY) if SMTP not configured
- *   3) No-op if neither is configured (logs warning, never throws)
+ * Mailer — unified email sender.
  *
- * Used by the invitation system, transactional emails, and reminders.
+ * Provider selection:
+ *   - If MAIL_PROVIDER is set ('smtp' | 'resend') use ONLY that provider.
+ *   - Otherwise (auto): prefer Resend when RESEND_API_KEY is set, else SMTP
+ *     when SMTP_HOST/SMTP_PORT are set, else no-op.
+ *
+ * Honesty contract: sendMail only returns ok:true when the provider actually
+ * accepted the message (SMTP send resolved / Resend returned 2xx). Any thrown
+ * error, non-2xx response, misconfigured forced provider, or the no-op branch
+ * returns ok:false with a human-readable `error`. Resend errors are surfaced
+ * verbatim (logged to stderr, first 500 chars returned to the caller).
  */
 import nodemailer, { type Transporter } from 'nodemailer';
-import { Resend } from 'resend';
 
 export type MailAttachment = {
   filename: string;
@@ -27,16 +32,21 @@ export type SendMailInput = {
   bcc?: string | string[];
 };
 
+export type MailProvider = 'smtp' | 'resend' | 'noop';
+
 export type SendMailResult = {
   ok: boolean;
-  provider: 'smtp' | 'resend' | 'noop';
+  provider: MailProvider;
   messageId?: string;
   error?: string;
 };
 
 let smtpTransport: Transporter | null | undefined = undefined;
 let smtpWarned = false;
-let resendWarned = false;
+
+function smtpConfigured(): boolean {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT);
+}
 
 function getSmtpTransport(): Transporter | null {
   if (smtpTransport !== undefined) return smtpTransport;
@@ -51,7 +61,7 @@ function getSmtpTransport(): Transporter | null {
     smtpTransport = null;
     if (!smtpWarned) {
       smtpWarned = true;
-      console.warn('[mailer] SMTP not configured — falling back to Resend or no-op.');
+      console.warn('[mailer] SMTP not configured.');
     }
     return null;
   }
@@ -70,18 +80,6 @@ function getSmtpTransport(): Transporter | null {
   return smtpTransport;
 }
 
-function getResendClient(): Resend | null {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) {
-    if (!resendWarned) {
-      resendWarned = true;
-      console.warn('[mailer] RESEND_API_KEY not set — Resend fallback disabled.');
-    }
-    return null;
-  }
-  return new Resend(key);
-}
-
 function defaultFrom(): string {
   const name = process.env.MAIL_FROM_NAME ?? 'Innovation to Impact';
   const address =
@@ -92,74 +90,137 @@ function defaultFrom(): string {
 }
 
 /**
- * Send an email. Never throws — returns a result object indicating provider used.
+ * Decide which provider sendMail will use given the current environment.
+ * Exported so the diagnostic route can report it without sending anything.
+ */
+export function selectProvider(): MailProvider {
+  const pref = (process.env.MAIL_PROVIDER ?? '').trim().toLowerCase();
+  if (pref === 'smtp') return 'smtp';
+  if (pref === 'resend') return 'resend';
+  // Auto: prefer Resend, then SMTP, then no-op.
+  if (process.env.RESEND_API_KEY) return 'resend';
+  if (smtpConfigured()) return 'smtp';
+  return 'noop';
+}
+
+async function sendViaSmtp(
+  from: string,
+  to: string,
+  input: SendMailInput
+): Promise<SendMailResult> {
+  const smtp = getSmtpTransport();
+  if (!smtp) {
+    return { ok: false, provider: 'smtp', error: 'SMTP selected but SMTP_HOST/SMTP_PORT are not configured' };
+  }
+  try {
+    const info = await smtp.sendMail({
+      from,
+      to,
+      cc: input.cc,
+      bcc: input.bcc,
+      subject: input.subject,
+      html: input.html,
+      text: input.text,
+      replyTo: input.replyTo,
+      attachments: input.attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType,
+      })),
+    });
+    return { ok: true, provider: 'smtp', messageId: info.messageId };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[mailer] SMTP send failed:', message);
+    return { ok: false, provider: 'smtp', error: message };
+  }
+}
+
+async function sendViaResend(
+  from: string,
+  input: SendMailInput
+): Promise<SendMailResult> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
+    return { ok: false, provider: 'resend', error: 'RESEND_API_KEY is not set' };
+  }
+
+  const attachments = input.attachments?.map((a) => ({
+    filename: a.filename,
+    content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+  }));
+
+  const payload: Record<string, unknown> = {
+    from,
+    to: Array.isArray(input.to) ? input.to : [input.to],
+    subject: input.subject,
+    html: input.html,
+    text: input.text,
+  };
+  if (input.cc) payload.cc = input.cc;
+  if (input.bcc) payload.bcc = input.bcc;
+  if (input.replyTo) payload.reply_to = input.replyTo;
+  if (attachments && attachments.length > 0) payload.attachments = attachments;
+
+  let res: Response;
+  try {
+    res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[mailer] Resend request failed:', message);
+    return { ok: false, provider: 'resend', error: message.slice(0, 500) };
+  }
+
+  const bodyText = await res.text();
+
+  if (!res.ok) {
+    console.error(`[mailer] Resend error ${res.status}: ${bodyText}`);
+    return {
+      ok: false,
+      provider: 'resend',
+      error: `Resend ${res.status}: ${bodyText}`.slice(0, 500),
+    };
+  }
+
+  let messageId: string | undefined;
+  try {
+    messageId = (JSON.parse(bodyText) as { id?: string })?.id;
+  } catch {
+    // 2xx with a non-JSON body — still a success, just no id to report.
+  }
+  return { ok: true, provider: 'resend', messageId };
+}
+
+/**
+ * Send an email. Never throws — returns a result object indicating provider
+ * used and, on failure, a human-readable error.
  */
 export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
   const from = input.from ?? defaultFrom();
   const to = Array.isArray(input.to) ? input.to.join(',') : input.to;
+  const provider = selectProvider();
 
-  // 1) Try SMTP
-  const smtp = getSmtpTransport();
-  if (smtp) {
-    try {
-      const info = await smtp.sendMail({
-        from,
-        to,
-        cc: input.cc,
-        bcc: input.bcc,
-        subject: input.subject,
-        html: input.html,
-        text: input.text,
-        replyTo: input.replyTo,
-        attachments: input.attachments?.map((a) => ({
-          filename: a.filename,
-          content: a.content,
-          contentType: a.contentType,
-        })),
-      });
-      return { ok: true, provider: 'smtp', messageId: info.messageId };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error('[mailer] SMTP send failed:', message);
-      // Fall through to Resend
-    }
+  if (provider === 'smtp') {
+    return sendViaSmtp(from, to, input);
+  }
+  if (provider === 'resend') {
+    return sendViaResend(from, input);
   }
 
-  // 2) Try Resend
-  const resend = getResendClient();
-  if (resend) {
-    try {
-      const attachments = input.attachments?.map((a) => ({
-        filename: a.filename,
-        content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
-      }));
-      const result = await resend.emails.send({
-        from,
-        to: Array.isArray(input.to) ? input.to : [input.to],
-        subject: input.subject,
-        html: input.html,
-        text: input.text,
-        cc: input.cc as string[] | string | undefined,
-        bcc: input.bcc as string[] | string | undefined,
-        replyTo: input.replyTo,
-        attachments,
-      } as any);
-      return { ok: true, provider: 'resend', messageId: result.data?.id };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error('[mailer] Resend send failed:', message);
-      return { ok: false, provider: 'resend', error: message };
-    }
-  }
-
-  // 3) No-op — log the message so admin sees what would have been sent
-  console.warn('[mailer] No email provider configured — email NOT sent to', to);
-  return { ok: false, provider: 'noop', error: 'no_provider_configured' };
+  // No-op — no provider configured. This must NEVER report success.
+  console.error('[mailer] No email provider configured — email NOT sent to', to);
+  return { ok: false, provider: 'noop', error: 'No email provider configured' };
 }
 
 /**
  * Renders a bilingual RTL-aware HTML wrapper around a body string.
- * Supports {{placeholders}} for template variables.
  */
 export function renderMailHtml(opts: {
   subject: string;
@@ -196,14 +257,34 @@ export function renderMailHtml(opts: {
 }
 
 /**
- * Simple template renderer for {{placeholders}}.
+ * Simple template renderer for {{placeholders}}. Unrecognized tokens render as
+ * empty strings. Use renderTemplateTracked when you need to know which tokens
+ * were missing.
  */
 export function renderTemplate(
   template: string,
   vars: Record<string, string | number | undefined>
 ): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+  return renderTemplateTracked(template, vars).text;
+}
+
+/**
+ * Like renderTemplate but also reports any {{tokens}} that had no matching
+ * (non-null/defined) variable. Valid tokens are always substituted regardless
+ * of missing ones — callers surface `missing` as a warning rather than failing.
+ */
+export function renderTemplateTracked(
+  template: string,
+  vars: Record<string, string | number | undefined | null>
+): { text: string; missing: string[] } {
+  const missing = new Set<string>();
+  const text = template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
     const v = vars[key];
-    return v === undefined || v === null ? '' : String(v);
+    if (v === undefined || v === null) {
+      missing.add(key);
+      return '';
+    }
+    return String(v);
   });
+  return { text, missing: Array.from(missing) };
 }

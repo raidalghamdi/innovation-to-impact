@@ -73,6 +73,16 @@
       "sendFailed": "Send failed.",
       "noRecipients": "Enter at least one recipient.",
       "noTemplate": "Select a template first."
+    },
+    "mailer": {
+      "diagTitle": "Mailer diagnostics",
+      "providerNone": "No email provider configured",
+      "providerResend": "Resend",
+      "providerSmtp": "SMTP",
+      "testSent": "Test email accepted by provider",
+      "testFailed": "Test email failed",
+      "noProvider": "No email provider is configured. Set RESEND_API_KEY or SMTP_* env vars.",
+      "sendFailed": "The email provider rejected this message"
     }
   },
   "app": {

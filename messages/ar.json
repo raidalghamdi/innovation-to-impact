@@ -73,6 +73,16 @@
       "sendFailed": "فشل الإرسال.",
       "noRecipients": "أدخل مستلماً واحداً على الأقل.",
       "noTemplate": "اختر قالباً أولاً."
+    },
+    "mailer": {
+      "diagTitle": "تشخيص البريد",
+      "providerNone": "لا يوجد مزوّد بريد مُهيّأ",
+      "providerResend": "Resend",
+      "providerSmtp": "SMTP",
+      "testSent": "قبِل المزوّد رسالة الاختبار",
+      "testFailed": "فشل إرسال رسالة الاختبار",
+      "noProvider": "لا يوجد مزوّد بريد مُهيّأ. عيّن RESEND_API_KEY أو متغيرات SMTP_*.",
+      "sendFailed": "رفض مزوّد البريد هذه الرسالة"
     }
   },
   "app": {

@@ -13,7 +13,13 @@ function createServiceRoleClient() {
   if (!c) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
   return c;
 }
-import { sendMail, renderMailHtml, renderTemplate, type MailAttachment } from '@/lib/mailer';
+import {
+  sendMail,
+  renderMailHtml,
+  renderTemplate,
+  renderTemplateTracked,
+  type MailAttachment,
+} from '@/lib/mailer';
 
 export type RoleCode =
   | 'innovator'
@@ -27,6 +33,7 @@ export type RoleCode =
 export type InvitationStatus =
   | 'pending'
   | 'sent'
+  | 'failed'
   | 'viewed'
   | 'accepted'
   | 'declined'
@@ -50,6 +57,7 @@ export type Invitation = {
   last_reminder_at: string | null;
   sent_at: string | null;
   sent_by: string | null;
+  error_message: string | null;
   campaign_id: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
@@ -185,6 +193,15 @@ function inviteLink(token: string): string {
   return `${base}/invitations/${token}`;
 }
 
+/**
+ * Accept/reject URLs for a given invitation token. Both point at the public
+ * invitation page; the reject variant carries an ?action=reject hint.
+ */
+function invitationLinks(token: string): { accept: string; reject: string } {
+  const accept = inviteLink(token);
+  return { accept, reject: `${accept}?action=reject` };
+}
+
 function formatDate(iso: string | null, locale: 'ar' | 'en'): string {
   if (!iso) return locale === 'ar' ? 'غير محدد' : 'Not set';
   const d = new Date(iso);
@@ -213,11 +230,21 @@ export async function sendInvitationEmail(
       ? defaults?.program_name_ar ?? 'برنامج ابتكر لمنافس'
       : defaults?.program_name_en ?? 'Innovation-to-Impact Program';
 
+  const links = invitationLinks(invitation.token);
+  const inviteeName = invitation.target_name ?? invitation.target_email;
+  const deadlineText = formatDate(invitation.deadline_at, locale);
   const vars = {
-    name: invitation.target_name ?? invitation.target_email,
+    name: inviteeName,
+    invitee_name: inviteeName,
+    sender_name: programName,
+    committee_name: programName,
+    event_name: programName,
     role: invitation.role,
-    link: inviteLink(invitation.token),
-    deadline: formatDate(invitation.deadline_at, locale),
+    link: links.accept,
+    accept_link: links.accept,
+    reject_link: links.reject,
+    deadline: deadlineText,
+    expires_at: deadlineText,
     program: programName,
   };
 
@@ -253,12 +280,24 @@ export async function sendInvitationEmail(
       detail: { provider: result.provider, error: result.error, kind },
     });
 
-  if (result.ok && kind === 'invite') {
-    await supabase
-      .schema('innovation')
-      .from('invitations')
-      .update({ status: 'sent', sent_at: new Date().toISOString() })
-      .eq('id', invitation.id);
+  if (kind === 'invite') {
+    if (result.ok) {
+      await supabase
+        .schema('innovation')
+        .from('invitations')
+        .update({ status: 'sent', sent_at: new Date().toISOString(), error_message: null })
+        .eq('id', invitation.id);
+    } else {
+      await supabase
+        .schema('innovation')
+        .from('invitations')
+        .update({
+          status: 'failed',
+          sent_at: null,
+          error_message: (result.error ?? 'send_failed').slice(0, 500),
+        })
+        .eq('id', invitation.id);
+    }
   }
 
   return { ok: result.ok, provider: result.provider, error: result.error };
@@ -470,18 +509,34 @@ export async function sendTemplatedInvitations(input: {
   let sent = 0;
   let queued = 0;
 
+  const deadlineText = formatDate(deadline, locale);
+
   for (const rec of recipients) {
+    // Generate the token up-front so {{accept_link}}/{{reject_link}} can be
+    // substituted in the body BEFORE the row is inserted.
+    const token = globalThis.crypto?.randomUUID?.() ?? null;
+    const links = token ? invitationLinks(token) : { accept: '', reject: '' };
+    const inviteeName = rec.name ?? rec.email;
     const vars: Record<string, string> = {
-      name: rec.name ?? rec.email,
+      name: inviteeName,
+      invitee_name: inviteeName,
+      sender_name: programName,
+      committee_name: programName,
+      event_name: programName,
       email: rec.email,
       role: template.role,
       program: programName,
-      deadline: formatDate(deadline, locale),
+      deadline: deadlineText,
+      expires_at: deadlineText,
+      accept_link: links.accept,
+      reject_link: links.reject,
+      link: links.accept,
       ...optionVars,
       ...rec.variable_overrides,
     };
+    const rendered = renderTemplateTracked(bodyTpl, vars);
     const subject = renderTemplate(subjectTpl, vars);
-    const bodyText = renderTemplate(bodyTpl, vars);
+    const bodyText = rendered.text;
     const html = renderMailHtml({ subject, body: bodyText, locale });
 
     const result = await sendMail({
@@ -492,17 +547,21 @@ export async function sendTemplatedInvitations(input: {
       attachments,
     });
 
-    const status = result.ok ? 'sent' : 'queued';
-    if (result.ok) sent += 1;
-    else queued += 1;
-    if (result.provider === 'resend' && !result.ok && result.error) {
-      failed.push({ email: rec.email, error: result.error });
+    // Honesty contract: only a genuine provider success is 'sent'. Everything
+    // else is 'failed' with the provider error captured and sent_at left null.
+    const status = result.ok ? 'sent' : 'failed';
+    if (result.ok) {
+      sent += 1;
+    } else {
+      queued += 1; // count of not-sent recipients (kept for UI compatibility)
+      failed.push({ email: rec.email, error: result.error ?? 'send_failed' });
     }
 
     await supabase
       .schema('innovation')
       .from('invitations')
       .insert({
+        ...(token ? { token } : {}),
         role: template.role,
         target_email: rec.email,
         target_name: rec.name,
@@ -511,6 +570,7 @@ export async function sendTemplatedInvitations(input: {
         campaign_id: campaignId,
         status,
         sent_at: result.ok ? new Date().toISOString() : null,
+        error_message: result.ok ? null : (result.error ?? 'send_failed').slice(0, 500),
         metadata: {
           template_code: template.code,
           kind: template.kind,
@@ -519,6 +579,7 @@ export async function sendTemplatedInvitations(input: {
           created_by: input.sent_by ?? null,
           variable_overrides: rec.variable_overrides,
           provider: result.provider,
+          unresolved_variables: rendered.missing,
         },
       });
   }
