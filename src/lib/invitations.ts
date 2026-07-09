@@ -285,7 +285,21 @@ export async function sendInvitationEmail(
     locale === 'ar' ? template.body_ar : template.body_en,
     vars
   );
-  const html = renderMailHtml({ subject, body: bodyText, locale });
+  const html = renderMailHtml({
+    subject,
+    body: bodyText,
+    locale,
+    logoUrl: absoluteLogoUrl(),
+    acceptUrl: links.accept,
+    rejectUrl: links.reject,
+    greetingName: inviteeName,
+    deadlineText,
+    metaItems: [
+      { label: 'الدور', value: roleLabelAr(invitation.role) },
+      { label: 'آخر موعد للرد', value: deadlineText },
+      { label: 'الجهة', value: 'الهيئة العامة للمنافسة' },
+    ],
+  });
 
   const attachmentRows = await getTemplateAttachments(template.id);
   const attachments = await downloadAttachments(attachmentRows);

@@ -202,7 +202,7 @@ export function renderBilingualEmailHtml(opts: {
 <body style="margin:0;background:#f4f6f8;padding:24px;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e9ee;">
     <div style="background:#01696F;color:#fff;padding:16px 20px;font-size:18px;font-weight:bold;">
-      i2i · الابتكار إلى الأثر
+      برنامج ابتكار المنافسة · ابتكر · نافس · أثّر
     </div>
     <div dir="rtl" style="padding:20px;text-align:right;color:#28251D;border-right:4px solid #01696F;">
       <h2 style="margin:0 0 12px;font-size:16px;">${opts.titleAr}</h2>

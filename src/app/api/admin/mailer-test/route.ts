@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     typeof body?.body === 'string' && body.body.trim()
       ? body.body.trim()
       : locale === 'ar'
-        ? 'هذه رسالة اختبار من منصة الابتكار إلى الأثر.'
+        ? 'هذه رسالة اختبار من برنامج ابتكار المنافسة.'
         : 'This is a test message from Innovation to Impact.';
 
   const result = await sendMail({

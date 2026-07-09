@@ -42,7 +42,7 @@ function renderHtml(opts: { title: string; body: string; rtl: boolean }): string
   <body style="margin:0;background:#f4f6f8;padding:24px;direction:${dir};font-family:'Segoe UI',Tahoma,Arial,Helvetica,sans-serif;">
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e9ee;direction:${dir};text-align:${align};">
       <div style="background:#01696F;color:#ffffff;padding:16px 20px;font-size:18px;font-weight:bold;text-align:${align};">
-        i2i · الابتكار إلى الأثر
+        برنامج ابتكار المنافسة · ابتكر · نافس · أثّر
       </div>
       <div style="padding:20px;border-${startSide}:4px solid #01696F;color:#28251D;text-align:${align};">
         <h1 style="margin:0 0 12px;font-size:18px;">${opts.title}</h1>
@@ -116,7 +116,7 @@ export async function sendBilingualEmail(input: SendBilingualEmailInput): Promis
   <body style="margin:0;background:#f4f6f8;padding:24px;font-family:'Segoe UI',Tahoma,Arial,Helvetica,sans-serif;">
     <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e9ee;">
       <div style="background:#01696F;color:#ffffff;padding:16px 20px;font-size:18px;font-weight:bold;">
-        i2i · الابتكار إلى الأثر
+        برنامج ابتكار المنافسة · ابتكر · نافس · أثّر
       </div>
       ${renderSection({ title: input.titleEn, bodyHtml: input.bodyHtmlEn, rtl: false })}
       <div style="border-top:1px solid #e5e9ee;"></div>

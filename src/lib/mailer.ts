@@ -81,7 +81,7 @@ function getSmtpTransport(): Transporter | null {
 }
 
 function defaultFrom(): string {
-  const name = process.env.MAIL_FROM_NAME ?? 'Innovation to Impact';
+  const name = process.env.MAIL_FROM_NAME ?? 'برنامج ابتكار المنافسة';
   const explicitAddress = process.env.MAIL_FROM_ADDRESS;
   if (explicitAddress) {
     return `${name} <${explicitAddress}>`;
