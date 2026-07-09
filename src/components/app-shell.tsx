@@ -11,7 +11,6 @@ import { HitlBanner } from '@/components/hitl-banner';
 import { PointsBadge } from '@/components/points-badge';
 import { GlobalSearch } from '@/components/global-search';
 import { HeaderSearch } from '@/components/header-search';
-import { UserMenu } from '@/components/user-menu';
 import { RoleUserMenu } from '@/components/role-user-menu';
 import { SiteFooter } from '@/components/site-footer';
 import { AdminBackNav } from '@/components/admin-back-nav';
@@ -198,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <PointsBadge userId={userId} role={role} />
             <NotificationBell userId={userId} />
             <LanguageToggle />
-            {userId && <UserMenu displayName={displayName || t('common.logout')} />}
+            {userId && <RoleUserMenu displayName={displayName || t('common.logout')} activeRole={role} />}
           </div>
         </header>
 
