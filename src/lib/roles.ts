@@ -17,7 +17,7 @@ export type Role = (typeof ROLES)[number];
 // Landing dashboard per role after login.
 export const ROLE_HOME: Record<Role, string> = {
   submitter: '/dashboard',
-  evaluator: '/evaluation',
+  evaluator: '/evaluator',
   judge: '/committee',
   admin: '/admin',
   supervisor: '/supervisor',
@@ -33,7 +33,7 @@ export function homeForRoleCode(roleCode: string | null | undefined): string {
   if (key === 'admin') return '/admin';
   if (key === 'judge' || key === 'committee') return '/committee';
   if (key === 'supervisor') return '/supervisor';
-  if (key === 'evaluator') return '/evaluation';
+  if (key === 'evaluator') return '/evaluator';
   if (key === 'submitter' || key === 'innovator') return '/dashboard';
   return '/dashboard';
 }
@@ -42,8 +42,8 @@ export function homeForRoleCode(roleCode: string | null | undefined): string {
 // Note: /admin/analytics is intentionally allowed for both admin and judge
 // — see analytics page role check. /admin (non-analytics) remains admin-only.
 export const ROLE_DENY: Record<Role, string[]> = {
-  submitter: ['/evaluation', '/committee', '/admin', '/analytics'],
-  innovator: ['/evaluation', '/committee', '/admin', '/analytics'],
+  submitter: ['/evaluator', '/committee', '/admin', '/analytics'],
+  innovator: ['/evaluator', '/committee', '/admin', '/analytics'],
   evaluator: ['/committee', '/admin', '/analytics'],
   supervisor: ['/committee', '/admin', '/analytics'],
   judge: ['/admin', '/analytics'],

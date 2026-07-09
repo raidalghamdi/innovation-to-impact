@@ -52,7 +52,7 @@ function detectCrumb(pathname: string): CrumbKey {
   if (p.startsWith('/profile/level') || p.startsWith('/profile')) return 'level';
   if (p.startsWith('/notifications')) return 'notifications';
   if (p.startsWith('/settings')) return 'settings';
-  if (p.startsWith('/evaluation')) return 'evaluation';
+  if (p.startsWith('/evaluator')) return 'evaluation';
   if (p.startsWith('/committee')) return 'committee';
   return 'dashboard';
 }

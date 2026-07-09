@@ -185,7 +185,7 @@ export async function POST(
               chosen,
               'evaluation_assigned',
               { ideaId: id, ideaCode },
-              { email: true, link: '/evaluation' }
+              { email: true, link: '/evaluator' }
             );
             await supabase
               .from('audit_logs')

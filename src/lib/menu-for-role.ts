@@ -78,8 +78,8 @@ const SUBMITTER_ITEMS: MenuItem[] = [
 
 const EVALUATOR_ITEMS: MenuItem[] = [
   { href: '/evaluator', labelAr: 'مساحة المقيّم', labelEn: 'Evaluator Workspace', icon: LayoutDashboard },
-  { href: '/evaluation', labelAr: 'التقييمات المخصّصة لي', labelEn: 'My Evaluations', icon: ClipboardList },
-  { href: '/evaluation?filter=completed', labelAr: 'التقييمات المكتملة', labelEn: 'Completed Evaluations', icon: CheckCircle2 },
+  { href: '/evaluator/my-evaluations', labelAr: 'التقييمات المخصّصة لي', labelEn: 'My Evaluations', icon: ClipboardList },
+  { href: '/evaluator/my-evaluations?filter=completed', labelAr: 'التقييمات المكتملة', labelEn: 'Completed Evaluations', icon: CheckCircle2 },
   { href: '/profile/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
 ];
 

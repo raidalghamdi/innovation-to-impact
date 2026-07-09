@@ -514,7 +514,10 @@
     "whatHappens": "ماذا يحدث هنا؟",
     "whatYouNeed": "ماذا تحتاج منك؟",
     "stageOwner": "المسؤول",
-    "yourStage": "دورك في هذه المرحلة"
+    "yourStage": "دورك في هذه المرحلة",
+    "groupProgram": "مراحل البرنامج",
+    "groupPostProgram": "ما بعد البرنامج",
+    "stoppedHere": "متوقفة هنا"
   },
   "dashboard": {
     "title": "لوحة المعلومات",

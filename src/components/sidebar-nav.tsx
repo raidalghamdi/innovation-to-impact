@@ -48,7 +48,7 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
       { href: '/team', key: 'team', icon: GitBranch, roles: ['submitter', 'admin'] },
       { href: '/search', key: 'search', icon: Search },
       { href: '/activities', key: 'activities', icon: Calendar, stage: '2' },
-      { href: '/evaluation', key: 'evaluation', icon: ClipboardCheck, stage: '4', roles: ['evaluator', 'admin'] },
+      { href: '/evaluator', key: 'evaluation', icon: ClipboardCheck, stage: '4', roles: ['evaluator', 'admin'] },
       { href: '/committee', key: 'committee', icon: Users, stage: '4', roles: ['judge', 'admin'] },
       { href: '/pilots', key: 'pilots', icon: FlaskConical, stage: '6' },
       { href: '/profile/level', key: 'leaderboard', icon: Trophy },

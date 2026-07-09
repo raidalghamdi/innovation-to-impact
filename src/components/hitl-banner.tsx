@@ -15,7 +15,7 @@ import { Sparkles, X } from 'lucide-react';
 // was removed there. Evaluator/committee/admin routes keep it.
 const AI_ASSISTED_PREFIXES = [
   '/admin/analytics',
-  '/evaluation',
+  '/evaluator',
   '/committee',
   '/admin/change-requests',
 ];

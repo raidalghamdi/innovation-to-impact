@@ -4,27 +4,30 @@
  * --font-* variables below. */
 
 .ev-root {
-  --ink: #1c2b45;
-  --ink-soft: #46597a;
-  --ink-faint: #7c8aa3;
-  --paper: #eef0ec;
+  /* Brand colors — Moon Raker navy / gold / cyan */
+  --ink: #1C4854;              /* was #1c2b45 — Moon Raker navy */
+  --ink-soft: #3A6975;         /* was #46597a — desaturated Moon Raker */
+  --ink-faint: #7F9AA3;        /* was #7c8aa3 */
+  --paper: #F5F7F7;            /* was #eef0ec — clean cool paper */
   --surface: #ffffff;
-  --line: #dbe0d9;
-  --line-strong: #c4cbc2;
-  --gold: #a97b2a;
-  --gold-deep: #7a5a1e;
-  --gold-soft: #f1e4c4;
-  --sage: #2f6b4e;
-  --sage-soft: #dcebe1;
-  --rust: #b14e33;
-  --rust-soft: #f4dfd5;
+  --line: #DEE5E7;             /* was #dbe0d9 — cool neutral */
+  --line-strong: #C4CFD3;      /* was #c4cbc2 */
+  --gold: #E0A82E;             /* was #a97b2a — brand gold */
+  --gold-deep: #B0821D;        /* was #7a5a1e */
+  --gold-soft: #F8ECC8;        /* was #f1e4c4 */
+  --sage: #2F6B4E;             /* unchanged */
+  --sage-soft: #DCEBE1;        /* unchanged */
+  --rust: #B14E33;             /* unchanged */
+  --rust-soft: #F4DFD5;        /* unchanged */
+  --cyan: #3FBAC8;             /* NEW — brand cyan */
+  --cyan-soft: #D9F1F4;        /* NEW — brand cyan soft */
 
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
 
-  --shadow-card: 0 1px 2px rgba(28, 43, 69, 0.06), 0 1px 0 rgba(28, 43, 69, 0.04);
-  --shadow-pop: 0 10px 30px rgba(28, 43, 69, 0.14);
+  --shadow-card: 0 1px 2px rgba(28, 72, 84, 0.06), 0 1px 0 rgba(28, 72, 84, 0.04);
+  --shadow-pop: 0 10px 30px rgba(28, 72, 84, 0.14);
 
   --font-display: var(--font-almarai), system-ui, sans-serif;
   --font-body: var(--font-plex-ar), system-ui, sans-serif;

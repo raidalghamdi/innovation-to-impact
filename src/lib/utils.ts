@@ -21,7 +21,26 @@ export function formatNumber(value: number, opts?: Intl.NumberFormatOptions) {
 
 // Dates are always Gregorian (ميلادي) with Latin digits, even in Arabic —
 // never Hijri / Umm al-Qura. `ar-SA-u-ca-gregory-nu-latn` forces this.
+// Default now includes time (24-hour HH:mm) per user request Round 19.
 export function formatDate(value: string | null | undefined, locale: string) {
+  if (!value) return '—';
+  try {
+    return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+// Date-only formatter for headers/labels where time would be noise.
+// Use sparingly — the platform default is formatDate (with time).
+export function formatDateOnly(value: string | null | undefined, locale: string) {
   if (!value) return '—';
   try {
     return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', {

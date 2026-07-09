@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
         activeIds,
         'evaluation_assigned',
         { themeId },
-        { link: '/evaluation', email: true }
+        { link: '/evaluator', email: true }
       );
     }
   } catch {

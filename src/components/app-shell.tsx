@@ -54,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     '/dashboard',
     '/my-ideas',
     '/ideas',
-    '/evaluation',
+    '/evaluator',
     '/supervisor',
     '/committee',
     '/notifications',
@@ -182,7 +182,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 primary action is opening their queue, not creating an idea. */}
             {(role === 'evaluator' || role === 'judge') ? (
               <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
-                <Link href={role === 'judge' ? '/committee' : '/evaluation'}>
+                <Link href={role === 'judge' ? '/committee' : '/evaluator'}>
                   <Plus className="h-4 w-4" />
                   <span className="ms-1 hidden xl:inline">{t('nav.startEvaluation')}</span>
                 </Link>

@@ -207,7 +207,7 @@ export default async function DashboardPage({
                     {formatDate(idea.created_at, locale)}
                   </p>
                   <div className="mt-3">
-                    <StageTimeline current={idea.current_stage} />
+                    <StageTimeline current={idea.current_stage} isStopped={['returned','rejected','on_hold','withdrawn'].includes(idea.status)} />
                   </div>
                 </Link>
               ))}

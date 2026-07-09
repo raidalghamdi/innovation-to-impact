@@ -8,6 +8,11 @@ import { resolveLevel } from '@/lib/evaluator-levels';
 import { formatDate } from '@/lib/utils';
 import { EvRing, EvEmptyState } from '@/components/evaluator/ev-ui';
 
+// Auth-gated, per-user dashboard — never meaningfully static. Rendering
+// dynamically also avoids a build-time prerender error when Supabase env is
+// absent (empty dashboard → EvEmptyState with a Lucide icon prop).
+export const dynamic = 'force-dynamic';
+
 export default async function EvaluatorDashboardPage({
   params,
 }: {

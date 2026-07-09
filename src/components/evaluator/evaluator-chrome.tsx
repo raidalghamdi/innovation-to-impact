@@ -134,7 +134,7 @@ function AccountMenu({
       >
         <span
           className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
-          style={{ background: 'linear-gradient(135deg,#2f6b4e,#46597a)' }}
+          style={{ background: 'linear-gradient(135deg,#2f6b4e,#3A6975)' }}
         >
           {initial}
         </span>

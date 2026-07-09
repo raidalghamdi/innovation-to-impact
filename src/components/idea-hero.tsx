@@ -62,6 +62,9 @@ export function IdeaHero({
   const ts = useTranslations('stages');
   const t = useTranslations('ideas');
 
+  const STOPPED_STATUSES = new Set(['returned', 'rejected', 'on_hold', 'withdrawn']);
+  const isStopped = STOPPED_STATUSES.has(status);
+
   const statusLabel = status
     ? isAr
       ? statusAr[status] ?? status
@@ -140,9 +143,98 @@ export function IdeaHero({
           <TeamStrip members={teamMembers} teamName={teamName} isAr={isAr} />
         </div>
 
+        {/* Info boxes + submitter card */}
+        <div className="mt-6 grid gap-[18px] items-stretch" style={{ gridTemplateColumns: 'minmax(0, 720px) minmax(0, 1fr)' }}>
+          <div className="flex flex-col gap-[10px]">
+            {/* Row 1: track */}
+            {themeName && (
+              <div className="flex items-center gap-[14px] rounded-xl border border-white/10 px-5 py-3.5 min-h-[52px]">
+                <span className="text-[12.5px] font-medium text-white/50 whitespace-nowrap min-w-[62px]">
+                  {isAr ? 'المسار' : 'Track'}
+                </span>
+                <span className="w-px self-stretch bg-white/10 my-0.5" />
+                <span className="flex-1 inline-flex items-center gap-2.5 text-[15px] font-medium text-white/95 text-right">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/55 shrink-0">
+                    <path d="M12 2v6M12 22v-6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M22 12h-6M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24" />
+                  </svg>
+                  {themeName}
+                </span>
+              </div>
+            )}
+            {/* Row 2: campaign + challenge */}
+            <div className="grid gap-[10px] grid-cols-1 sm:grid-cols-2">
+              {campaignName && (
+                <div className="flex items-center gap-[14px] rounded-xl border border-white/10 px-5 py-3.5 min-h-[52px]">
+                  <span className="text-[12.5px] font-medium text-white/50 whitespace-nowrap min-w-[62px]">
+                    {isAr ? 'الفعالية' : 'Campaign'}
+                  </span>
+                  <span className="w-px self-stretch bg-white/10 my-0.5" />
+                  <span className="flex-1 inline-flex items-center gap-2.5 text-[15px] font-medium text-white/95 text-right">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/55 shrink-0">
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <path d="M16 2v4M8 2v4M3 10h18" />
+                    </svg>
+                    {campaignName}
+                  </span>
+                </div>
+              )}
+              {challengeName && (
+                <div className="flex items-center gap-[14px] rounded-xl border border-white/10 px-5 py-3.5 min-h-[52px]">
+                  <span className="text-[12.5px] font-medium text-white/50 whitespace-nowrap min-w-[62px]">
+                    {isAr ? 'التحدي' : 'Challenge'}
+                  </span>
+                  <span className="w-px self-stretch bg-white/10 my-0.5" />
+                  <span className="flex-1 inline-flex items-center gap-2.5 text-[15px] font-medium text-white/95 text-right">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/55 shrink-0">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                    {challengeName}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Submitter card */}
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5 flex flex-col justify-center gap-1.5">
+            <div className="text-[11.5px] font-medium text-white/45 tracking-wide">
+              {isAr ? 'مقدّم الفكرة' : 'Submitter'}
+              {participationType === 'team' && (isAr ? ' — قائد الفريق' : ' — team lead')}
+            </div>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full inline-flex items-center justify-center text-white font-extrabold text-sm shrink-0" style={{ background: 'linear-gradient(135deg,#3FBAC8 0%,#2288a8 100%)' }}>
+                {(teamMembers.find(m => m.is_leader)?.full_name || teamMembers[0]?.full_name || '?').charAt(0)}
+              </div>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <div className="font-extrabold text-[13.5px] leading-tight text-white/95">
+                  {teamMembers.find(m => m.is_leader)?.full_name || teamMembers[0]?.full_name || (isAr ? 'غير محدد' : 'Unknown')}
+                </div>
+                {teamMembers.find(m => m.is_leader)?.role_title && (
+                  <div className="text-[11px] text-white/50 leading-tight truncate">
+                    {teamMembers.find(m => m.is_leader)?.role_title}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-1.5 text-[11.5px] text-white/55">
+              <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold border" style={{ background: 'rgba(63,186,200,0.15)', color: '#8fdae4', borderColor: 'rgba(63,186,200,0.30)' }}>
+                {participationType === 'team'
+                  ? (isAr ? `فريق · ${teamMembers.length} أعضاء` : `Team · ${teamMembers.length} members`)
+                  : (isAr ? 'فرد' : 'Individual')}
+              </span>
+              {submittedAt && (
+                <span>
+                  {isAr ? 'تاريخ التقديم: ' : 'Submitted: '}
+                  <strong className="text-white/95 font-semibold">{formatDate(submittedAt, locale)}</strong>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Horizontal timeline */}
-        <div className="mt-8 rounded-xl bg-white/5 p-4 backdrop-blur">
-          <StageTimelineHorizontal current={currentStage} dark />
+        <div className="mt-4">
+          <StageTimelineHorizontal current={currentStage} isStopped={isStopped} />
         </div>
 
         {/* Returned-idea banner */}

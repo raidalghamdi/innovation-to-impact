@@ -49,7 +49,7 @@ export async function JudgeDashboard({ userId, locale }: { userId: string; local
           {isAr ? 'لديك أفكار بانتظار تقييمك' : 'You have ideas awaiting your evaluation'}
         </p>
         <Button asChild size="sm" className="mt-4">
-          <Link href="/evaluation">
+          <Link href="/evaluator">
             {isAr ? 'الذهاب إلى قائمة التقييم' : 'Go to Evaluation Queue'}
             <Chevron className="h-4 w-4" />
           </Link>

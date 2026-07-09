@@ -38,7 +38,7 @@ function entityHref(entityType: string, entityId: string): string | null {
     case 'idea':
       return `/ideas/${entityId}`;
     case 'evaluation':
-      return `/evaluation`;
+      return `/evaluator`;
     case 'committee_decision':
       return `/committee`;
     case 'change_request':

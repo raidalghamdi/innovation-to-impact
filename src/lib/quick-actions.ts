@@ -75,7 +75,7 @@ export const QUICK_ACTIONS: Partial<Record<Role, QuickAction[]>> = {
       labelAr: 'قائمة التقييم',
       subEn: 'Ideas awaiting your review',
       subAr: 'أفكار بانتظار مراجعتك',
-      href: '/evaluation',
+      href: '/evaluator',
     },
     {
       id: 'criteria',

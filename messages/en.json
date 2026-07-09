@@ -514,7 +514,10 @@
     "whatHappens": "What happens here?",
     "whatYouNeed": "What you need to do?",
     "stageOwner": "Owner",
-    "yourStage": "Your role in this stage"
+    "yourStage": "Your role in this stage",
+    "groupProgram": "Program stages",
+    "groupPostProgram": "Post-program",
+    "stoppedHere": "Stopped here"
   },
   "dashboard": {
     "title": "Dashboard",

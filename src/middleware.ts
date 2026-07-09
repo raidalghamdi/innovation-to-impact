@@ -13,6 +13,7 @@ const PROTECTED_PREFIXES = [
   '/my-ideas',
   '/activities',
   '/evaluation',
+  '/evaluator',
   '/committee',
   '/pilots',
   '/analytics',
