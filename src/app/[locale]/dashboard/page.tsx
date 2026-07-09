@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { Card, CardContent } from '@/components/ui/card';
@@ -71,6 +72,12 @@ export default async function DashboardPage({
         ? cookieRole
         : myRoles.find((r) => r.is_primary)?.role_code ?? myRoles[0].role_code;
 
+    // Evaluators have their own dedicated area (/evaluator) with an
+    // evaluator-only landing — they must never see the innovator dashboard.
+    if (activeRole === 'evaluator') {
+      redirect(`/${locale}/evaluator`);
+    }
+
     const roleOptions = myRoles.map((r) => ({
       code: r.role_code,
       name_ar: r.role_name_ar,
@@ -104,6 +111,12 @@ export default async function DashboardPage({
         <BackToTop label={tc('backToTop')} />
       </AppShell>
     );
+  }
+
+  // Legacy fallback (no user_roles rows): evaluators still belong in their own
+  // dedicated area, never the innovator dashboard.
+  if (role === 'evaluator') {
+    redirect(`/${locale}/evaluator`);
   }
 
   const allIdeas = await fetchIdeas();

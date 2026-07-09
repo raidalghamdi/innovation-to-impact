@@ -20,6 +20,7 @@ type Props = {
   viewAllLabel: string;
   evaluateLabel: string;
   emptyLabel: string;
+  emptyCtaLabel: string;
   submittedOnLabel: string;
   items: QueueRow[];
 };
@@ -29,6 +30,7 @@ export function EvaluatorQueuePreview({
   viewAllLabel,
   evaluateLabel,
   emptyLabel,
+  emptyCtaLabel,
   submittedOnLabel,
   items,
 }: Props) {
@@ -49,6 +51,13 @@ export function EvaluatorQueuePreview({
         <div className="flex flex-col items-center justify-center rounded-[var(--radius-lg)] border border-dashed border-[var(--line-strong)] bg-[var(--surface)] px-6 py-12 text-center">
           <ClipboardList className="h-10 w-10 text-[var(--ink-faint)]" strokeWidth={1.5} />
           <p className="mt-3 text-sm text-[var(--ink-soft)]">{emptyLabel}</p>
+          <Link
+            href="/evaluator/ideas"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[var(--gold-deep)] hover:underline"
+          >
+            {emptyCtaLabel}
+            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+          </Link>
         </div>
       ) : (
         <ul className="ev-card divide-y divide-[var(--line)]">

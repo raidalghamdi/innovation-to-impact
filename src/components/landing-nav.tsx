@@ -24,9 +24,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { CoBrand } from '@/components/logo';
 import { LanguageToggle } from '@/components/language-toggle';
-import { HeaderSearch } from '@/components/header-search';
 import { Button } from '@/components/ui/button';
-import { RoleUserMenu } from '@/components/role-user-menu';
 import { ROLE_HOME } from '@/lib/roles';
 import type { Role } from '@/lib/roles';
 import { Menu, X, LayoutDashboard } from 'lucide-react';
@@ -124,23 +122,19 @@ export function LandingNav({
         </nav>
       )}
 
-      {/* Desktop actions (≥lg). HeaderSearch only appears at 2xl+ (≥1536px)
-          because CoBrand + 6 anchor links already fill the row at 1280–1535. */}
+      {/* Desktop actions (≥lg). This is the PUBLIC marketing nav — it must not
+          leak internal-app chrome (platform search, user/role menu) onto the
+          landing page. Authenticated visitors get a single "My dashboard" link
+          back into the app; the full account menu lives inside AppShell. */}
       <div className="hidden shrink-0 items-center gap-1.5 lg:flex xl:gap-2">
-        <div className="hidden xl:block">
-          <HeaderSearch />
-        </div>
         {!hideLoginCta && (
           user ? (
-            <>
-              <Button asChild variant="ghost" size="sm">
-                <Link href={ROLE_HOME[user.role] as any}>
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
-                </Link>
-              </Button>
-              <RoleUserMenu displayName={user.displayName} activeRole={user.role} />
-            </>
+            <Button asChild variant="gold" size="sm">
+              <Link href={ROLE_HOME[user.role] as any}>
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
+              </Link>
+            </Button>
           ) : (
             <Button asChild variant="ghost" size="sm">
               <Link href="/login">{t('nav.login')}</Link>
@@ -217,10 +211,6 @@ export function LandingNav({
               <div className="my-4 border-t border-border" />
             </>
           )}
-
-          <div className="px-1 pb-3">
-            <HeaderSearch />
-          </div>
 
           <div className="px-1">
             <LanguageToggle />

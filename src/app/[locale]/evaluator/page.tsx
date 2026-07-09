@@ -8,7 +8,17 @@ import { getUserPoints } from '@/lib/gamification';
 import { fetchEvaluatorDashboard } from '@/lib/data';
 import { resolveLevel } from '@/lib/evaluator-levels';
 import { formatDate } from '@/lib/utils';
-import { EvRing } from '@/components/evaluator/ev-ui';
+import {
+  ListChecks,
+  SlidersHorizontal,
+  CalendarClock,
+  Trophy,
+  LifeBuoy,
+  ClipboardCheck,
+  CalendarCheck,
+  Timer,
+  Star,
+} from 'lucide-react';
 
 // Auth-gated, per-user dashboard — never meaningfully static.
 export const dynamic = 'force-dynamic';
@@ -32,7 +42,28 @@ export default async function EvaluatorDashboardPage({
   const level = resolveLevel(points.points);
   const levelName = isAr ? level.current.name_ar : level.current.name_en;
 
-  const remaining = dashboard.totalAssigned - dashboard.completed;
+  // ── Evaluator KPIs (never innovator/platform metrics) ────────────────────
+  const awaiting = Math.max(dashboard.totalAssigned - dashboard.completed, 0);
+
+  const now = new Date();
+  const evaluatedThisMonth = dashboard.queue.filter((q) => {
+    if (!q.submitted_evaluation_at) return false;
+    const d = new Date(q.submitted_evaluation_at);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).length;
+
+  const durations = dashboard.queue
+    .filter((q) => q.submitted_evaluation_at && q.submitted_at)
+    .map(
+      (q) =>
+        (new Date(q.submitted_evaluation_at as string).getTime() -
+          new Date(q.submitted_at as string).getTime()) /
+        86_400_000
+    )
+    .filter((d) => d >= 0);
+  const avgDays = durations.length
+    ? Math.max(1, Math.round(durations.reduce((a, b) => a + b, 0) / durations.length))
+    : null;
 
   // Recent activity — derived from real evaluation submissions in the queue.
   const activity = dashboard.queue
@@ -53,49 +84,103 @@ export default async function EvaluatorDashboardPage({
     .slice(0, 5)
     .map((q) => ({
       id: q.idea_id,
-      title: (isAr ? q.title_ar : q.title_en) || q.idea_code || (isAr ? 'فكرة مجهولة الهوية' : 'Anonymous idea'),
+      title:
+        (isAr ? q.title_ar : q.title_en) ||
+        q.idea_code ||
+        (isAr ? 'فكرة مجهولة الهوية' : 'Anonymous idea'),
       track: (isAr ? q.theme_ar : q.theme_en) || null,
       submitted: q.submitted_at ? formatDate(q.submitted_at, locale) : '—',
     }));
 
   const displayName = user?.fullName || user?.email || (isAr ? 'مقيّم' : 'Evaluator');
 
+  const quickActions = [
+    { icon: ListChecks, title: t('qaEvaluate'), sub: t('qaEvaluateSub'), href: '/evaluator/ideas' },
+    { icon: SlidersHorizontal, title: t('qaCriteria'), sub: t('qaCriteriaSub'), href: '/evaluator/criteria' },
+    { icon: CalendarClock, title: t('qaSchedule'), sub: t('qaScheduleSub'), href: '/evaluator/schedule' },
+    { icon: Trophy, title: t('qaLevel'), sub: t('qaLevelSub'), href: '/evaluator/level' },
+    { icon: LifeBuoy, title: t('qaSupport'), sub: t('qaSupportSub'), href: '/support' },
+  ] as const;
+
+  const kpis = [
+    { icon: ClipboardCheck, label: t('kpiAwaiting'), value: String(awaiting), color: 'var(--gold)' },
+    { icon: CalendarCheck, label: t('kpiEvaluatedMonth'), value: String(evaluatedThisMonth), color: 'var(--sage)' },
+    {
+      icon: Timer,
+      label: t('kpiAvgTime'),
+      value: avgDays ? `${avgDays} ${t('unitDay')}` : '—',
+      color: 'var(--cyan)',
+    },
+    { icon: Star, label: t('kpiPoints'), value: String(points.points), color: 'var(--gold-deep)', hint: levelName },
+  ] as const;
+
   return (
     <div className="space-y-8">
-      {/* Head */}
-      <div>
-        <p className="ev-eyebrow">{t('welcomeBack')}</p>
-        <h1 className="mt-1 text-2xl font-extrabold text-[var(--ink)] sm:text-3xl">{displayName}</h1>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          label={t('statRemaining')}
-          ring={<EvRing value={remaining} max={dashboard.totalAssigned || 1} color="var(--gold)" label={String(remaining)} />}
-        />
-        <StatCard
-          label={t('statCompleted')}
-          ring={<EvRing value={dashboard.completed} max={dashboard.totalAssigned || 1} color="var(--sage)" label={String(dashboard.completed)} />}
-        />
-        <div className="ev-card p-5">
-          <p className="text-sm font-medium text-[var(--ink-soft)]">{t('statLevel')}</p>
-          <p className="mt-2 font-display text-lg font-bold text-[var(--ink)]">{levelName}</p>
-          <div className="ev-progress mt-3">
-            <span style={{ width: `${level.progressPct}%` }} />
-          </div>
-          <p className="ev-num mt-2 text-xs text-[var(--ink-faint)]">{points.points} {t('points')}</p>
-        </div>
-      </div>
-
-      {/* Banner CTA */}
-      <div className="rounded-[var(--radius-lg)] bg-[var(--ink)] p-6 text-white sm:p-8">
-        <h2 className="font-display text-xl font-bold">{t('ctaTitle')}</h2>
+      {/* Hero card */}
+      <section className="rounded-[var(--radius-lg)] bg-[var(--ink)] p-6 text-white sm:p-8">
+        <p className="text-xs font-medium uppercase tracking-[0.08em] text-white/60">
+          {t('welcomeBack')}
+        </p>
+        <h1 className="mt-1 font-display text-2xl font-extrabold sm:text-3xl">
+          {isAr ? `أهلاً بعودتك، ${displayName}` : `Welcome back, ${displayName}`}
+        </h1>
         <p className="mt-2 max-w-xl text-sm text-white/70">{t('ctaBody')}</p>
-        <Link href="/evaluator/ideas" className="ev-btn-gold mt-4 text-sm">
-          {t('ctaButton')}
+        <Link href="/evaluator/ideas" className="ev-btn-gold mt-5 text-sm">
+          {t('startEvaluating')}
         </Link>
+      </section>
+
+      {/* Evaluator KPIs */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {kpis.map((k) => {
+          const Icon = k.icon;
+          return (
+            <div key={k.label} className="ev-card p-5">
+              <span
+                className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)]"
+                style={{ background: 'var(--paper)', color: k.color }}
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+              <p className="ev-num mt-3 text-2xl font-bold text-[var(--ink)]">{k.value}</p>
+              <p className="mt-1 text-xs font-medium text-[var(--ink-soft)]">{k.label}</p>
+              {'hint' in k && k.hint && (
+                <p className="mt-0.5 text-[11px] text-[var(--ink-faint)]">{k.hint}</p>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {/* Quick actions — evaluator-only */}
+      <section>
+        <h2 className="mb-3 font-display text-lg font-bold text-[var(--ink)]">
+          {t('quickActionsTitle')}
+        </h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {quickActions.map((qa) => {
+            const Icon = qa.icon;
+            return (
+              <Link
+                key={qa.href}
+                href={qa.href as any}
+                className="ev-idea-card flex items-center gap-4 p-4"
+              >
+                <span
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)]"
+                  style={{ background: 'var(--gold-soft)', color: 'var(--gold-deep)' }}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-[var(--ink)]">{qa.title}</span>
+                  <span className="block text-xs text-[var(--ink-faint)]">{qa.sub}</span>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Evaluation queue preview */}
       <EvaluatorQueuePreview
@@ -103,6 +188,7 @@ export default async function EvaluatorDashboardPage({
         viewAllLabel={t('viewAll')}
         evaluateLabel={t('evaluate')}
         emptyLabel={t('queueEmptyShort')}
+        emptyCtaLabel={t('viewFullQueue')}
         submittedOnLabel={t('submittedOn')}
         items={queuePreview}
       />
@@ -123,15 +209,6 @@ export default async function EvaluatorDashboardPage({
           items={activity}
         />
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, ring }: { label: string; ring: React.ReactNode }) {
-  return (
-    <div className="ev-card flex items-center gap-4 p-5">
-      {ring}
-      <p className="text-sm font-medium text-[var(--ink-soft)]">{label}</p>
     </div>
   );
 }
