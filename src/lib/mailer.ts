@@ -82,11 +82,16 @@ function getSmtpTransport(): Transporter | null {
 
 function defaultFrom(): string {
   const name = process.env.MAIL_FROM_NAME ?? 'Innovation to Impact';
-  const address =
-    process.env.MAIL_FROM_ADDRESS ??
-    process.env.RESEND_FROM ??
-    'noreply@gac.gov.sa';
-  return `${name} <${address}>`;
+  const explicitAddress = process.env.MAIL_FROM_ADDRESS;
+  if (explicitAddress) {
+    return `${name} <${explicitAddress}>`;
+  }
+  const resendFrom = process.env.RESEND_FROM?.trim();
+  if (resendFrom) {
+    // Pass through if already formatted (`Name <email>`), else wrap.
+    return resendFrom.includes('<') ? resendFrom : `${name} <${resendFrom}>`;
+  }
+  return `${name} <noreply@gac.gov.sa>`;
 }
 
 /**
