@@ -1,16 +1,14 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
-import { CheckCircle2, ClipboardList } from 'lucide-react';
+import { EvaluatorRecentActivity } from '@/components/evaluator/evaluator-recent-activity';
 import { getCurrentUser } from '@/lib/user';
 import { getUserPoints } from '@/lib/gamification';
 import { fetchEvaluatorDashboard } from '@/lib/data';
 import { resolveLevel } from '@/lib/evaluator-levels';
 import { formatDate } from '@/lib/utils';
-import { EvRing, EvEmptyState } from '@/components/evaluator/ev-ui';
+import { EvRing } from '@/components/evaluator/ev-ui';
 
-// Auth-gated, per-user dashboard — never meaningfully static. Rendering
-// dynamically also avoids a build-time prerender error when Supabase env is
-// absent (empty dashboard → EvEmptyState with a Lucide icon prop).
+// Auth-gated, per-user dashboard — never meaningfully static.
 export const dynamic = 'force-dynamic';
 
 export default async function EvaluatorDashboardPage({
@@ -87,29 +85,13 @@ export default async function EvaluatorDashboardPage({
       </div>
 
       {/* Recent activity */}
-      <section>
-        <h2 className="mb-3 font-display text-lg font-bold text-[var(--ink)]">{t('recentActivity')}</h2>
-        {activity.length === 0 ? (
-          <EvEmptyState icon={ClipboardList} title={t('noActivityTitle')} hint={t('noActivityHint')} />
-        ) : (
-          <ul className="ev-card divide-y divide-[var(--line)]">
-            {activity.map((a) => (
-              <li key={a.id} className="flex items-center gap-3 p-4">
-                <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)]"
-                  style={{ background: 'var(--sage-soft)', color: 'var(--sage)' }}
-                >
-                  <CheckCircle2 className="h-5 w-5" />
-                </span>
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--ink)]">
-                  {t('activitySubmitted')} — {a.title}
-                </span>
-                <span className="ev-num shrink-0 text-xs text-[var(--ink-faint)]">{a.when}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <EvaluatorRecentActivity
+        heading={t('recentActivity')}
+        emptyTitle={t('noActivityTitle')}
+        emptyHint={t('noActivityHint')}
+        submittedLabel={t('activitySubmitted')}
+        items={activity}
+      />
     </div>
   );
 }
