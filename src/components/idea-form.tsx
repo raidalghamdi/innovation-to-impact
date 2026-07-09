@@ -296,6 +296,7 @@ export function IdeaForm({
     // Summary was removed from the form (folded into the single description
     // field per the 4-page re-order). The long description is stored as the
     // idea's main body in proposed_solution, matching the prior mapping.
+    const isTeam = participation === 'team';
     const payload: Record<string, any> = {
       title_ar: isAr ? title : null,
       title_en: !isAr ? title : null,
@@ -306,6 +307,10 @@ export function IdeaForm({
       status: 'submitted',
       current_stage: 1,
       submitter_id: userData.user.id,
+      team_name: isTeam ? teamName.trim() : null,
+      team_members: isTeam
+        ? validTeamMembers.map((m) => ({ name: m.name.trim(), email: m.email.trim() }))
+        : [],
     };
     // Persist to innovation.ideas. Do NOT swallow errors silently — if the
       // insert fails (RLS, missing columns, offline) we must surface the message

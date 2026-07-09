@@ -1580,8 +1580,6 @@
     "teamMemberRemove": "إزالة العضو",
     "descriptionTemplate": "تحميل قالب الوصف",
     "eventLabel": "الفعالية",
-    "templateUploadLabel": "رفع القالب بعد تعبئته",
-    "templateUploadHint": "اختر ملف القالب المعبّأ (PDF أو Word).",
     "termsDeclaration": "أوافق على شروط وأحكام الهاكاثون.",
     "termsAgreePrefix": "أوافق على",
     "termsLink": "شروط وأحكام الهاكاثون",
@@ -1686,7 +1684,6 @@
     "step3Meta": "عبر البريد الإلكتروني",
     "step3Body": "سنراسلك عبر البريد بقرارهم وبالخطوات التالية.",
     "trackCta": "تتبّع فكرتك",
-    "submitAnotherCta": "قدّم فكرة أخرى",
     "referenceLabel": "المرجع"
   },
   "emptyStates": {

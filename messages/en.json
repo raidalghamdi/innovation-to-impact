@@ -1580,8 +1580,6 @@
     "teamMemberRemove": "Remove member",
     "descriptionTemplate": "Download description template",
     "eventLabel": "Event",
-    "templateUploadLabel": "Upload filled template",
-    "templateUploadHint": "Choose the completed template file (PDF or Word).",
     "termsDeclaration": "I agree to the hackathon terms and conditions.",
     "termsAgreePrefix": "I agree to the hackathon",
     "termsLink": "terms and conditions",
@@ -1686,7 +1684,6 @@
     "step3Meta": "By email",
     "step3Body": "We'll email you with what they decided and what comes next.",
     "trackCta": "Track your idea",
-    "submitAnotherCta": "Submit another idea",
     "referenceLabel": "Reference"
   },
   "emptyStates": {
