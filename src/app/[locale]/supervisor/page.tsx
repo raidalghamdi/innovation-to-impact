@@ -35,13 +35,62 @@ export default async function SupervisorPage({
   const supabase = await createClient();
 
   // Pull ideas needing supervisor attention (draft is excluded — those are still with innovator)
-  const { data: ideas } = await supabase!
+  const { data: ideasRaw } = await supabase!
     .from('ideas')
     .select(
-      'id, code, title_ar, title_en, proposed_solution, strategic_theme_id, status, submitted_at, created_at, rejection_reason, rejection_reason_ar'
+      'id, code, title_ar, title_en, proposed_solution, strategic_theme_id, activity_id, participation_type, team_name, team_members, original_source_metadata, submitter_id, status, submitted_at, created_at, rejection_reason, rejection_reason_ar'
     )
     .in('status', ['submitted', 'screening', 'returned', 'approved', 'assigned', 'evaluation', 'rejected'])
     .order('submitted_at', { ascending: false, nullsFirst: false });
+
+  const ideaRows = (ideasRaw as any[]) ?? [];
+
+  // Resolve activity (الفعالية) names and submitter (مقدّم الفكرة) profiles so the
+  // review modal can render them without extra round-trips.
+  const activityIds = Array.from(
+    new Set(ideaRows.map((i) => i.activity_id).filter(Boolean))
+  ) as string[];
+  const activityMap = new Map<string, { name_ar: string | null; name_en: string | null }>();
+  if (activityIds.length) {
+    const { data: acts } = await supabase!
+      .from('activities')
+      .select('id, name_ar, name_en')
+      .in('id', activityIds);
+    for (const a of (acts as any[]) ?? [])
+      activityMap.set(a.id, { name_ar: a.name_ar ?? null, name_en: a.name_en ?? null });
+  }
+
+  const submitterIds = Array.from(
+    new Set(ideaRows.map((i) => i.submitter_id).filter(Boolean))
+  ) as string[];
+  const submitterMap = new Map<string, { name: string | null; email: string | null }>();
+  if (submitterIds.length) {
+    const { data: profs } = await supabase!
+      .from('user_profiles')
+      .select('id, full_name, full_name_ar, email')
+      .in('id', submitterIds);
+    for (const p of (profs as any[]) ?? [])
+      submitterMap.set(p.id, {
+        name: locale === 'ar' ? p.full_name_ar || p.full_name : p.full_name || p.full_name_ar,
+        email: p.email ?? null,
+      });
+  }
+
+  const ideas = ideaRows.map((i) => {
+    const act = i.activity_id ? activityMap.get(i.activity_id) : null;
+    const sub = i.submitter_id ? submitterMap.get(i.submitter_id) : null;
+    const meta = i.original_source_metadata;
+    const challenge =
+      meta && typeof meta === 'object' && meta.challenge ? String(meta.challenge) : null;
+    return {
+      ...i,
+      activity_name_ar: act?.name_ar ?? null,
+      activity_name_en: act?.name_en ?? null,
+      challenge,
+      submitter_name: sub?.name ?? null,
+      submitter_email: sub?.email ?? null,
+    };
+  });
 
   // Themes / tracks — DB uses name_ar/name_en, alias to title_* for the client.
   const { data: themesRaw } = await supabase!
@@ -85,7 +134,7 @@ export default async function SupervisorPage({
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
       <SupervisorDashboard
         locale={locale}
-        ideas={(ideas as any[]) ?? []}
+        ideas={ideas as any[]}
         themes={themes}
         evaluators={evaluators}
         trackAssignments={(trackAssignments as any[]) ?? []}

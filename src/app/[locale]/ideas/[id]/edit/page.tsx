@@ -36,7 +36,7 @@ export default async function IdeaEditPage({
   const { data: idea } = await supabase
     .from('ideas')
     .select(
-      'id, submitter_id, status, title_ar, title_en, proposed_solution, editable_sections, rejection_reason, rejection_reason_ar'
+      'id, submitter_id, status, title_ar, title_en, proposed_solution, strategic_theme_id, activity_id, participation_type, team_name, team_members, original_source_metadata, editable_sections, rejection_reason, rejection_reason_ar'
     )
     .eq('id', id)
     .maybeSingle();
@@ -52,10 +52,50 @@ export default async function IdeaEditPage({
   const editableSections = Array.isArray(row.editable_sections)
     ? (row.editable_sections as string[])
     : [];
-  const validSections = ['title', 'proposed_solution', 'attachments', 'team'] as const;
+  const validSections = [
+    'activity_id',
+    'strategic_theme_id',
+    'challenge',
+    'participation_type',
+    'team',
+    'title',
+    'proposed_solution',
+    'attachments',
+  ] as const;
   const cleaned = editableSections.filter((s) => (validSections as readonly string[]).includes(s)) as Array<
     (typeof validSections)[number]
   >;
+
+  // Option lists for the activity / track selects.
+  const { data: activitiesRaw } = await supabase
+    .from('activities')
+    .select('id, name_ar, name_en')
+    .order('name_en');
+  const activities = ((activitiesRaw as any[]) ?? []).map((a) => ({
+    id: a.id,
+    name_ar: a.name_ar ?? null,
+    name_en: a.name_en ?? null,
+  }));
+
+  const { data: themesRaw } = await supabase
+    .from('strategic_themes')
+    .select('id, name_ar, name_en')
+    .order('name_en');
+  const themes = ((themesRaw as any[]) ?? []).map((th) => ({
+    id: th.id,
+    name_ar: th.name_ar ?? null,
+    name_en: th.name_en ?? null,
+  }));
+
+  const meta = row.original_source_metadata;
+  const challenge =
+    meta && typeof meta === 'object' && meta.challenge ? String(meta.challenge) : '';
+  const teamMembers = Array.isArray(row.team_members)
+    ? (row.team_members as Array<{ name?: string | null; email?: string | null }>).map((m) => ({
+        name: m?.name ?? '',
+        email: m?.email ?? '',
+      }))
+    : [];
 
   const reason =
     locale === 'ar'
@@ -79,7 +119,16 @@ export default async function IdeaEditPage({
           title_ar: row.title_ar,
           title_en: row.title_en,
           proposed_solution: row.proposed_solution,
+          activity_id: row.activity_id ?? null,
+          strategic_theme_id: row.strategic_theme_id ?? null,
+          challenge,
+          participation_type:
+            row.participation_type === 'team' ? 'team' : 'individual',
+          team_name: row.team_name ?? null,
+          team_members: teamMembers,
         }}
+        activities={activities}
+        themes={themes}
         editableSections={cleaned}
         reason={reason}
       />

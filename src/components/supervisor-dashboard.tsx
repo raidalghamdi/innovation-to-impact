@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { StatusBadge } from '@/components/status-badge';
+import { getIdeaAttachments, type SupervisorAttachment } from '@/app/[locale]/supervisor/actions';
+
+type TeamMember = { name?: string | null; email?: string | null };
 
 type Idea = {
   id: string;
@@ -17,6 +21,15 @@ type Idea = {
   title_en: string | null;
   proposed_solution: string | null;
   strategic_theme_id: string | null;
+  activity_id: string | null;
+  activity_name_ar: string | null;
+  activity_name_en: string | null;
+  participation_type: string | null;
+  team_name: string | null;
+  team_members: TeamMember[] | null;
+  challenge: string | null;
+  submitter_name: string | null;
+  submitter_email: string | null;
   status: string;
   submitted_at: string | null;
   created_at: string | null;
@@ -53,15 +66,45 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
   // These correspond to the idea-form sections. When empty, the innovator
   // can edit any field (backward compat). When set, only listed sections
   // are editable and the rest are locked.
+  // One entry per editable wizard field (Round 17, Section C — 8 fields).
   const RETURN_SECTIONS = [
+    'activity_id',
+    'strategic_theme_id',
+    'challenge',
+    'participation_type',
+    'team',
     'title',
     'proposed_solution',
     'attachments',
-    'team',
   ] as const;
   type ReturnSection = typeof RETURN_SECTIONS[number];
   const [editableSections, setEditableSections] = useState<Set<ReturnSection>>(new Set());
   const [flash, setFlash] = useState<{ ok: boolean; msg: string } | null>(null);
+  // Attachments for the currently-open review modal (fetched on open).
+  const [attachments, setAttachments] = useState<SupervisorAttachment[]>([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!viewIdea) {
+      setAttachments([]);
+      return;
+    }
+    let cancelled = false;
+    setAttachmentsLoading(true);
+    getIdeaAttachments(viewIdea.id)
+      .then((rows) => {
+        if (!cancelled) setAttachments(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setAttachments([]);
+      })
+      .finally(() => {
+        if (!cancelled) setAttachmentsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [viewIdea]);
 
   const themeMap = useMemo(() => {
     const m = new Map<string, Theme>();
@@ -132,10 +175,14 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
   }
 
   const sectionLabels = {
+    activity_id: isAr ? 'الفعالية' : 'Activity',
+    strategic_theme_id: isAr ? 'المسار' : 'Track',
+    challenge: isAr ? 'التحدي' : 'Challenge',
+    participation_type: isAr ? 'نوع المشاركة' : 'Participation type',
+    team: isAr ? 'بيانات أعضاء الفريق' : 'Team members',
     title: isAr ? 'عنوان الفكرة' : 'Idea title',
     proposed_solution: isAr ? 'وصف الفكرة' : 'Idea description',
     attachments: isAr ? 'المرفقات' : 'Attachments',
-    team: isAr ? 'بيانات الفريق' : 'Team details',
   } as const;
 
   function submitDecision() {
@@ -383,12 +430,141 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
 
             <div className="max-h-[60vh] overflow-y-auto">
               <CardContent className="space-y-5 py-5">
-                {viewIdea.proposed_solution && (
-                  <ReviewSection
-                    label={isAr ? 'وصف الفكرة' : 'Idea description'}
-                    value={viewIdea.proposed_solution}
-                  />
-                )}
+                {(() => {
+                  const title = isAr
+                    ? viewIdea.title_ar || viewIdea.title_en
+                    : viewIdea.title_en || viewIdea.title_ar;
+                  const activity = isAr
+                    ? viewIdea.activity_name_ar || viewIdea.activity_name_en
+                    : viewIdea.activity_name_en || viewIdea.activity_name_ar;
+                  const theme = viewIdea.strategic_theme_id
+                    ? themeMap.get(viewIdea.strategic_theme_id)
+                    : null;
+                  const themeName = theme
+                    ? isAr
+                      ? theme.title_ar || theme.title_en
+                      : theme.title_en || theme.title_ar
+                    : null;
+                  const members = Array.isArray(viewIdea.team_members)
+                    ? viewIdea.team_members
+                    : [];
+                  const isTeam =
+                    viewIdea.participation_type === 'team' ||
+                    (!viewIdea.participation_type && members.length > 0);
+                  const participationLabel = isTeam
+                    ? isAr
+                      ? `فريق (${members.length} أعضاء)`
+                      : `Team (${members.length} members)`
+                    : isAr
+                      ? 'فردي'
+                      : 'Individual';
+                  return (
+                    <>
+                      <ReviewSection
+                        label={isAr ? 'عنوان الفكرة' : 'Idea title'}
+                        value={title || '—'}
+                      />
+                      <ReviewSection
+                        label={isAr ? 'الفعالية' : 'Activity'}
+                        value={activity || '—'}
+                      />
+                      <ReviewSection
+                        label={isAr ? 'المسار' : 'Track'}
+                        value={themeName || '—'}
+                      />
+                      {viewIdea.challenge && (
+                        <ReviewSection
+                          label={isAr ? 'التحدي' : 'Challenge'}
+                          value={viewIdea.challenge}
+                        />
+                      )}
+                      <ReviewSection
+                        label={isAr ? 'نوع المشاركة' : 'Participation type'}
+                        value={participationLabel}
+                      />
+                      {isTeam && members.length > 0 && (
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {isAr ? 'بيانات أعضاء الفريق' : 'Team members'}
+                          </div>
+                          <ul className="mt-2 space-y-2">
+                            {members.map((m, idx) => (
+                              <li
+                                key={idx}
+                                className="flex flex-col gap-0.5 rounded-md border border-border p-2 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                              >
+                                <span className="font-medium">{m?.name || '—'}</span>
+                                {m?.email && (
+                                  <span className="text-xs text-muted-foreground" dir="ltr">
+                                    {m.email}
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {isAr ? 'مقدّم الفكرة' : 'Submitter'}
+                        </div>
+                        <div className="mt-1 text-sm">
+                          <div className="font-medium">{viewIdea.submitter_name || '—'}</div>
+                          {viewIdea.submitter_email && (
+                            <div className="text-xs text-muted-foreground" dir="ltr">
+                              {viewIdea.submitter_email}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {viewIdea.proposed_solution && (
+                        <ReviewSection
+                          label={isAr ? 'وصف الفكرة' : 'Idea description'}
+                          value={viewIdea.proposed_solution}
+                        />
+                      )}
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {isAr ? 'المرفقات' : 'Attachments'}
+                        </div>
+                        {attachmentsLoading ? (
+                          <div className="mt-1 text-sm text-muted-foreground">
+                            {isAr ? 'جارٍ التحميل…' : 'Loading…'}
+                          </div>
+                        ) : attachments.length === 0 ? (
+                          <div className="mt-1 text-sm text-muted-foreground">
+                            {isAr ? 'لا توجد مرفقات.' : 'No attachments.'}
+                          </div>
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {attachments.map((a) => (
+                              <li
+                                key={a.id}
+                                className="flex items-center justify-between gap-3 rounded-md border border-border p-2 text-sm"
+                              >
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <FileText className="h-4 w-4 shrink-0 text-brand-teal" />
+                                  <span className="truncate">{a.filename}</span>
+                                </div>
+                                {a.url && (
+                                  <a
+                                    href={a.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-brand-teal hover:underline"
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                    {isAr ? 'تنزيل' : 'Download'}
+                                  </a>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
                 {(viewIdea.rejection_reason_ar || viewIdea.rejection_reason) && (
                   <div className="rounded-md border border-red-200 bg-red-50 p-3">
                     <div className="text-xs font-semibold text-red-800">

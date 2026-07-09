@@ -243,12 +243,6 @@ function renderIdea(l: Layout, dataset: IdeasDataset, idea: Idea, evidence: stri
     'المشكلة',
     idea.problem_statement
   );
-  l.bilingualField(
-    'Expected impact',
-    idea.expected_benefits,
-    'الأثر المتوقع',
-    idea.expected_benefits
-  );
 
   const es = evalSummaryLine(dataset, idea.id);
   l.bilingualField('Evaluation summary', es.en, 'ملخص التقييم', es.ar);

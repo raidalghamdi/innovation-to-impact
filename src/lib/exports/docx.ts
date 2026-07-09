@@ -87,11 +87,6 @@ export async function generateIdeaDocx(opts: IdeaDocxOpts): Promise<Buffer | nul
     arHeading('الحل المقترح'),
     arPara(idea.proposed_solution),
 
-    enHeading('Expected impact'),
-    enPara(idea.expected_benefits),
-    arHeading('الأثر المتوقع'),
-    arPara(idea.expected_benefits),
-
     new Paragraph({
       alignment: AlignmentType.LEFT,
       children: [

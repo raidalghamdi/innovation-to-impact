@@ -38,7 +38,7 @@ export async function POST(
   // Fetch the idea to verify ownership + status + editable_sections gate.
   const { data: idea, error: fetchErr } = await supabase
     .from('ideas')
-    .select('id, code, submitter_id, status, editable_sections, strategic_theme_id')
+    .select('id, code, submitter_id, status, editable_sections, strategic_theme_id, original_source_metadata')
     .eq('id', id)
     .maybeSingle();
   if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 400 });
@@ -51,6 +51,7 @@ export async function POST(
     status: string | null;
     editable_sections: string[] | null;
     strategic_theme_id: string | null;
+    original_source_metadata: Record<string, unknown> | null;
   };
 
   if (row.submitter_id !== user.id && user.role !== 'admin') {
@@ -64,24 +65,58 @@ export async function POST(
     );
   }
 
-  // Map body keys → the section that governs them. If a key's section isn't
-  // in editable_sections, drop it silently.
+  // Map plain string/scalar body keys → the section that governs them. If a
+  // key's section isn't in editable_sections, drop it silently.
   const SECTION_FOR_KEY: Record<string, string> = {
     title_ar: 'title',
     title_en: 'title',
     proposed_solution: 'proposed_solution',
+    activity_id: 'activity_id',
+    strategic_theme_id: 'strategic_theme_id',
+    participation_type: 'participation_type',
   };
 
   // editable_sections === null → legacy behavior, all sections editable.
   const openAll = !Array.isArray(row.editable_sections) || row.editable_sections.length === 0;
   const allow = new Set(row.editable_sections ?? []);
+  const sectionOpen = (section: string) => openAll || allow.has(section);
 
   const patch: Record<string, unknown> = {};
   for (const [key, section] of Object.entries(SECTION_FOR_KEY)) {
     if (!(key in body)) continue;
-    if (!openAll && !allow.has(section)) continue;
+    if (!sectionOpen(section)) continue;
     const v = body[key];
     if (typeof v === 'string' || v === null) patch[key] = v;
+  }
+
+  // Team (name + members array) — governed by the 'team' section.
+  if (sectionOpen('team')) {
+    if ('team_name' in body) {
+      const tn = body.team_name;
+      if (typeof tn === 'string' || tn === null) patch.team_name = tn;
+    }
+    if ('team_members' in body && Array.isArray(body.team_members)) {
+      patch.team_members = (body.team_members as Array<Record<string, unknown>>)
+        .map((m) => ({
+          name: typeof m?.name === 'string' ? m.name.trim() : '',
+          email: typeof m?.email === 'string' ? m.email.trim() : '',
+        }))
+        .filter((m) => m.name || m.email);
+    }
+  }
+
+  // Challenge — stored inside the original_source_metadata JSONB (no dedicated
+  // column), so merge it in rather than replacing the whole object.
+  if (sectionOpen('challenge') && 'challenge' in body) {
+    const c = body.challenge;
+    if (typeof c === 'string' || c === null) {
+      const meta =
+        row.original_source_metadata && typeof row.original_source_metadata === 'object'
+          ? { ...row.original_source_metadata }
+          : {};
+      meta.challenge = c || null;
+      patch.original_source_metadata = meta;
+    }
   }
 
   if (Object.keys(patch).length === 0) {

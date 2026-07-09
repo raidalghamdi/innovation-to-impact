@@ -36,7 +36,6 @@ export type CommitteeIdea = {
   title_en: string;
   problem_statement: string;
   proposed_solution: string;
-  expected_benefits: string;
   summary: Summary | null;
 };
 
@@ -296,7 +295,6 @@ export function CommitteeDecisionPanel({
             <CardContent className="space-y-4 text-sm">
               <Section label={t('problem')} body={detail.problem_statement} />
               <Section label={t('solution')} body={detail.proposed_solution} />
-              <Section label={t('benefits')} body={detail.expected_benefits} />
 
               <div>
                 <p className="mb-2 font-semibold text-brand-teal">{t('perCriterion')}</p>

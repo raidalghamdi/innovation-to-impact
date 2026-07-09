@@ -319,6 +319,7 @@ export function IdeaForm({
       proposed_solution: description,
       strategic_theme_id: theme || null,
       activity_id: activity || null,
+      participation_type: participation,
       ownership_acknowledged: ack,
       status: 'submitted',
       current_stage: 1,

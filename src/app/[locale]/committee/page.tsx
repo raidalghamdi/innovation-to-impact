@@ -47,7 +47,6 @@ export default async function CommitteePage({
       title_en: i.title_en ?? null,
       problem_statement: i.problem_statement ?? null,
       proposed_solution: i.proposed_solution ?? null,
-      expected_benefits: i.expected_benefits ?? null,
       theme_ar: theme?.name_ar ?? null,
       theme_en: theme?.name_en ?? null,
       avg_score: s?.avgTotal ?? null,

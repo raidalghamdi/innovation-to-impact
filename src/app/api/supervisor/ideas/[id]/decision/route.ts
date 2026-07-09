@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { userHasRole } from '@/lib/user-role-check';
-import { createNotification, type NotificationType } from '@/lib/notifications';
+import { createNotification } from '@/lib/notifications';
+import { notifyIdeaDecision, type IdeaDecisionEvent } from '@/lib/idea-decision-notify';
 
 type Decision = 'approve' | 'reject' | 'return';
 
@@ -48,10 +49,14 @@ export async function POST(
   // scope of changes to make (the UI enforces this too, but the API must not
   // trust the client).
   const ALLOWED_SECTIONS = new Set([
+    'activity_id',
+    'strategic_theme_id',
+    'challenge',
+    'participation_type',
+    'team',
     'title',
     'proposed_solution',
     'attachments',
-    'team',
   ]);
   const cleanedSections =
     decision === 'return' && Array.isArray(editable_sections)
@@ -102,29 +107,18 @@ export async function POST(
       .select('id, code, submitter_id, strategic_theme_id')
       .eq('id', id)
       .maybeSingle();
-    const submitterId = (ideaRow as { submitter_id?: string } | null)?.submitter_id ?? null;
     const ideaCode = (ideaRow as { code?: string } | null)?.code ?? id;
     const themeId = (ideaRow as { strategic_theme_id?: string } | null)?.strategic_theme_id ?? null;
 
-    const notifType: NotificationType =
-      decision === 'approve'
-        ? 'idea_approved'
-        : decision === 'reject'
-          ? 'idea_rejected'
-          : 'idea_feedback_requested';
-    // Locale-less path — the i18n <Link> prepends the active locale. Returned
-    // ideas deep-link into the edit page so the innovator lands on the form
-    // they must act on; approvals/rejections go to the idea details page.
-    const link = decision === 'return' ? `/ideas/${id}/edit` : `/ideas/${id}`;
-
-    if (submitterId) {
-      await createNotification(
-        submitterId,
-        notifType,
-        { ideaId: id, ideaCode, reason: reason ?? reason_ar ?? '' },
-        { email: true, link }
-      );
-    }
+    // Fan the screening decision out to the submitter + team members: in-app
+    // (submitter) plus a branded CTA email to each. Exact bilingual copy lives
+    // in idea-decision-notify.ts / messages.
+    const eventMap: Record<Decision, IdeaDecisionEvent> = {
+      approve: 'approved',
+      reject: 'rejected',
+      return: 'returned',
+    };
+    await notifyIdeaDecision(id, eventMap[decision]);
 
     if (decision === 'approve' && themeId) {
       // S4-26 — auto-assign an evaluator on approval, round-robin by workload.

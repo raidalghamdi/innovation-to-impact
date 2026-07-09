@@ -71,7 +71,8 @@ export default async function IdeaDetailPage({
   let submitterId: string | null = null;
   let submitterName: string | null = null;
   let submitterEmail: string | null = null;
-  // Participation type is derived: a populated team → 'team', otherwise 'individual'.
+  // Participation type is read directly from the ideas.participation_type column
+  // written by the submission wizard; falls back to team-derived when absent.
   let participationType: 'individual' | 'team' = 'individual';
 
   // Attachments come from the evidence ledger (bucket + evidence_attachments),
@@ -83,7 +84,7 @@ export default async function IdeaDetailPage({
     const { data: ideaRow } = await supabase
       .from('ideas')
       .select(
-        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, submitter_id, team_id, team_name, team_members, original_source_metadata, submitted_at, updated_at'
+        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, participation_type, submitter_id, team_id, team_name, team_members, original_source_metadata, submitted_at, updated_at'
       )
       .eq('id', id)
       .maybeSingle();
@@ -125,14 +126,14 @@ export default async function IdeaDetailPage({
       if ((ideaRow as any).activity_id) {
         const { data: act } = await supabase
           .from('activities')
-          .select('name_ar, name_en, title_ar, title_en')
+          .select('name_ar, name_en')
           .eq('id', (ideaRow as any).activity_id)
           .maybeSingle();
         if (act) {
           campaignName =
             locale === 'ar'
-              ? (act as any).name_ar || (act as any).title_ar || (act as any).name_en || (act as any).title_en
-              : (act as any).name_en || (act as any).title_en || (act as any).name_ar || (act as any).title_ar;
+              ? (act as any).name_ar || (act as any).name_en
+              : (act as any).name_en || (act as any).name_ar;
         }
       }
       // Team — prefer the new inline columns (written by the submission wizard),
@@ -185,7 +186,12 @@ export default async function IdeaDetailPage({
         }
       }
 
-      participationType = teamMembers.length > 0 || teamName ? 'team' : 'individual';
+      const ptCol = (ideaRow as any).participation_type;
+      if (ptCol === 'team' || ptCol === 'individual') {
+        participationType = ptCol;
+      } else {
+        participationType = teamMembers.length > 0 || teamName ? 'team' : 'individual';
+      }
 
       // Submitter profile — shown on the individual participation card.
       if (submitterId) {

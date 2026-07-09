@@ -1165,16 +1165,16 @@
         "body": "The committee has recorded a decision on an idea you reviewed."
       },
       "idea_feedback_requested": {
-        "title": "Feedback requested",
-        "body": "The committee has requested changes to your idea. Please review the feedback and resubmit."
+        "title": "Your idea was returned for revision",
+        "body": "Your idea has been returned. Please review the comments and complete the required changes."
       },
       "idea_approved": {
-        "title": "Your idea was approved",
-        "body": "Congratulations — the committee approved your idea. It will move to the next stage."
+        "title": "Update on your idea",
+        "body": "Your idea has passed the initial screening and is now being evaluated."
       },
       "idea_rejected": {
         "title": "Decision on your idea",
-        "body": "The committee has reviewed your idea and decided not to proceed. See the feedback for details."
+        "body": "We are sorry — your idea was not accepted due to unmet requirements."
       },
       "deadline_approaching": {
         "title": "Deadline approaching",
@@ -1197,8 +1197,8 @@
         "body": "A new idea ({ideaCode}) was submitted and is awaiting screening."
       },
       "idea_submitted_confirmation": {
-        "title": "Your idea has been submitted: {ideaTitle}",
-        "body": "We've received your idea. You'll be notified once a supervisor reviews it."
+        "title": "Your idea has been received",
+        "body": "Your idea has been received. You will be notified with updates."
       }
     }
   },

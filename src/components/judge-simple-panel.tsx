@@ -16,7 +16,6 @@ export type JudgeIdea = {
   title_en: string | null;
   problem_statement: string | null;
   proposed_solution: string | null;
-  expected_benefits: string | null;
   theme_ar?: string | null;
   theme_en?: string | null;
   avg_score?: number | null;
@@ -155,9 +154,6 @@ export function JudgeSimplePanel({ locale, ideas }: Props) {
                 )}
                 {i.proposed_solution && (
                   <Section label={isAr ? 'الحل المقترح' : 'Proposed solution'} value={i.proposed_solution} />
-                )}
-                {i.expected_benefits && (
-                  <Section label={isAr ? 'الفوائد المتوقعة' : 'Expected benefits'} value={i.expected_benefits} />
                 )}
 
                 <div className="border-t pt-4">

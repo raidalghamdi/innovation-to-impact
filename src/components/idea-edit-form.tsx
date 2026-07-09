@@ -13,7 +13,18 @@ import { AlertTriangle, Lock, Save, X, Paperclip, FileText, CheckCircle2 } from 
 const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10MB — mirrors lib/storage.ts.
 const ATTACH_ALLOWED_EXT = /\.(pdf|jpe?g|png|docx)$/i;
 
-type Section = 'title' | 'proposed_solution' | 'attachments' | 'team';
+type Section =
+  | 'activity_id'
+  | 'strategic_theme_id'
+  | 'challenge'
+  | 'participation_type'
+  | 'team'
+  | 'title'
+  | 'proposed_solution'
+  | 'attachments';
+
+type TeamMemberInput = { name: string; email: string };
+type Option = { id: string; name_ar: string | null; name_en: string | null };
 
 type Props = {
   locale: string;
@@ -22,7 +33,15 @@ type Props = {
     title_ar: string | null;
     title_en: string | null;
     proposed_solution: string | null;
+    activity_id: string | null;
+    strategic_theme_id: string | null;
+    challenge: string;
+    participation_type: 'individual' | 'team';
+    team_name: string | null;
+    team_members: TeamMemberInput[];
   };
+  activities: Option[];
+  themes: Option[];
   editableSections: Section[]; // supervisor-selected editable sections
   reason: string | null; // supervisor notes shown at top
 };
@@ -42,6 +61,8 @@ export function IdeaEditForm({
   locale,
   ideaId,
   initial,
+  activities,
+  themes,
   editableSections,
   reason,
 }: Props) {
@@ -57,6 +78,28 @@ export function IdeaEditForm({
   const [titleAr, setTitleAr] = useState(initial.title_ar ?? '');
   const [titleEn, setTitleEn] = useState(initial.title_en ?? '');
   const [solution, setSolution] = useState(initial.proposed_solution ?? '');
+  const [activityId, setActivityId] = useState(initial.activity_id ?? '');
+  const [themeId, setThemeId] = useState(initial.strategic_theme_id ?? '');
+  const [challenge, setChallenge] = useState(initial.challenge ?? '');
+  const [participation, setParticipation] = useState<'individual' | 'team'>(
+    initial.participation_type
+  );
+  const [teamName, setTeamName] = useState(initial.team_name ?? '');
+  const [teamMembers, setTeamMembers] = useState<TeamMemberInput[]>(
+    initial.team_members.length > 0 ? initial.team_members : [{ name: '', email: '' }]
+  );
+
+  const optionLabel = (o: Option) => (isAr ? o.name_ar || o.name_en : o.name_en || o.name_ar) ?? '';
+
+  function updateMember(idx: number, field: 'name' | 'email', value: string) {
+    setTeamMembers((prev) => prev.map((m, i) => (i === idx ? { ...m, [field]: value } : m)));
+  }
+  function addMember() {
+    setTeamMembers((prev) => [...prev, { name: '', email: '' }]);
+  }
+  function removeMember(idx: number) {
+    setTeamMembers((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)));
+  }
 
   // Attachment uploads (only relevant when 'attachments' is editable). Files
   // upload immediately to the evidence bucket linked to this idea; there is no
@@ -110,6 +153,19 @@ export function IdeaEditForm({
         patch.title_en = titleEn;
       }
       if (isEditable('proposed_solution')) patch.proposed_solution = solution;
+      if (isEditable('activity_id')) patch.activity_id = activityId || null;
+      if (isEditable('strategic_theme_id')) patch.strategic_theme_id = themeId || null;
+      if (isEditable('challenge')) patch.challenge = challenge.trim() || null;
+      if (isEditable('participation_type')) patch.participation_type = participation;
+      if (isEditable('team')) {
+        patch.team_name = participation === 'team' ? teamName.trim() || null : null;
+        patch.team_members =
+          participation === 'team'
+            ? teamMembers
+                .map((m) => ({ name: m.name.trim(), email: m.email.trim() }))
+                .filter((m) => m.name || m.email)
+            : [];
+      }
 
       const res = await fetch(`/api/ideas/${ideaId}/resubmit`, {
         method: 'POST',
@@ -210,6 +266,152 @@ export function IdeaEditForm({
         />
       </SectionCard>
 
+      {/* ACTIVITY */}
+      <SectionCard
+        title={isAr ? sectionLabels.ar.activity_id : sectionLabels.en.activity_id}
+        locked={!isEditable('activity_id')}
+        isAr={isAr}
+      >
+        <select
+          value={activityId}
+          onChange={(e) => setActivityId(e.target.value)}
+          disabled={!isEditable('activity_id')}
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+        >
+          <option value="">{isAr ? '— اختر الفعالية —' : '— Select activity —'}</option>
+          {activities.map((a) => (
+            <option key={a.id} value={a.id}>
+              {optionLabel(a)}
+            </option>
+          ))}
+        </select>
+      </SectionCard>
+
+      {/* TRACK / THEME */}
+      <SectionCard
+        title={isAr ? sectionLabels.ar.strategic_theme_id : sectionLabels.en.strategic_theme_id}
+        locked={!isEditable('strategic_theme_id')}
+        isAr={isAr}
+      >
+        <select
+          value={themeId}
+          onChange={(e) => setThemeId(e.target.value)}
+          disabled={!isEditable('strategic_theme_id')}
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+        >
+          <option value="">{isAr ? '— اختر المسار —' : '— Select track —'}</option>
+          {themes.map((th) => (
+            <option key={th.id} value={th.id}>
+              {optionLabel(th)}
+            </option>
+          ))}
+        </select>
+      </SectionCard>
+
+      {/* CHALLENGE */}
+      <SectionCard
+        title={isAr ? sectionLabels.ar.challenge : sectionLabels.en.challenge}
+        locked={!isEditable('challenge')}
+        isAr={isAr}
+      >
+        <Textarea
+          value={challenge}
+          onChange={(e) => setChallenge(e.target.value)}
+          rows={3}
+          disabled={!isEditable('challenge')}
+        />
+      </SectionCard>
+
+      {/* PARTICIPATION TYPE */}
+      <SectionCard
+        title={isAr ? sectionLabels.ar.participation_type : sectionLabels.en.participation_type}
+        locked={!isEditable('participation_type')}
+        isAr={isAr}
+      >
+        <div className="flex flex-wrap gap-6">
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="participation_type"
+              checked={participation === 'individual'}
+              onChange={() => setParticipation('individual')}
+              disabled={!isEditable('participation_type')}
+            />
+            {isAr ? 'فردي' : 'Individual'}
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="participation_type"
+              checked={participation === 'team'}
+              onChange={() => setParticipation('team')}
+              disabled={!isEditable('participation_type')}
+            />
+            {isAr ? 'فريق' : 'Team'}
+          </label>
+        </div>
+      </SectionCard>
+
+      {/* TEAM */}
+      <SectionCard
+        title={isAr ? sectionLabels.ar.team : sectionLabels.en.team}
+        locked={!isEditable('team')}
+        isAr={isAr}
+      >
+        {participation === 'team' ? (
+          <div className="space-y-4">
+            <div>
+              <Label>{isAr ? 'اسم الفريق' : 'Team name'}</Label>
+              <Input
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                disabled={!isEditable('team')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{isAr ? 'أعضاء الفريق' : 'Team members'}</Label>
+              {teamMembers.map((m, idx) => (
+                <div key={idx} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                  <Input
+                    placeholder={isAr ? 'الاسم' : 'Name'}
+                    value={m.name}
+                    onChange={(e) => updateMember(idx, 'name', e.target.value)}
+                    disabled={!isEditable('team')}
+                  />
+                  <Input
+                    placeholder={isAr ? 'البريد الإلكتروني' : 'Email'}
+                    type="email"
+                    value={m.email}
+                    onChange={(e) => updateMember(idx, 'email', e.target.value)}
+                    disabled={!isEditable('team')}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => removeMember(idx)}
+                    disabled={!isEditable('team') || teamMembers.length <= 1}
+                    aria-label={isAr ? 'حذف العضو' : 'Remove member'}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {isEditable('team') && (
+                <Button type="button" variant="outline" onClick={addMember}>
+                  {isAr ? 'إضافة عضو' : 'Add member'}
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {isAr
+              ? 'مشاركة فردية — لا يوجد أعضاء فريق.'
+              : 'Individual participation — no team members.'}
+          </p>
+        )}
+      </SectionCard>
+
       {/* ATTACHMENTS — real upload input, wired to the evidence bucket.
           Files upload immediately (the idea already exists) linked to this
           idea id, matching the submit-form upload path. */}
@@ -267,16 +469,6 @@ export function IdeaEditForm({
           </div>
         </SectionCard>
       )}
-      {isEditable('team') && (
-        <SectionCard title={isAr ? sectionLabels.ar.team : sectionLabels.en.team} isAr={isAr}>
-          <p className="text-sm text-muted-foreground">
-            {isAr
-              ? 'يمكن قائد الفريق تعديل الأعضاء من صفحة "فريقي".'
-              : 'The team lead can edit members from the "My team" page.'}
-          </p>
-        </SectionCard>
-      )}
-
       {/* Actions */}
       <div className="flex flex-wrap items-center justify-end gap-3 border-t pt-4">
         <Button variant="outline" onClick={() => router.push(`/${locale}/ideas/${ideaId}`)}>
@@ -327,17 +519,25 @@ function SectionCard({
   );
 }
 
-const sectionLabels = {
+const sectionLabels: { ar: Record<Section, string>; en: Record<Section, string> } = {
   ar: {
+    activity_id: 'الفعالية',
+    strategic_theme_id: 'المسار',
+    challenge: 'التحدي',
+    participation_type: 'نوع المشاركة',
+    team: 'بيانات أعضاء الفريق',
     title: 'عنوان الفكرة',
     proposed_solution: 'وصف الفكرة',
     attachments: 'المرفقات',
-    team: 'بيانات الفريق',
   },
   en: {
+    activity_id: 'Activity',
+    strategic_theme_id: 'Track',
+    challenge: 'Challenge',
+    participation_type: 'Participation type',
+    team: 'Team details',
     title: 'Idea title',
     proposed_solution: 'Idea description',
     attachments: 'Attachments',
-    team: 'Team details',
   },
 };

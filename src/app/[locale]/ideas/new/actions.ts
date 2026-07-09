@@ -53,17 +53,15 @@ function buildSubmissionEmail(opts: {
   teamMember?: boolean;
 }): { subject: string; html: string; text: string } {
   const ar = opts.locale === 'ar';
-  const subject = ar
-    ? 'تم استلام فكرتك — برنامج ابتكار المنافسة'
-    : 'Your idea has been submitted — Competition Innovation Program';
+  const subject = ar ? 'تم استلام فكرتك' : 'Your idea has been received';
 
   const body = opts.teamMember
     ? ar
-      ? `تمت إضافتك كعضو في فريق الفكرة "${opts.ideaTitle}". تم استلام الفكرة بنجاح وهي الآن قيد الانتظار للمراجعة.`
-      : `You've been added as a team member on the idea "${opts.ideaTitle}". The idea has been received and is now awaiting review.`
+      ? `تمت إضافتك كعضو في فريق الفكرة "${opts.ideaTitle}". تم استلام الفكرة، سيتم إشعارك بالتحديثات.`
+      : `You've been added as a team member on the idea "${opts.ideaTitle}". The idea has been received. You will be notified with updates.`
     : ar
-      ? 'تم استلام فكرتك بنجاح، وهي الآن قيد الانتظار للمراجعة من قبل المشرف.'
-      : 'Your idea has been received successfully and is now awaiting review by a supervisor.';
+      ? 'تم استلام فكرتك، سيتم إشعارك بالتحديثات.'
+      : 'Your idea has been received. You will be notified with updates.';
 
   const metaItems = ar
     ? [

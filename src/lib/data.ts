@@ -659,7 +659,6 @@ export type EvaluatorQueueItem = {
   title_en: string | null;
   problem_statement: string | null;
   proposed_solution: string | null;
-  expected_benefits: string | null;
   theme_id: string | null;
   theme_ar: string | null;
   theme_en: string | null;
@@ -806,7 +805,6 @@ export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<Eval
           title_en: idea.title_en ?? null,
           problem_statement: idea.problem_statement ?? null,
           proposed_solution: idea.proposed_solution ?? null,
-          expected_benefits: idea.expected_benefits ?? null,
           theme_id: idea.strategic_theme_id ?? null,
           theme_ar: theme?.title_ar ?? null,
           theme_en: theme?.title_en ?? null,
@@ -862,7 +860,6 @@ export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<Eval
     title_en: a.idea_title_en,
     problem_statement: null,
     proposed_solution: null,
-    expected_benefits: null,
     theme_id: null,
     theme_ar: null,
     theme_en: null,

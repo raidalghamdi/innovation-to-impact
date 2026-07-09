@@ -478,16 +478,13 @@ function IdeaDetailCard({
         </div>
 
         {/* Description sections */}
-        {(item.problem_statement || item.proposed_solution || item.expected_benefits) && (
+        {(item.problem_statement || item.proposed_solution) && (
           <div className="mt-4 space-y-3 text-sm">
             {item.problem_statement && (
               <Section label={t('meta.problem')} value={item.problem_statement} />
             )}
             {item.proposed_solution && (
               <Section label={t('meta.solution')} value={item.proposed_solution} />
-            )}
-            {item.expected_benefits && (
-              <Section label={t('meta.benefits')} value={item.expected_benefits} />
             )}
           </div>
         )}
