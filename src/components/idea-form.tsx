@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
-import { uploadEvidence } from '@/lib/storage';
-import { notifySupervisorsOfNewIdea } from '@/app/[locale]/ideas/new/actions';
+import { notifySupervisorsOfNewIdea, persistIdeaAttachments } from '@/app/[locale]/ideas/new/actions';
 import { getTrackChallenges } from '@/lib/tracks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -362,26 +361,23 @@ export function IdeaForm({
         /* non-blocking */
       }
     }
-    // Upload any queued attachments now that we have an idea id. Uploads are
-    // best-effort: a failed attachment doesn't roll back the idea — the author
-    // can retry from the idea detail page. Errors are surfaced but non-blocking.
+    // Persist queued attachments via a FormData server action now that we have
+    // an idea id. Files are sent as real FormData entries (never as plain
+    // objects to a server action) and written with the service-role client so
+    // RLS can't silently drop them — the root-cause fix for missing uploads.
     if (newIdeaId && selectedFiles.length > 0) {
-      const failed: string[] = [];
-      for (const file of selectedFiles) {
-        try {
-          const res = await uploadEvidence(file, 'idea_submission', {
-            ideaId: newIdeaId,
-            entityType: 'idea',
-            entityId: newIdeaId,
-          });
-          if (!res.ok) failed.push(file.name);
-        } catch {
-          failed.push(file.name);
+      try {
+        const fd = new FormData();
+        fd.set('ideaId', newIdeaId);
+        for (const file of selectedFiles) fd.append('attachments', file);
+        const res = await persistIdeaAttachments(fd);
+        if (!res.ok) {
+          // eslint-disable-next-line no-console
+          console.warn('[idea-form] attachment persistence failed:', res.error);
         }
-      }
-      if (failed.length > 0) {
+      } catch (err) {
         // eslint-disable-next-line no-console
-        console.warn('[idea-form] attachment upload(s) failed:', failed);
+        console.warn('[idea-form] attachment persistence threw:', err);
       }
     }
     try {

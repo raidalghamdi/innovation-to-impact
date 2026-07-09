@@ -14,6 +14,7 @@
  */
 import nodemailer, { type Transporter } from 'nodemailer';
 import { applyTestRedirect } from '@/lib/email-redirect';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export type MailAttachment = {
   filename: string;
@@ -31,6 +32,9 @@ export type SendMailInput = {
   replyTo?: string;
   cc?: string | string[];
   bcc?: string | string[];
+  // Optional link back to the domain entity that triggered this email
+  // (e.g. an idea). Recorded on innovation.email_log for auditability.
+  relatedEntity?: { type: string; id: string };
 };
 
 export type MailProvider = 'smtp' | 'resend' | 'noop';
@@ -204,30 +208,90 @@ async function sendViaResend(
   return { ok: true, provider: 'resend', messageId };
 }
 
+function toDisplay(to: string | string[]): string {
+  return Array.isArray(to) ? to.join(', ') : String(to);
+}
+
+/**
+ * Write one audit row per send attempt to innovation.email_log. Best-effort:
+ * a logging failure must never break email delivery, so everything is wrapped
+ * in try/catch and only console.error'd.
+ */
+async function logEmailAttempt(entry: {
+  toOriginal: string;
+  toFinal: string;
+  from: string;
+  subject: string;
+  redirectApplied: boolean;
+  relatedEntity?: { type: string; id: string };
+  result: SendMailResult;
+}): Promise<void> {
+  try {
+    const admin = createAdminClient();
+    if (!admin) return;
+    await admin.from('email_log').insert({
+      to_original: entry.toOriginal.slice(0, 500),
+      to_final: entry.toFinal.slice(0, 500),
+      from_addr: entry.from.slice(0, 500),
+      subject: entry.subject.slice(0, 500),
+      provider: entry.result.provider,
+      status: entry.result.ok ? 'ok' : entry.result.provider === 'noop' ? 'noop' : 'error',
+      provider_message_id: entry.result.messageId ?? null,
+      error: entry.result.error ? entry.result.error.slice(0, 500) : null,
+      redirect_applied: entry.redirectApplied,
+      related_entity_type: entry.relatedEntity?.type ?? null,
+      related_entity_id: entry.relatedEntity?.id ?? null,
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[mailer] email_log insert failed:', err);
+  }
+}
+
 /**
  * Send an email. Never throws — returns a result object indicating provider
- * used and, on failure, a human-readable error.
+ * used and, on failure, a human-readable error. Every attempt is recorded on
+ * innovation.email_log (after the test-redirect is applied so both the
+ * original and final recipients are captured).
  */
 export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
   const from = input.from ?? defaultFrom();
+  const relatedEntity = input.relatedEntity;
+
+  const toOriginal = toDisplay(input.to);
 
   // TEST-ONLY: reroute mail addressed to a matching recipient (see email-redirect.ts).
   const redirected = applyTestRedirect(input.to, input.subject);
   input = { ...input, to: redirected.to, subject: redirected.subject };
 
+  const toFinal = toDisplay(input.to);
+  const redirectApplied = toFinal !== toOriginal;
+
   const to = Array.isArray(input.to) ? input.to.join(',') : input.to;
   const provider = selectProvider();
 
+  let result: SendMailResult;
   if (provider === 'smtp') {
-    return sendViaSmtp(from, to, input);
-  }
-  if (provider === 'resend') {
-    return sendViaResend(from, input);
+    result = await sendViaSmtp(from, to, input);
+  } else if (provider === 'resend') {
+    result = await sendViaResend(from, input);
+  } else {
+    // No-op — no provider configured. This must NEVER report success.
+    console.error('[mailer] No email provider configured — email NOT sent to', to);
+    result = { ok: false, provider: 'noop', error: 'No email provider configured' };
   }
 
-  // No-op — no provider configured. This must NEVER report success.
-  console.error('[mailer] No email provider configured — email NOT sent to', to);
-  return { ok: false, provider: 'noop', error: 'No email provider configured' };
+  await logEmailAttempt({
+    toOriginal,
+    toFinal,
+    from,
+    subject: input.subject,
+    redirectApplied,
+    relatedEntity,
+    result,
+  });
+
+  return result;
 }
 
 /** Minimal HTML-escape for values interpolated into email markup. */

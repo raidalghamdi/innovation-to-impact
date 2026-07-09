@@ -1,4 +1,18 @@
 {
+  "emailLog": {
+    "title": "Email Log",
+    "subtitle": "The last 100 email send attempts recorded by the platform.",
+    "empty": "No emails have been logged yet.",
+    "colWhen": "When",
+    "colToOriginal": "To (original)",
+    "colToFinal": "To (final)",
+    "colSubject": "Subject",
+    "colProvider": "Provider",
+    "colStatus": "Status",
+    "colError": "Error",
+    "redirected": "Redirected",
+    "forbidden": "You do not have access to the email log."
+  },
   "invitationTemplates": {
     "kind": {
       "open": "Open",
@@ -505,6 +519,7 @@
     "viewDetails": "View details",
     "aiTitleAssist": "Suggest a title",
     "attachments": "Attachments",
+    "noAttachments": "No attachments",
     "campaign": "Campaign",
     "trackLabel": "Track",
     "challengeLabel": "Challenge",

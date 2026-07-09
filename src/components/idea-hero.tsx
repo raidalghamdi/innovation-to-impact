@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { AlertTriangle } from 'lucide-react';
 import { StageTimelineHorizontal } from '@/components/stage-timeline-horizontal';
+import { formatDate } from '@/lib/utils';
 
 type TeamMember = {
   id: string;
@@ -22,6 +23,8 @@ type Props = {
   campaignName: string | null;
   themeName: string | null;
   challengeName: string | null;
+  participationType: 'individual' | 'team';
+  submittedAt: string | null;
   teamMembers: TeamMember[];
   teamName: string | null;
   canEdit: boolean;
@@ -48,6 +51,8 @@ export function IdeaHero({
   campaignName,
   themeName,
   challengeName,
+  participationType,
+  submittedAt,
   teamMembers,
   teamName,
   canEdit,
@@ -56,55 +61,79 @@ export function IdeaHero({
   const isAr = locale === 'ar';
   const ts = useTranslations('stages');
   const t = useTranslations('ideas');
-  const tc = useTranslations('common');
 
-  const stageLabel = ts(`s${currentStage}` as any);
   const statusLabel = status
     ? isAr
       ? statusAr[status] ?? status
       : statusEn[status] ?? status
     : '';
 
+  // Unified chip strip. Each chip is a small uppercase-ish label above a value
+  // line. Chips with an empty value are dropped so we never render a dangling
+  // label. Order matches the Round 18 spec.
+  const chips: Array<{ key: string; label: string; value: string; accent?: boolean }> = [
+    { key: 'status', label: isAr ? 'الحالة' : 'Status', value: statusLabel, accent: true },
+    { key: 'code', label: isAr ? 'رقم الفكرة' : 'Code', value: ideaCode ?? '' },
+    {
+      key: 'stage',
+      label: isAr ? 'المرحلة' : 'Stage',
+      value: currentStage ? `${currentStage}` : '',
+    },
+    {
+      key: 'participation',
+      label: isAr ? 'نوع المشاركة' : 'Participation',
+      value:
+        participationType === 'team'
+          ? isAr
+            ? 'فريق'
+            : 'Team'
+          : isAr
+            ? 'فردي'
+            : 'Individual',
+    },
+    { key: 'track', label: isAr ? 'المسار' : 'Track', value: themeName ?? '' },
+    { key: 'activity', label: isAr ? 'الفعالية' : 'Activity', value: campaignName ?? '' },
+    { key: 'challenge', label: isAr ? 'التحدي' : 'Challenge', value: challengeName ?? '' },
+    {
+      key: 'submitted',
+      label: isAr ? 'تاريخ التقديم' : 'Submitted',
+      value: submittedAt ? formatDate(submittedAt, locale) : '',
+    },
+  ].filter((c) => c.value && c.value.trim().length > 0);
+
   return (
     <section className="relative -mt-4 mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F2E33] via-[#122E33] to-[#1B474D] text-white shadow-xl">
       <div className="px-6 pb-8 pt-8 sm:px-10 sm:pt-10">
-        {/* Top row: code + status chip */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 font-medium text-emerald-300">
-              {statusLabel}
-            </span>
-            <span className="rounded-full bg-white/10 px-3 py-1 font-medium text-white/80">
-              {ideaCode} · {isAr ? 'المرحلة' : 'Stage'} {currentStage}
-            </span>
-          </div>
-          <div className="text-xs uppercase tracking-wider text-white/50">
-            {t('title')}
-          </div>
-        </div>
+        {/* Eyebrow */}
+        <div className="text-xs uppercase tracking-wider text-white/50">{t('title')}</div>
 
         {/* Big title */}
         <h1
-          className="mt-5 max-w-4xl text-2xl font-bold leading-tight sm:text-3xl md:text-4xl lg:text-5xl"
+          className="mt-3 max-w-4xl text-2xl font-bold leading-tight sm:text-3xl md:text-4xl lg:text-5xl"
           dir={isAr ? 'rtl' : 'ltr'}
         >
           {title}
         </h1>
 
-        {/* Campaign (الفعالية) — labeled row */}
-        {campaignName && (
-          <div className="mt-6">
-            <ChipCard label={t('campaign')} value={campaignName} />
-          </div>
-        )}
-
-        {/* Chips row: track + challenge, side by side */}
-        {(themeName || challengeName) && (
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {themeName && <ChipCard label={t('trackLabel')} value={themeName} />}
-            {challengeName && <ChipCard label={t('challengeLabel')} value={challengeName} />}
-          </div>
-        )}
+        {/* Chip strip — label over value, empty chips dropped, wraps on
+            narrow screens. Contrast tuned for the dark hero background. */}
+        <div className="mt-6 flex flex-wrap gap-3">
+          {chips.map((c) => (
+            <div
+              key={c.key}
+              className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5"
+            >
+              <div className="text-[11px] uppercase tracking-wider text-white/55">{c.label}</div>
+              <div
+                className={`mt-0.5 text-sm font-semibold ${
+                  c.accent ? 'text-emerald-300' : 'text-white'
+                }`}
+              >
+                {c.value}
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* Team strip */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
@@ -144,15 +173,6 @@ export function IdeaHero({
         )}
       </div>
     </section>
-  );
-}
-
-function ChipCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3">
-      <span className="shrink-0 text-xs uppercase tracking-wider text-white/60">{label}</span>
-      <span className="min-w-0 break-words text-end text-sm font-medium">{value}</span>
-    </div>
   );
 }
 

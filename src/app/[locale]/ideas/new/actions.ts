@@ -3,10 +3,116 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/user';
 import { createNotification, fanOut, getSupervisorIds } from '@/lib/notifications';
 import { renderMailHtml, sendMail } from '@/lib/mailer';
+import { EVIDENCE_BUCKET } from '@/lib/evidence-types';
 
 type Client = SupabaseClient<any, any, any>;
+
+// Attachment persistence guard rails (must mirror the client-side hints).
+const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10 MB per file
+const ATTACH_ALLOWED_MIME = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+]);
+
+function safeAttachmentName(name: string): string {
+  const base = name.split(/[\\/]/).pop() ?? 'file';
+  return base.replace(/[^\w.\-]+/g, '_').slice(0, 120) || 'file';
+}
+
+let evidenceBucketEnsured = false;
+
+/**
+ * Persist idea attachments via a FormData server action — the reliable submit
+ * path. Files ride in FormData (never as plain-object props to a server
+ * action) and are written with the service-role admin client so RLS on
+ * evidence_attachments can never silently drop the insert (root cause of the
+ * IDEA-2026-038 "no attachments persisted" bug).
+ *
+ * Best-effort validation: on the first invalid file we stop and report a
+ * friendly error, keeping any files already uploaded in this call.
+ */
+export async function persistIdeaAttachments(
+  formData: FormData
+): Promise<{ ok: boolean; uploaded: number; error?: string }> {
+  const ideaId = String(formData.get('ideaId') ?? '').trim();
+  if (!ideaId) return { ok: false, uploaded: 0, error: 'missing_idea' };
+
+  const files = formData
+    .getAll('attachments')
+    .filter((f): f is File => f instanceof File && f.size > 0);
+  if (files.length === 0) return { ok: true, uploaded: 0 };
+
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, uploaded: 0, error: 'not_configured' };
+
+  const user = await getCurrentUser();
+  const uploaderId = user?.id ?? null;
+
+  // Ensure the private evidence bucket exists (create once per process).
+  if (!evidenceBucketEnsured) {
+    try {
+      const { data: bucket } = await admin.storage.getBucket(EVIDENCE_BUCKET);
+      if (!bucket) {
+        await admin.storage.createBucket(EVIDENCE_BUCKET, { public: false });
+      }
+      evidenceBucketEnsured = true;
+    } catch {
+      // If the bucket already exists createBucket errors; treat as ensured.
+      evidenceBucketEnsured = true;
+    }
+  }
+
+  let uploaded = 0;
+  for (const file of files) {
+    if (file.size > ATTACH_MAX_BYTES) {
+      return { ok: false, uploaded, error: `too_large:${file.name}` };
+    }
+    const mime = (file.type || '').toLowerCase();
+    if (mime && !ATTACH_ALLOWED_MIME.has(mime)) {
+      return { ok: false, uploaded, error: `bad_type:${file.name}` };
+    }
+
+    const safe = safeAttachmentName(file.name);
+    const path = `ideas/${ideaId}/${crypto.randomUUID()}-${safe}`;
+
+    const { error: upErr } = await admin.storage
+      .from(EVIDENCE_BUCKET)
+      .upload(path, file, { contentType: file.type || undefined, upsert: false });
+    if (upErr) {
+      // eslint-disable-next-line no-console
+      console.error('[persistIdeaAttachments] upload failed:', upErr);
+      return { ok: false, uploaded, error: upErr.message };
+    }
+
+    const { error: insErr } = await admin.from('evidence_attachments').insert({
+      idea_id: ideaId,
+      uploader_id: uploaderId,
+      storage_path: path,
+      filename: safe,
+      content_type: file.type || null,
+      size_bytes: file.size,
+      context: 'idea_submission',
+      linked_entity_type: 'idea',
+      linked_entity_id: ideaId,
+    });
+    if (insErr) {
+      // eslint-disable-next-line no-console
+      console.error('[persistIdeaAttachments] insert failed:', insErr);
+      await admin.storage.from(EVIDENCE_BUCKET).remove([path]);
+      return { ok: false, uploaded, error: insErr.message };
+    }
+    uploaded++;
+  }
+
+  return { ok: true, uploaded };
+}
 
 type TeamMember = { name?: string | null; email?: string | null };
 
@@ -172,7 +278,7 @@ export async function notifyOnIdeaSubmission(ideaId: string): Promise<void> {
           ideaCode,
           ideaUrl: ideaDetailUrl(ideaId, submitterLocale),
         });
-        await sendMail({ to: submitterEmail, subject: mail.subject, html: mail.html, text: mail.text });
+        await sendMail({ to: submitterEmail, subject: mail.subject, html: mail.html, text: mail.text, relatedEntity: { type: 'idea', id: ideaId } });
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('[notifyOnIdeaSubmission] submitter email failed:', err);
@@ -195,7 +301,7 @@ export async function notifyOnIdeaSubmission(ideaId: string): Promise<void> {
           ideaUrl: ideaDetailUrl(ideaId, 'ar'),
           teamMember: true,
         });
-        await sendMail({ to: email, subject: mail.subject, html: mail.html, text: mail.text });
+        await sendMail({ to: email, subject: mail.subject, html: mail.html, text: mail.text, relatedEntity: { type: 'idea', id: ideaId } });
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('[notifyOnIdeaSubmission] team-member email failed:', err);

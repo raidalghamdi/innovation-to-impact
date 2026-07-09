@@ -1,4 +1,18 @@
 {
+  "emailLog": {
+    "title": "سجل البريد",
+    "subtitle": "آخر 100 محاولة إرسال بريد إلكتروني سجّلتها المنصة.",
+    "empty": "لا توجد رسائل مسجّلة بعد.",
+    "colWhen": "التاريخ",
+    "colToOriginal": "المستلم (الأصلي)",
+    "colToFinal": "المستلم (الفعلي)",
+    "colSubject": "الموضوع",
+    "colProvider": "المزوّد",
+    "colStatus": "الحالة",
+    "colError": "الخطأ",
+    "redirected": "مُعاد توجيهه",
+    "forbidden": "ليس لديك صلاحية الوصول إلى سجل البريد."
+  },
   "invitationTemplates": {
     "kind": {
       "open": "مفتوح",
@@ -490,6 +504,7 @@
     "aiTitleAssist": "اقترح عنواناً",
     "aiTitleRegenerate": "إعادة الاقتراح",
     "attachments": "المرفقات",
+    "noAttachments": "لا توجد مرفقات",
     "campaign": "الفعالية",
     "trackLabel": "المسار",
     "challengeLabel": "التحدي",

@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { uploadEvidence } from '@/lib/storage';
+import { persistIdeaAttachments } from '@/app/[locale]/ideas/new/actions';
+import { getTrackChallenges } from '@/lib/tracks';
 import { AlertTriangle, Lock, Save, X, Paperclip, FileText, CheckCircle2 } from 'lucide-react';
 
 const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10MB — mirrors lib/storage.ts.
@@ -91,6 +92,10 @@ export function IdeaEditForm({
 
   const optionLabel = (o: Option) => (isAr ? o.name_ar || o.name_en : o.name_en || o.name_ar) ?? '';
 
+  // Challenge options mirror the submission wizard: derived from the currently
+  // selected track. Recomputed whenever the track changes.
+  const challengeOptions = getTrackChallenges(themeId, locale);
+
   function updateMember(idx: number, field: 'name' | 'email', value: string) {
     setTeamMembers((prev) => prev.map((m, i) => (i === idx ? { ...m, [field]: value } : m)));
   }
@@ -124,11 +129,10 @@ export function IdeaEditForm({
       setUploads((prev) => [...prev, { id: key, name: file.name, status: 'uploading' }]);
       startTransition(async () => {
         try {
-          const res = await uploadEvidence(file, 'idea_submission', {
-            ideaId,
-            entityType: 'idea',
-            entityId: ideaId,
-          });
+          const fd = new FormData();
+          fd.set('ideaId', ideaId);
+          fd.append('attachments', file);
+          const res = await persistIdeaAttachments(fd);
           setUploads((prev) =>
             prev.map((u) =>
               u.id === key
@@ -202,15 +206,20 @@ export function IdeaEditForm({
             </p>
           )}
           {editableSections.length > 0 && (
-            <div className="mt-3 text-xs text-amber-900">
-              <span className="font-semibold">
-                {isAr ? 'الأقسام المطلوب تعديلها: ' : 'Sections to edit: '}
-              </span>
-              {editableSections
-                .map((s) =>
-                  isAr ? sectionLabels.ar[s] ?? s : sectionLabels.en[s] ?? s
-                )
-                .join(isAr ? '، ' : ', ')}
+            <div className="mt-3">
+              <div className="mb-1.5 text-xs font-semibold text-amber-900">
+                {isAr ? 'الحقول المطلوب تعديلها' : 'Fields to edit'}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {editableSections.map((s) => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center rounded-full border border-amber-400 bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900"
+                  >
+                    {isAr ? sectionLabels.ar[s] ?? s : sectionLabels.en[s] ?? s}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -308,18 +317,35 @@ export function IdeaEditForm({
         </select>
       </SectionCard>
 
-      {/* CHALLENGE */}
+      {/* CHALLENGE — dropdown matching the wizard (options come from the
+          selected track). Falls back to a text input only when the track
+          defines no challenge list, so a legacy free-text value stays editable. */}
       <SectionCard
         title={isAr ? sectionLabels.ar.challenge : sectionLabels.en.challenge}
         locked={!isEditable('challenge')}
         isAr={isAr}
       >
-        <Textarea
-          value={challenge}
-          onChange={(e) => setChallenge(e.target.value)}
-          rows={3}
-          disabled={!isEditable('challenge')}
-        />
+        {challengeOptions.length > 0 ? (
+          <select
+            value={challenge}
+            onChange={(e) => setChallenge(e.target.value)}
+            disabled={!isEditable('challenge')}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+          >
+            <option value="">{isAr ? '— اختر التحدي —' : '— Select challenge —'}</option>
+            {challengeOptions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <Input
+            value={challenge}
+            onChange={(e) => setChallenge(e.target.value)}
+            disabled={!isEditable('challenge')}
+          />
+        )}
       </SectionCard>
 
       {/* PARTICIPATION TYPE */}
@@ -509,7 +535,7 @@ function SectionCard({
           {locked && (
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
               <Lock className="h-3 w-3" />
-              {isAr ? 'مقفل' : 'Locked'}
+              {isAr ? 'غير قابل للتعديل' : 'Not editable'}
             </span>
           )}
         </CardTitle>

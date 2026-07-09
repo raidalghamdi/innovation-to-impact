@@ -168,7 +168,7 @@ export async function notifyIdeaDecision(
           ideaCode,
           ctaUrl: absoluteUrl(submitterLocale, copy.path(ideaId)),
         });
-        await sendMail({ to: submitterEmail, subject: mail.subject, html: mail.html, text: mail.text });
+        await sendMail({ to: submitterEmail, subject: mail.subject, html: mail.html, text: mail.text, relatedEntity: { type: 'idea', id: ideaId } });
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('[notifyIdeaDecision] submitter email failed:', err);
@@ -189,7 +189,7 @@ export async function notifyIdeaDecision(
           ideaCode,
           ctaUrl: absoluteUrl('ar', copy.path(ideaId)),
         });
-        await sendMail({ to: email, subject: mail.subject, html: mail.html, text: mail.text });
+        await sendMail({ to: email, subject: mail.subject, html: mail.html, text: mail.text, relatedEntity: { type: 'idea', id: ideaId } });
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('[notifyIdeaDecision] team-member email failed:', err);

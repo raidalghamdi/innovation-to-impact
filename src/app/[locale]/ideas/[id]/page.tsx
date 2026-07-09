@@ -245,6 +245,8 @@ export default async function IdeaDetailPage({
         campaignName={campaignName}
         themeName={themeName}
         challengeName={challengeName}
+        participationType={participationType}
+        submittedAt={submittedAt}
         teamMembers={teamMembers}
         teamName={teamName}
         canEdit={canEdit}
@@ -273,22 +275,25 @@ export default async function IdeaDetailPage({
             </CardContent>
           </Card>
 
-          {/* Attachments — inline preview (images + PDF) plus download. Hidden
-              entirely when there are none. */}
-          {evidenceAttachments.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-brand-teal">{t('attachments')}</CardTitle>
-              </CardHeader>
-              <CardContent>
+          {/* Attachments — inline preview (images + PDF) plus download. Always
+              rendered (header + either the list or a muted empty state) so users
+              always know where attachments live. */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-brand-teal">{t('attachments')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {evidenceAttachments.length > 0 ? (
                 <ul className="space-y-4">
                   {evidenceAttachments.map((a) => (
                     <AttachmentRow key={a.id} attachment={a} downloadLabel={tc('download')} />
                   ))}
                 </ul>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <p className="text-sm text-muted-foreground">{t('noAttachments')}</p>
+              )}
+            </CardContent>
+          </Card>
 
         </div>
 
