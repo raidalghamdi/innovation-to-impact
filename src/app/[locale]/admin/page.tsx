@@ -175,6 +175,14 @@ const ADMIN_CARDS: AdminCard[] = [
     icon: FileText,
   },
   {
+    href: '/admin/terms',
+    labelAr: 'الشروط والأحكام',
+    labelEn: 'Terms & Conditions',
+    descAr: 'تحرير محتوى صفحة الشروط والأحكام (عربي/إنجليزي).',
+    descEn: 'Edit the public Terms & Conditions page (Arabic/English).',
+    icon: FileText,
+  },
+  {
     href: '/admin/reports',
     labelAr: 'مركز التقارير',
     labelEn: 'Reports Center',

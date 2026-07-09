@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/routing';
 import { fetchIdeas } from '@/lib/data';
 import { ideas as demoIdeas } from '@/lib/demo-data';
-import { CheckCircle2, ClipboardCheck, Users, Mail, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ClipboardCheck, Users, Mail, ArrowRight, LayoutDashboard } from 'lucide-react';
 
 export default async function IdeaSubmittedPage({
   params,
@@ -126,11 +126,17 @@ export default async function IdeaSubmittedPage({
         </Card>
 
         {/* CTAs */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <div className="flex flex-col gap-3 md:flex-row md:justify-center">
           <Button asChild size="lg">
             <Link href="/my-ideas">
               {t('trackCta')}
               <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/dashboard">
+              <LayoutDashboard className="h-4 w-4" />
+              {t('myDashboardCta')}
             </Link>
           </Button>
         </div>

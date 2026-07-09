@@ -62,6 +62,7 @@ function smartTitle(text: string, locale: string): string {
 
 type TeamMember = { email: string; name: string };
 
+const MIN_TEAM_MEMBERS = 3;
 const MAX_TEAM_MEMBERS = 5;
 
 // Character limits per field.
@@ -69,16 +70,11 @@ const LIMITS = { title: 120, summary: 300, description: 2000 };
 
 const DRAFT_KEY = 'gac-idea-draft-v1';
 
-// Attachment constraints — mirror the server-side guard in lib/storage.ts.
+// Attachment constraints — all file formats are accepted; only the per-file
+// size and total count are enforced (mirrors the server guard in lib/storage.ts,
+// which caps size but does not restrict type).
 const ATTACH_MAX_FILES = 5;
 const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10MB per file
-const ATTACH_ALLOWED_MIME = new Set<string>([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-]);
-const ATTACH_ALLOWED_EXT = /\.(pdf|jpe?g|png|docx)$/i;
 
 type Draft = {
   title: string;
@@ -192,7 +188,23 @@ export function IdeaForm({
     );
   }
   function removeMember(idx: number) {
-    setTeamMembers((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)));
+    setTeamMembers((prev) =>
+      prev.length <= MIN_TEAM_MEMBERS ? prev : prev.filter((_, i) => i !== idx)
+    );
+  }
+
+  // Switching to team participation pre-fills empty rows up to the minimum so
+  // the author sees the expected 3-member baseline immediately.
+  function selectParticipation(opt: 'individual' | 'team') {
+    setParticipation(opt);
+    if (opt === 'team') {
+      setTeamMembers((prev) => {
+        if (prev.length >= MIN_TEAM_MEMBERS) return prev;
+        const next = [...prev];
+        while (next.length < MIN_TEAM_MEMBERS) next.push({ email: '', name: '' });
+        return next;
+      });
+    }
   }
 
   const validTeamMembers = teamMembers.filter(
@@ -212,12 +224,7 @@ export function IdeaForm({
     const rejected: string[] = [];
     const accepted: File[] = [];
     for (const f of incoming) {
-      const mimeOk = ATTACH_ALLOWED_MIME.has(f.type);
-      const extOk = ATTACH_ALLOWED_EXT.test(f.name);
-      if (!mimeOk && !extOk) {
-        rejected.push(`${f.name} — ${tf('attachmentsRejectType')}`);
-        continue;
-      }
+      // All file formats are accepted — only the size cap is enforced here.
       if (f.size > ATTACH_MAX_BYTES) {
         rejected.push(`${f.name} — ${tf('attachmentsRejectSize')}`);
         continue;
@@ -243,7 +250,7 @@ export function IdeaForm({
       const challengeOk = challenges.length === 0 || Boolean(challenge);
       const teamOk =
         participation === 'individual' ||
-        (teamName.trim().length > 0 && validTeamMembers.length >= 1);
+        (teamName.trim().length > 0 && validTeamMembers.length >= MIN_TEAM_MEMBERS);
       return basics && challengeOk && teamOk;
     }
     if (s === 1) return title.trim().length > 0 && description.trim().length > 0;
@@ -254,7 +261,16 @@ export function IdeaForm({
 
   function next() {
     if (!stepValid(step)) {
-      setError(step === 2 ? tf('attachmentsRequired') : tf('required'));
+      if (
+        step === 0 &&
+        participation === 'team' &&
+        teamName.trim().length > 0 &&
+        validTeamMembers.length < MIN_TEAM_MEMBERS
+      ) {
+        setError(tf('teamMinMembers'));
+      } else {
+        setError(step === 2 ? tf('attachmentsRequired') : tf('required'));
+      }
       return;
     }
     setError(null);
@@ -535,7 +551,7 @@ export function IdeaForm({
                         name="participation"
                         value={opt}
                         checked={participation === opt}
-                        onChange={() => setParticipation(opt)}
+                        onChange={() => selectParticipation(opt)}
                         className="h-4 w-4 accent-brand-teal"
                       />
                       {opt === 'individual' ? tf('participationIndividual') : tf('participationTeam')}
@@ -592,7 +608,7 @@ export function IdeaForm({
                           type="button"
                           aria-label={tf('teamMemberRemove')}
                           onClick={() => removeMember(idx)}
-                          disabled={teamMembers.length <= 1}
+                          disabled={teamMembers.length <= MIN_TEAM_MEMBERS}
                           className="self-end rounded p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 sm:self-auto"
                         >
                           <X className="h-4 w-4" />
@@ -641,17 +657,7 @@ export function IdeaForm({
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label htmlFor="description">{tf('descriptionLabel')}</Label>
-                  <a
-                    href="/templates/idea-description-template.docx"
-                    download
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-teal underline-offset-2 hover:underline"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    {tf('descriptionTemplate')}
-                  </a>
-                </div>
+                <Label htmlFor="description">{tf('descriptionLabel')}</Label>
                 <Textarea
                   id="description"
                   value={description}
@@ -661,6 +667,14 @@ export function IdeaForm({
                   rows={6}
                   dir={isAr ? 'rtl' : 'ltr'}
                 />
+                {/* Template download sits directly under the textarea so it's
+                    an obvious next action while filling in the description. */}
+                <Button type="button" size="sm" variant="outline" asChild>
+                  <a href="/templates/idea-description-template.docx" download>
+                    <Download className="h-4 w-4" />
+                    {tf('descriptionTemplate')}
+                  </a>
+                </Button>
                 <div className="flex justify-end">{counter(description, LIMITS.description)}</div>
               </div>
             </div>
@@ -687,7 +701,6 @@ export function IdeaForm({
                 <Input
                   type="file"
                   multiple
-                  accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   className="hidden"
                   onChange={(e) => {
                     ingestFiles(Array.from(e.target.files ?? []));

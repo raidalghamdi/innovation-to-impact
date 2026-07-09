@@ -1464,6 +1464,19 @@
       "The platform is provided on an \"as is\" basis; the Authority may update these terms and program details from time to time."
     ]
   },
+  "adminTerms": {
+    "title": "Edit Terms & Conditions",
+    "subtitle": "Edit the public Terms & Conditions page. Changes go live after saving.",
+    "arabic": "Arabic content",
+    "english": "English content",
+    "save": "Save",
+    "saved": "Saved",
+    "saveError": "Could not save, please try again.",
+    "preview": "Preview",
+    "edit": "Edit",
+    "previewEmpty": "Nothing to preview yet.",
+    "markdownHint": "Use ## to start a section heading, and separate paragraphs with a blank line."
+  },
   "roadmap": {
     "title": "Program Roadmap",
     "subtitle": "Key phases and dates for the current program cycle.",
@@ -1559,7 +1572,8 @@
     "autosaveSaved": "Draft saved",
     "autosaveRestored": "Welcome back — we saved your draft",
     "reviewNote": "Everything look right? Hit submit when you're ready.",
-    "attachmentsHint": "Drag & drop files here, or click to browse. PDF, DOCX, PNG, JPG up to 10MB each.",
+    "attachmentsHint": "Drag & drop files here, or click to browse. All file formats accepted, up to 10MB each.",
+    "attachmentsAllFormats": "All file formats accepted",
     "attachmentsLimit": "Up to {count} files, {mb}MB each.",
     "attachmentsExamples": "Examples: a pitch deck, illustrative images/diagrams, supporting studies or reports, prototypes or mockups.",
     "attachmentsRemove": "Remove attachment",
@@ -1575,7 +1589,8 @@
     "participationIndividual": "Individual",
     "participationTeam": "Team",
     "teamMembersLabel": "Team members",
-    "teamMembersHint": "Add 1 to 5 members by email.",
+    "teamMembersHint": "Add 3 to 5 members by email.",
+    "teamMinMembers": "At least 3 team members required",
     "teamNameLabel": "Team name",
     "teamNamePlaceholder": "Enter your team name",
     "teamMemberEmail": "Email",
@@ -1688,6 +1703,7 @@
     "step3Meta": "By email",
     "step3Body": "We'll email you with what they decided and what comes next.",
     "trackCta": "Track your idea",
+    "myDashboardCta": "My Dashboard",
     "referenceLabel": "Reference"
   },
   "emptyStates": {
