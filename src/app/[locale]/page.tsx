@@ -169,8 +169,8 @@ export default async function LandingPage({
 
           {/* Layer 4: content, single centered column */}
           <div className="relative mx-auto max-w-3xl space-y-6 px-4 text-center sm:px-8">
-            <p className="inline-flex items-center gap-2 rounded-full border border-brand-cyan/40 bg-brand-teal-dark/50 px-4 py-1.5 text-xs font-semibold tracking-wider text-brand-cyan-light backdrop-blur-sm sm:text-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
+            <p className="inline-flex items-center gap-2 rounded-full border border-brand-cyan/50 bg-brand-teal-dark/60 px-6 py-2.5 text-sm font-bold tracking-wider text-brand-cyan-light backdrop-blur-sm sm:text-base md:px-8 md:py-3 md:text-lg">
+              <span className="h-2 w-2 rounded-full bg-brand-gold" aria-hidden="true" />
               {t('landing.hero.eyebrow')}
             </p>
 

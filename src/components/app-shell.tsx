@@ -136,9 +136,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {t('common.skipToContent')}
         </a>
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 pt-safe backdrop-blur sm:h-24 sm:gap-3 sm:px-6 xl:h-28 xl:px-8">
-          <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={t('nav.home')}>
+          <Link href="/" className="flex min-w-0 shrink items-center gap-2.5 overflow-hidden" aria-label={t('nav.home')}>
             {/* Matches LandingNav sizing exactly (see logo.tsx sizing notes). */}
-            <CoBrand className="h-10 sm:h-12 xl:h-14 2xl:h-16" locale={locale} />
+            <CoBrand className="h-8 sm:h-10 xl:h-12" locale={locale} />
           </Link>
 
           {/* Desktop anchor nav (≥xl) — same links as LandingNav. Hidden on
@@ -228,8 +228,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
             {/* Logo links to the public homepage so admins can jump back to the
                 landing page from anywhere in the console. */}
-            <Link href="/" className="flex min-w-0 shrink items-center gap-2.5" aria-label={t('nav.home')}>
-              <CoBrand className="h-10 sm:h-16" locale={locale} />
+            <Link href="/" className="flex min-w-0 shrink items-center gap-2.5 overflow-hidden" aria-label={t('nav.home')}>
+              <CoBrand className="h-7 sm:h-10 md:h-12" locale={locale} />
             </Link>
           </div>
           <div className="flex items-center gap-2">

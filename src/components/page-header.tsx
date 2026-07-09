@@ -18,8 +18,8 @@ export function PageHeader({
         className
       )}
     >
-      <div>
-        <h1 className="text-xl font-semibold text-brand-teal">{title}</h1>
+      <div className="min-w-0">
+        <h1 className="text-xl font-semibold text-brand-teal break-words">{title}</h1>
         {subtitle && (
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
         )}

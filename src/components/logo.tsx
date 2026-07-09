@@ -51,7 +51,7 @@ export function Logo({
         width={PROGRAM_MARK_DIM.width}
         height={PROGRAM_MARK_DIM.height}
         priority
-        className={`${className} w-auto`}
+        className={`${className} w-auto flex-none`}
       />
       {showWordmark && locale === 'ar' && (
         <Image
@@ -59,7 +59,7 @@ export function Logo({
           alt={t('wordmarkAr')}
           width={WORDMARK_AR_DIM.width}
           height={WORDMARK_AR_DIM.height}
-          className={`${className} w-auto`}
+          className={`${className} w-auto flex-none`}
         />
       )}
     </span>
@@ -83,7 +83,7 @@ export function GacLogo({
       alt={t('gacAuthority')}
       width={GAC_LOGO_DIM.width}
       height={GAC_LOGO_DIM.height}
-      className={`${className} w-auto`}
+      className={`${className} w-auto flex-none`}
     />
   );
 }

@@ -300,7 +300,7 @@ export function InvitationTemplatesManager({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardContent className="space-y-4 p-5">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-xs uppercase tracking-wide text-slate-500">
                   {currentTpl.code}
                 </div>
@@ -309,7 +309,7 @@ export function InvitationTemplatesManager({
                   size="sm"
                   variant="outline"
                   onClick={() => setShowSend(true)}
-                  className="gap-2"
+                  className="w-full gap-2 sm:w-auto"
                 >
                   <Send className="h-4 w-4" />
                   {isAr ? 'أرسل الآن' : 'Send now'}
