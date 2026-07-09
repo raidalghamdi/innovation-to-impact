@@ -43,7 +43,11 @@
       "atLeastOneEmail": "أدخل بريداً واحداً على الأقل.",
       "noValidRows": "لا توجد صفوف صالحة.",
       "couldNotReadFile": "تعذّر قراءة الملف.",
-      "couldNotFetchUsers": "تعذّر جلب المستخدمين."
+      "couldNotFetchUsers": "تعذّر جلب المستخدمين.",
+      "extraInfoSection": "الصندوق الاختياري",
+      "extraInfoHint": "يظهر لهذا الإرسال فقط. اترك الحقلين فارغين لإخفاء الصندوق.",
+      "extraInfoTitleLabel": "عنوان الصندوق الاختياري",
+      "extraInfoBodyLabel": "نص الصندوق الاختياري"
     },
     "picker": {
       "compose": "إنشاء وإرسال دعوة",

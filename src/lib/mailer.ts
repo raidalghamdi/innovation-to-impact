@@ -224,40 +224,187 @@ export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
   return { ok: false, provider: 'noop', error: 'No email provider configured' };
 }
 
+/** Minimal HTML-escape for values interpolated into email markup. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function isBlank(v: string | null | undefined): boolean {
+  return v == null || String(v).trim() === '';
+}
+
 /**
- * Renders a bilingual RTL-aware HTML wrapper around a body string.
+ * Renders the branded "Competition Innovation Program" invitation email.
+ *
+ * Ported from the approved mockup (dark-teal header, white logo, optional
+ * info box, dual CTA, gold-accented footer slogan). All styling is inline —
+ * email clients do not reliably honour <style> blocks. The header title is
+ * intentionally Arabic regardless of locale, matching the approved design.
+ *
+ * Optional sections collapse when their inputs are absent:
+ *   - logo image: omitted when `logoUrl` is blank
+ *   - meta strip: omitted when `metaItems` is empty
+ *   - optional info box: omitted when BOTH title and body are blank
+ *   - CTA row: omitted when neither `acceptUrl` nor `rejectUrl` is provided
+ *     (falls back to plain body text, used by reminders/accept/reject mails)
  */
 export function renderMailHtml(opts: {
   subject: string;
   body: string;
   locale: 'ar' | 'en';
-  brandName?: string;
-  brandColor?: string;
+  brandName?: string; // kept for backward-compat; unused in new template
+  brandColor?: string; // kept for backward-compat; unused in new template
+  logoUrl?: string;
+  acceptUrl?: string;
+  rejectUrl?: string;
+  metaItems?: Array<{ label: string; value: string }>;
+  extraInfoTitle?: string;
+  extraInfoBody?: string;
+  greetingName?: string;
+  deadlineText?: string;
 }): string {
-  const rtl = opts.locale === 'ar';
+  const rtl = opts.locale !== 'en';
   const dir = rtl ? 'rtl' : 'ltr';
-  const align = rtl ? 'right' : 'left';
-  const startSide = rtl ? 'right' : 'left';
-  const brand = opts.brandName ?? (rtl ? 'الابتكار إلى الأثر' : 'Innovation to Impact');
-  const color = opts.brandColor ?? '#01696F';
-  // Convert plain newlines to <br> for HTML rendering
-  const htmlBody = opts.body.replace(/\n/g, '<br>');
+
+  const subject = escapeHtml(opts.subject ?? '');
+  const htmlBody = escapeHtml(opts.body ?? '').replace(/\n/g, '<br>');
+
+  // --- Header logo ----------------------------------------------------------
+  const logo = !isBlank(opts.logoUrl)
+    ? `<img src="${escapeHtml(opts.logoUrl!.trim())}" alt="برنامج ابتكار المنافسة" height="68" style="height:68px;display:block;margin:0 auto;border:0;outline:none;text-decoration:none;" />`
+    : '';
+
+  // --- Greeting -------------------------------------------------------------
+  const greetName = !isBlank(opts.greetingName) ? opts.greetingName!.trim() : opts.subject;
+  const greeting = !isBlank(greetName)
+    ? `<div style="font-size:18px;font-weight:600;color:#1C4854;margin:0 0 12px;">مرحباً ${escapeHtml(greetName)}،</div>`
+    : '';
+
+  // --- Meta strip -----------------------------------------------------------
+  const metaItems = (opts.metaItems ?? []).filter(
+    (m) => m && !isBlank(m.label) && !isBlank(m.value)
+  );
+  let metaStrip = '';
+  if (metaItems.length > 0) {
+    const cells = metaItems
+      .map(
+        (m, i) => `${
+          i > 0
+            ? '<td style="width:1px;padding:0;"><div style="width:1px;height:32px;background:#E0D9C4;"></div></td>'
+            : ''
+        }<td style="padding:0 8px;vertical-align:middle;text-align:${rtl ? 'right' : 'left'};">
+              <div style="font-size:12px;color:#7A7974;margin-bottom:4px;font-weight:500;">${escapeHtml(
+                m.label
+              )}</div>
+              <div style="font-size:15px;color:#232529;font-weight:600;">${escapeHtml(m.value)}</div>
+            </td>`
+      )
+      .join('');
+    metaStrip = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F7F5EF;border:1px solid #EFE9DA;border-radius:12px;margin:20px 0 24px;">
+          <tr><td style="padding:16px 20px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>${cells}</tr></table>
+          </td></tr>
+        </table>`;
+  }
+
+  // --- Optional info box ----------------------------------------------------
+  // Hidden entirely when BOTH title and body are blank.
+  let optionalBox = '';
+  if (!isBlank(opts.extraInfoTitle) || !isBlank(opts.extraInfoBody)) {
+    const titleHtml = !isBlank(opts.extraInfoTitle)
+      ? `<div style="font-size:12px;color:#1C4854;font-weight:700;letter-spacing:0.4px;margin-bottom:6px;">◆ ${escapeHtml(
+          opts.extraInfoTitle!.trim()
+        )}</div>`
+      : '';
+    const bodyHtml = !isBlank(opts.extraInfoBody)
+      ? `<div style="font-size:14px;color:#3B4A52;line-height:1.7;">${escapeHtml(
+          opts.extraInfoBody!.trim()
+        ).replace(/\n/g, '<br>')}</div>`
+      : '';
+    optionalBox = `<div style="background:#F0F9FB;border-${rtl ? 'right' : 'left'}:4px solid #3FBAC8;border-radius:10px;padding:16px 20px;margin:8px 0 24px;">${titleHtml}${bodyHtml}</div>`;
+  }
+
+  // --- CTA row / body -------------------------------------------------------
+  const hasAccept = !isBlank(opts.acceptUrl);
+  const hasReject = !isBlank(opts.rejectUrl);
+  let ctaBlock = '';
+  if (hasAccept || hasReject) {
+    const btns: string[] = [];
+    if (hasAccept) {
+      btns.push(`<td style="padding:0 6px;" width="50%"><a href="${escapeHtml(
+        opts.acceptUrl!.trim()
+      )}" style="display:block;text-align:center;padding:14px 20px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;background:#1C4854;color:#ffffff;">قبول الدعوة</a></td>`);
+    }
+    if (hasReject) {
+      btns.push(`<td style="padding:0 6px;" width="50%"><a href="${escapeHtml(
+        opts.rejectUrl!.trim()
+      )}" style="display:block;text-align:center;padding:14px 20px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;background:#ffffff;color:#1C4854;border:1px solid #1C4854;">اعتذار</a></td>`);
+    }
+    ctaBlock = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0;"><tr>${btns.join(
+      ''
+    )}</tr></table>`;
+  }
+
+  const deadlineNote = !isBlank(opts.deadlineText)
+    ? `<div style="text-align:center;color:#7A7974;font-size:13px;margin-top:14px;">آخر موعد للرد: ${escapeHtml(
+        opts.deadlineText!.trim()
+      )}</div>`
+    : '';
+
+  const signoff = `<div style="margin-top:28px;padding-top:20px;border-top:1px solid #EFECE5;color:#3B4A52;font-size:14px;line-height:1.8;">
+          مع خالص التقدير،<br>
+          <strong style="color:#1C4854;">فريق برنامج ابتكار المنافسة</strong>
+        </div>`;
+
+  const year = new Date().getFullYear();
+
   return `<!doctype html>
 <html dir="${dir}" lang="${rtl ? 'ar' : 'en'}">
-  <body style="margin:0;background:#f4f6f8;padding:24px;direction:${dir};font-family:'Segoe UI',Tahoma,Arial,Helvetica,sans-serif;">
-    <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e9ee;direction:${dir};text-align:${align};">
-      <div style="background:${color};color:#ffffff;padding:16px 20px;font-size:18px;font-weight:bold;text-align:${align};">
-        ${brand}
-      </div>
-      <div style="padding:20px;border-${startSide}:4px solid ${color};color:#28251D;text-align:${align};">
-        <h1 style="margin:0 0 12px;font-size:18px;">${opts.subject}</h1>
-        <div style="margin:0;font-size:14px;line-height:1.7;color:#3b4a52;">${htmlBody}</div>
-      </div>
-      <div style="padding:12px 20px;background:#f9f8f5;color:#7a7974;font-size:12px;text-align:${align};">
-        © ${new Date().getFullYear()} · ${brand}
-      </div>
-    </div>
-  </body>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:32px 16px;background:#ECEEF0;direction:${dir};color:#232529;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="620" style="max-width:620px;width:100%;margin:0 auto;">
+    <tr><td style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #E5E9EC;">
+
+      <!-- Header -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td style="background:#1C4854;background:linear-gradient(135deg,#1C4854 0%,#245C6B 100%);padding:40px 24px 28px;text-align:center;">
+          ${logo}
+          <div style="color:#ffffff;font-size:22px;font-weight:700;margin-top:20px;letter-spacing:-0.2px;">برنامج ابتكار المنافسة</div>
+          <div style="color:#CFEDF8;font-size:13px;letter-spacing:0.6px;margin-top:4px;font-weight:500;">GAC Innovation Program</div>
+        </td></tr>
+        <tr><td style="height:4px;line-height:4px;font-size:0;background:#3FBAC8;background:linear-gradient(90deg,#3FBAC8 0%,#E0A82E 50%,#3FBAC8 100%);">&nbsp;</td></tr>
+      </table>
+
+      <!-- Body -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td style="padding:32px 32px 28px;text-align:${rtl ? 'right' : 'left'};">
+          ${greeting}
+          <div style="font-size:20px;font-weight:700;color:#232529;line-height:1.5;margin-bottom:20px;">${subject}</div>
+          <div style="font-size:15px;line-height:1.85;color:#3B4A52;margin-bottom:18px;">${htmlBody}</div>
+          ${metaStrip}
+          ${optionalBox}
+          ${ctaBlock}
+          ${deadlineNote}
+          ${signoff}
+        </td></tr>
+      </table>
+
+      <!-- Footer -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td style="background:#F7F5EF;padding:22px 24px;text-align:center;border-top:1px solid #EFE9DA;">
+          <div style="font-size:16px;font-weight:700;color:#1C4854;letter-spacing:4px;margin-bottom:6px;">ابتكر<span style="color:#E0A82E;padding:0 4px;">·</span>نافس<span style="color:#E0A82E;padding:0 4px;">·</span>أثّر</div>
+          <div style="font-size:12px;color:#7A7974;margin-top:4px;">الهيئة العامة للمنافسة — General Authority for Competition</div>
+          <div style="font-size:11px;color:#9A9A96;margin-top:10px;">هذه رسالة تلقائية — يرجى عدم الرد عليها مباشرة. © ${year}</div>
+        </td></tr>
+      </table>
+
+    </td></tr>
+  </table>
+</body>
 </html>`;
 }
 

@@ -43,7 +43,11 @@
       "atLeastOneEmail": "Enter at least one email.",
       "noValidRows": "No valid rows.",
       "couldNotReadFile": "Could not read the file.",
-      "couldNotFetchUsers": "Could not fetch users."
+      "couldNotFetchUsers": "Could not fetch users.",
+      "extraInfoSection": "Optional info box",
+      "extraInfoHint": "Shown only for this send. Leave both blank to hide the box.",
+      "extraInfoTitleLabel": "Optional box title",
+      "extraInfoBodyLabel": "Optional box text"
     },
     "picker": {
       "compose": "Compose & send invitation",

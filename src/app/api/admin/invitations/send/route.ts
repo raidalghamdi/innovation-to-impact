@@ -82,6 +82,10 @@ export async function POST(req: NextRequest) {
         sent_by: user.id,
         subject_override: typeof body?.subject === 'string' ? body.subject : null,
         body_override: typeof body?.body === 'string' ? body.body : null,
+        extra_info_title:
+          typeof body?.extra_info_title === 'string' ? body.extra_info_title : null,
+        extra_info_body:
+          typeof body?.extra_info_body === 'string' ? body.extra_info_body : null,
       });
       return NextResponse.json(result);
     } catch (err) {

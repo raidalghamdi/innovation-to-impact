@@ -94,6 +94,10 @@ export function InvitationSendModal({ template, roles, locale, onClose, onToast 
       : [];
   const [overrides, setOverrides] = useState<Record<string, string>>({});
 
+  // Optional extra-info box (per-send only, not part of the stored template)
+  const [extraInfoTitle, setExtraInfoTitle] = useState('');
+  const [extraInfoBody, setExtraInfoBody] = useState('');
+
   const parseList = (raw: string): { valid: Recipient[]; invalid: string[] } => {
     const parts = raw
       .split(/[\n,;]+/)
@@ -173,6 +177,8 @@ export function InvitationSendModal({ template, roles, locale, onClose, onToast 
 
   const send = async () => {
     let payload: Record<string, unknown> = { template_code: template.code, locale };
+    if (extraInfoTitle.trim()) payload.extra_info_title = extraInfoTitle.trim();
+    if (extraInfoBody.trim()) payload.extra_info_body = extraInfoBody.trim();
 
     if (tab === 'single') {
       if (!EMAIL_RE.test(singleEmail.trim().toLowerCase())) {
@@ -439,6 +445,35 @@ export function InvitationSendModal({ template, roles, locale, onClose, onToast 
               ))}
             </div>
           )}
+
+          {/* Optional extra-info box (per-send only) */}
+          <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+            <div className="text-sm font-semibold text-slate-800">
+              {t('extraInfoSection')}
+            </div>
+            <p className="text-xs text-slate-500">{t('extraInfoHint')}</p>
+            <div>
+              <Label htmlFor="extra-info-title" className="text-xs">
+                {t('extraInfoTitleLabel')}
+              </Label>
+              <Input
+                id="extra-info-title"
+                value={extraInfoTitle}
+                onChange={(e) => setExtraInfoTitle(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="extra-info-body" className="text-xs">
+                {t('extraInfoBodyLabel')}
+              </Label>
+              <Textarea
+                id="extra-info-body"
+                rows={3}
+                value={extraInfoBody}
+                onChange={(e) => setExtraInfoBody(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 flex justify-end gap-2">

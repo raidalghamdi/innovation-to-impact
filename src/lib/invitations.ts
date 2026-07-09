@@ -186,6 +186,34 @@ export async function createInvitations(input: {
   return (data as Invitation[]) ?? [];
 }
 
+const AR_ROLES: Record<string, string> = {
+  admin: 'مدير النظام',
+  supervisor: 'مشرف',
+  facilitator: 'ميسر',
+  committee: 'لجنة',
+  expert: 'خبير',
+  judge: 'محكم',
+  innovator: 'مبتكر',
+  evaluator: 'مقيم',
+  mentor: 'موجّه',
+};
+
+function roleLabelAr(role: string): string {
+  return AR_ROLES[role?.toLowerCase?.()] ?? role;
+}
+
+/**
+ * Absolute URL to the white program logo (PNG). Gmail blocks inline SVG, so we
+ * ship a rasterised PNG in public/brand/. Falls back to the deployed origin.
+ */
+function absoluteLogoUrl(): string {
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.APP_URL ??
+    'https://innovation-to-impact.vercel.app';
+  return `${base.replace(/\/$/, '')}/brand/Competition-Innovation-Program-logo-white.png`;
+}
+
 function inviteLink(token: string): string {
   const base =
     process.env.NEXT_PUBLIC_APP_URL ??
@@ -454,6 +482,8 @@ export async function sendTemplatedInvitations(input: {
   sent_by?: string | null;
   subject_override?: string | null;
   body_override?: string | null;
+  extra_info_title?: string | null;
+  extra_info_body?: string | null;
 }): Promise<SendTemplatedResult> {
   const supabase = createServiceRoleClient();
   const locale = input.locale ?? 'ar';
@@ -518,6 +548,19 @@ export async function sendTemplatedInvitations(input: {
     const token = randomUUID();
     const links = invitationLinks(token);
     const inviteeName = rec.name ?? rec.email;
+    // Optional extra-info box: per-recipient override wins, then the per-send
+    // value from the modal, then any template_options default. Kept as a
+    // substitutable {{extra_info_*}} var too, so template authors can inline it.
+    const extraInfoTitle =
+      rec.variable_overrides?.extra_info_title ??
+      input.extra_info_title ??
+      optionVars.extra_info_title ??
+      null;
+    const extraInfoBody =
+      rec.variable_overrides?.extra_info_body ??
+      input.extra_info_body ??
+      optionVars.extra_info_body ??
+      null;
     const vars: Record<string, string> = {
       name: inviteeName,
       invitee_name: inviteeName,
@@ -532,13 +575,31 @@ export async function sendTemplatedInvitations(input: {
       accept_link: links.accept,
       reject_link: links.reject,
       link: links.accept,
+      extra_info_title: extraInfoTitle ?? '',
+      extra_info_body: extraInfoBody ?? '',
       ...optionVars,
       ...rec.variable_overrides,
     };
     const rendered = renderTemplateTracked(bodyTpl, vars);
     const subject = renderTemplate(subjectTpl, vars);
     const bodyText = rendered.text;
-    const html = renderMailHtml({ subject, body: bodyText, locale });
+    const html = renderMailHtml({
+      subject,
+      body: bodyText,
+      locale,
+      logoUrl: absoluteLogoUrl(),
+      acceptUrl: links.accept,
+      rejectUrl: links.reject,
+      greetingName: inviteeName,
+      deadlineText,
+      metaItems: [
+        { label: 'الدور', value: roleLabelAr(template.role) },
+        { label: 'آخر موعد للرد', value: deadlineText },
+        { label: 'الجهة', value: 'الهيئة العامة للمنافسة' },
+      ],
+      extraInfoTitle: extraInfoTitle ?? undefined,
+      extraInfoBody: extraInfoBody ?? undefined,
+    });
 
     const result = await sendMail({
       to: rec.email,
