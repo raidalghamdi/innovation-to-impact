@@ -18,7 +18,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { resolveRoleSync, type Role } from '@/lib/roles';
-import { Menu, X, Plus, Home } from 'lucide-react';
+import { Menu, X, Plus, Home, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Labels for the admin BackNav — kept here (not on the server layout) so the
@@ -136,23 +136,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {t('common.skipToContent')}
         </a>
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 pt-safe backdrop-blur sm:h-24 sm:gap-3 sm:px-6 xl:h-28 xl:px-8">
-          <Link href="/" className="flex min-w-0 shrink items-center gap-2.5 overflow-hidden" aria-label={t('nav.home')}>
-            {/* Matches LandingNav sizing exactly (see logo.tsx sizing notes). */}
-            <CoBrand className="h-8 sm:h-10 xl:h-12" locale={locale} />
-          </Link>
+          {/* Round 32: [Logo + Home] are grouped inside a single flex cluster
+              so Home hugs the logo on the inline-start edge. Previously they
+              were siblings of the outer justify-between container, which
+              pushed Home toward the visual center of the header. */}
+          <div className="flex min-w-0 shrink items-center gap-2 sm:gap-3">
+            <Link href="/" className="flex min-w-0 shrink items-center gap-2.5 overflow-hidden" aria-label={t('nav.home')}>
+              {/* Matches LandingNav sizing exactly (see logo.tsx sizing notes). */}
+              <CoBrand className="h-8 sm:h-10 xl:h-12" locale={locale} />
+            </Link>
 
-          {/* Round 30: persistent Home link back to the public landing page,
-              pinned to the right of the logo (RTL: first element after the
-              logo). Visible on every viewport so all roles can jump home from
-              anywhere — label collapses to icon-only under lg. */}
-          <Link
-            href="/"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
-            aria-label={t('nav.homePage')}
-          >
-            <Home className="h-4 w-4" />
-            <span className="hidden lg:inline">{t('nav.homePage')}</span>
-          </Link>
+            {/* Persistent Home link back to the public landing page, pinned
+                immediately next to the logo. Visible on every viewport so all
+                roles can jump home from anywhere — label collapses to icon-only
+                under lg. */}
+            <Link
+              href="/"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
+              aria-label={t('nav.homePage')}
+            >
+              <Home className="h-4 w-4" />
+              <span className="hidden lg:inline">{t('nav.homePage')}</span>
+            </Link>
+          </div>
 
           {/* Desktop anchor nav (≥xl) — same links as LandingNav. Hidden on
               authenticated app routes (dashboard, my-ideas, ideas, …). */}
@@ -201,6 +207,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link href="/ideas/new">
                   <Plus className="h-4 w-4" />
                   <span className="ms-1 hidden xl:inline">{t('nav.submitIdea')}</span>
+                </Link>
+              </Button>
+            )}
+            {/* Round 32: persistent "لوحة أعمالي" quick-jump for every
+                signed-in role. Per-role routing mirrors the RoleUserMenu
+                dropdown exactly:
+                  innovator  → /dashboard
+                  evaluator  → /evaluator
+                  supervisor → /supervisor  (never /admin from the Nav)
+                (Admins have their own dedicated admin shell with its own
+                لوحة أعمالي below.) */}
+            {userId && (
+              <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
+                <Link
+                  href={
+                    role === 'supervisor'
+                      ? '/supervisor'
+                      : role === 'evaluator'
+                      ? '/evaluator'
+                      : role === 'judge'
+                      ? '/committee'
+                      : '/dashboard'
+                  }
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="ms-1 hidden xl:inline">{locale === 'ar' ? 'لوحة أعمالي' : 'My workboard'}</span>
                 </Link>
               </Button>
             )}
@@ -271,6 +303,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             {/* Admin shell: no "Submit Idea" CTA — admins manage the pipeline,
                 they don't submit ideas from their own console. */}
+            {/* Round 32: persistent "لوحة أعمالي" quick-jump in the admin
+                shell too, so the same primary Nav CTA is available in every
+                authenticated shell. Admins land on /admin — which is the same
+                target the RoleUserMenu dropdown uses. */}
+            {userId && (
+              <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
+                <Link href="/admin">
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="ms-1 hidden xl:inline">{locale === 'ar' ? 'لوحة أعمالي' : 'My workboard'}</span>
+                </Link>
+              </Button>
+            )}
             <PointsBadge userId={userId} role={role} />
             <NotificationBell userId={userId} role={role} />
             <LanguageToggle />
