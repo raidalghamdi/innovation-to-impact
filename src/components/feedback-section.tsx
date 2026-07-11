@@ -18,6 +18,11 @@ export async function FeedbackSection({
   // they must act on.
   highlight?: boolean;
 }) {
+  // Hide the card entirely when there are no reviewer comments to show — the
+  // section is only meant to surface real notes (e.g. when an idea is returned
+  // for edits), never an empty placeholder.
+  if (feedback.length === 0) return null;
+
   const t = await getTranslations('feedback');
   return (
     <Card className={highlight ? 'border-amber-400 bg-amber-50' : undefined}>
@@ -32,24 +37,20 @@ export async function FeedbackSection({
         <p className="text-xs text-muted-foreground">{t('subtitle')}</p>
       </CardHeader>
       <CardContent>
-        {feedback.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('empty')}</p>
-        ) : (
-          <ul className="space-y-4">
-            {feedback.map((f) => (
-              <FeedbackCard
-                key={f.id}
-                feedback={f}
-                locale={locale}
-                roleLabel={
-                  f.reviewer_role === 'judge' ? t('roleJudge') : t('roleEvaluator')
-                }
-                ratingLabel={t('ratingLabel')}
-                recommendationLabel={t('recommendationLabel')}
-              />
-            ))}
-          </ul>
-        )}
+        <ul className="space-y-4">
+          {feedback.map((f) => (
+            <FeedbackCard
+              key={f.id}
+              feedback={f}
+              locale={locale}
+              roleLabel={
+                f.reviewer_role === 'judge' ? t('roleJudge') : t('roleEvaluator')
+              }
+              ratingLabel={t('ratingLabel')}
+              recommendationLabel={t('recommendationLabel')}
+            />
+          ))}
+        </ul>
         <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
           {t('anonymityNote')}
         </p>

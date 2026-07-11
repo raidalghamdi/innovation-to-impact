@@ -628,6 +628,7 @@
     "attachments": "Attachments",
     "noAttachments": "No attachments",
     "campaign": "Campaign",
+    "activityLabel": "Activity",
     "trackLabel": "Track",
     "challengeLabel": "Challenge",
     "participationType": "Participation type",
