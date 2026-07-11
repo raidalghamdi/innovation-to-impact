@@ -116,7 +116,11 @@
     "crit_scalability": "Scalability",
     "crit_presentation": "Presentation quality",
     "critHint_scalability": "How well can it scale?",
-    "critHint_presentation": "How clear and well-presented is it?"
+    "critHint_presentation": "How clear and well-presented is it?",
+    "heroKicker": "Idea",
+    "blockSubmissionMeta": "Submission details",
+    "metaSubmittedAt": "Submitted at",
+    "metaUpdatedAt": "Last update"
   },
   "emailLog": {
     "title": "Email Log",

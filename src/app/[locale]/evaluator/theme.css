@@ -52,6 +52,27 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Hero panel — dark Moon Raker background, first visual anchor of the
+   evaluate page. Radial highlight adds depth without imagery; gold accents
+   are earned via the sparkle icon + chip borders only. */
+.ev-hero {
+  background:
+    radial-gradient(120% 100% at 100% 0%, rgba(63, 186, 200, 0.14) 0%, rgba(63, 186, 200, 0) 55%),
+    radial-gradient(90% 80% at 0% 100%, rgba(224, 168, 46, 0.10) 0%, rgba(224, 168, 46, 0) 60%),
+    linear-gradient(180deg, #123640 0%, #1C4854 55%, #143840 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 40px -24px rgba(18, 54, 64, 0.55);
+}
+
+.ev-hero-chip {
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+.ev-hero-chip:hover {
+  border-color: rgba(224, 168, 46, 0.55);
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
 .ev-eyebrow {
   font-size: 12px;
   letter-spacing: 0.08em;

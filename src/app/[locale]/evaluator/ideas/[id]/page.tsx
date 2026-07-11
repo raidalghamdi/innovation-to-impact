@@ -26,7 +26,7 @@ export default async function EvaluatorIdeaDetailPage({
   const { data: ideaRow } = await supabase
     .from('ideas')
     .select(
-      'id, code, title_ar, title_en, status, proposed_solution, strategic_theme_id, activity_id, participation_type, original_source_metadata, submitted_at, attachments'
+      'id, code, title_ar, title_en, status, proposed_solution, strategic_theme_id, activity_id, participation_type, original_source_metadata, submitted_at, updated_at, attachments'
     )
     .eq('id', id)
     .maybeSingle();
@@ -89,6 +89,7 @@ export default async function EvaluatorIdeaDetailPage({
       challengeName={challengeName}
       description={row.proposed_solution ?? null}
       submittedAt={row.submitted_at ?? null}
+      updatedAt={row.updated_at ?? null}
       participationType={participationType}
       attachments={attachments.map((a) => ({
         id: a.id,

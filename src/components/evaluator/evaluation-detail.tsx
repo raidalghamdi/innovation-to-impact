@@ -3,7 +3,18 @@
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
-import { ArrowLeft, ArrowRight, Download, FileText, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Download,
+  FileText,
+  Hash,
+  Route as RouteIcon,
+  Sparkles,
+  Target,
+  Users,
+} from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import { EvRing, EvSuccessOverlay, EvToast } from '@/components/evaluator/ev-ui';
 import { submitEvaluatorScore } from '@/app/[locale]/evaluator/actions';
@@ -22,6 +33,7 @@ type Props = {
   challengeName: string | null;
   description: string | null;
   submittedAt: string | null;
+  updatedAt: string | null;
   participationType: 'individual' | 'team' | null;
   attachments: Attachment[];
   readOnly: boolean;
@@ -60,19 +72,14 @@ export function EvaluationDetail(props: Props) {
     });
   }
 
-  // Round 29 point 2: idea info card shows exactly seven fields — title,
-  // supervisor approval status, event, track, challenge, code, submitted-at.
-  // No other identity fields on this page.
-  const infoRows: Array<{ label: string; value: string }> = [
-    { label: t('infoSupervisorStatus'), value: supervisorStatus(props.status, isAr) },
-    { label: t('infoEvent'), value: props.activityName ?? '—' },
-    { label: t('infoTrack'), value: props.trackName ?? '—' },
-    { label: t('infoChallenge'), value: props.challengeName ?? '—' },
-    { label: t('infoCode'), value: props.code ?? '—' },
-    {
-      label: t('infoSubmittedAt'),
-      value: props.submittedAt ? formatDateTime(props.submittedAt, locale) : '—',
-    },
+  // Round 29 v2 — hero holds only the four identity fields. Supervisor approval
+  // status is implicit (the idea couldn't reach the evaluator otherwise), so no
+  // badge is rendered. Submission timestamps live in their own card below.
+  const heroFields: Array<{ icon: typeof CalendarDays; label: string; value: string }> = [
+    { icon: CalendarDays, label: t('infoEvent'), value: props.activityName ?? '—' },
+    { icon: RouteIcon, label: t('infoTrack'), value: props.trackName ?? '—' },
+    { icon: Target, label: t('infoChallenge'), value: props.challengeName ?? '—' },
+    { icon: Hash, label: t('infoCode'), value: props.code ?? '—' },
   ];
 
   return (
@@ -85,20 +92,41 @@ export function EvaluationDetail(props: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main */}
         <div className="space-y-6 lg:col-span-2">
-          {/* Idea information card — seven fields only (Round 29 pt 2) */}
-          <div className="ev-card p-6">
-            <h1 className="font-display text-2xl font-extrabold text-[var(--ink)]">{props.title}</h1>
-            <dl className="mt-5 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-              {infoRows.map((r) => (
-                <div key={r.label} className="flex flex-col gap-0.5">
-                  <dt className="text-xs font-semibold text-[var(--ink-faint)]">{r.label}</dt>
-                  <dd className="text-sm font-medium text-[var(--ink)]">{r.value}</dd>
+          {/* Hero — dark, brand-teal background. First anchor point on the
+              page: idea title + the four identity fields (event / track /
+              challenge / code). No supervisor status badge (implicit), no
+              submission date (moved into its own card below). */}
+          <section className="ev-hero overflow-hidden rounded-[var(--radius-lg,20px)] p-6 sm:p-8">
+            <div className="flex items-center gap-2 text-[var(--gold)]">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              <span className="text-xs font-semibold uppercase tracking-[0.18em]">
+                {t('heroKicker')}
+              </span>
+            </div>
+            <h1 className="mt-3 font-display text-3xl font-extrabold leading-tight text-white sm:text-4xl">
+              {props.title}
+            </h1>
+            <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {heroFields.map(({ icon: Icon, label, value }) => (
+                <div
+                  key={label}
+                  className="ev-hero-chip flex items-center gap-3 rounded-[var(--radius-sm)] border border-[rgba(224,168,46,0.32)] bg-[rgba(255,255,255,0.04)] px-4 py-3"
+                >
+                  <Icon className="h-4 w-4 shrink-0 text-[var(--gold)]" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <dt className="text-[11px] font-medium uppercase tracking-wider text-white/55">
+                      {label}
+                    </dt>
+                    <dd className="mt-0.5 truncate text-sm font-semibold text-white" title={value}>
+                      {value}
+                    </dd>
+                  </div>
                 </div>
               ))}
             </dl>
-          </div>
+          </section>
 
-          {/* Description — same content the innovator submitted */}
+          {/* Description */}
           <div className="ev-card p-6">
             <h2 className="font-display text-lg font-bold text-[var(--ink)]">{t('blockDescription')}</h2>
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-[var(--ink-soft)]">
@@ -131,7 +159,7 @@ export function EvaluationDetail(props: Props) {
             )}
           </div>
 
-          {/* Team — participation type only, no names (Round 29 pt 3) */}
+          {/* Team — participation type only */}
           <div className="ev-card p-6">
             <h2 className="flex items-center gap-2 font-display text-lg font-bold text-[var(--ink)]">
               <Users className="h-5 w-5 text-[var(--ink-faint)]" />
@@ -144,6 +172,29 @@ export function EvaluationDetail(props: Props) {
                   ? t('participationIndividual')
                   : '—'}
             </p>
+          </div>
+
+          {/* Submission metadata — dedicated card, placed after Team. Two
+              rows separated by a hairline divider, styled after the innovator
+              reference the user attached. */}
+          <div className="ev-card p-6">
+            <h2 className="font-display text-lg font-bold text-[var(--ink)]">
+              {t('blockSubmissionMeta')}
+            </h2>
+            <dl className="mt-4 divide-y divide-[var(--line)]">
+              <div className="flex items-center justify-between gap-4 py-3">
+                <dt className="text-sm text-[var(--ink-soft)]">{t('metaSubmittedAt')}</dt>
+                <dd className="text-sm font-medium text-[var(--ink)]">
+                  {props.submittedAt ? formatDateTime(props.submittedAt, locale) : '—'}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 py-3">
+                <dt className="text-sm text-[var(--ink-soft)]">{t('metaUpdatedAt')}</dt>
+                <dd className="text-sm font-medium text-[var(--ink)]">
+                  {props.updatedAt ? formatDateTime(props.updatedAt, locale) : '—'}
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
 
@@ -222,16 +273,4 @@ export function EvaluationDetail(props: Props) {
       <EvToast message={t('submitError')} show={toast} />
     </div>
   );
-}
-
-// Supervisor approval status — the evaluator needs to see whether the
-// supervisor has approved the idea before it reached them. Any status past
-// 'submitted'/'screening' is effectively "approved by supervisor" because the
-// idea only gets assigned to an evaluator after supervisor approval.
-function supervisorStatus(status: string, isAr: boolean): string {
-  const approved = status === 'approved' || status === 'assigned' || status === 'evaluation';
-  if (approved) return isAr ? 'مُعتمَدة من المشرف' : 'Approved by supervisor';
-  if (status === 'screening') return isAr ? 'قيد فرز المشرف' : 'Under supervisor screening';
-  if (status === 'submitted') return isAr ? 'بانتظار مراجعة المشرف' : 'Awaiting supervisor review';
-  return status;
 }

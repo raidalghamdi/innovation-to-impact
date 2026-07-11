@@ -116,7 +116,11 @@
     "crit_scalability": "قابلية التوسع",
     "crit_presentation": "جودة العرض",
     "critHint_scalability": "إلى أي مدى يمكن توسيع نطاقها؟",
-    "critHint_presentation": "ما مدى وضوح العرض وجودة تقديمه؟"
+    "critHint_presentation": "ما مدى وضوح العرض وجودة تقديمه؟",
+    "heroKicker": "فكرة",
+    "blockSubmissionMeta": "بيانات التقديم",
+    "metaSubmittedAt": "تاريخ التقديم",
+    "metaUpdatedAt": "آخر تحديث"
   },
   "emailLog": {
     "title": "سجل البريد",
