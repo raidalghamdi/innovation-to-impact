@@ -125,7 +125,7 @@ export default async function EvaluatorDashboardPage({
                   the number, only smaller, so the typography stays
                   consistent across all four cards. */}
               <div className="flex items-start justify-between gap-3">
-                <p className="font-display text-base font-bold leading-snug text-[var(--ink)]">
+                <p className="font-display text-xl font-bold leading-snug text-[var(--ink)]">
                   {k.label}
                 </p>
                 <span
@@ -135,9 +135,15 @@ export default async function EvaluatorDashboardPage({
                   <Icon className="h-4 w-4" />
                 </span>
               </div>
-              <p className="ev-num mt-3 flex items-baseline gap-1.5 font-display text-xl font-bold leading-none text-[var(--ink-soft)]">
+              {/* Number line intentionally does NOT use the .ev-num class —
+                  that class forces --font-mono which broke typographic
+                  consistency with the label. Here the number inherits the
+                  same font-display family as the label, only smaller and
+                  ink-soft so the label remains the visual anchor. The unit
+                  ('يوم') shares the exact same classes as the number. */}
+              <p className="mt-3 flex items-baseline gap-1.5 font-display text-lg font-semibold leading-none text-[var(--ink-soft)] tabular-nums">
                 <span>{k.value}</span>
-                {k.unit && <span className="font-display text-base font-bold text-[var(--ink-soft)]">{k.unit}</span>}
+                {k.unit && <span className="font-display text-lg font-semibold text-[var(--ink-soft)]">{k.unit}</span>}
               </p>
               {'hint' in k && k.hint && (
                 <p className="mt-1.5 text-[11px] text-[var(--ink-faint)]">{k.hint}</p>
