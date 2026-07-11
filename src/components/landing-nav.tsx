@@ -76,17 +76,21 @@ export function LandingNav({
   const buildHref = (anchor: string) =>
     isLandingRoot ? `#${anchor}` : `/${locale}/#${anchor}`;
 
-  // Round 30 §5b: pick the correct dashboard target for the user.
+  // Round 30 §5b + Round 32: pick the correct dashboard target for the user.
   //   - Supervisor's canonical Role is coerced to 'admin' (see src/lib/user.ts),
   //     so ROLE_HOME[user.role] would send them to /admin. Fall back to
   //     '/supervisor' when the raw role codes include supervisor and no
   //     stronger 'admin' code.
   //   - Evaluator's canonical Role is 'evaluator' and ROLE_HOME.evaluator is
-  //     already '/evaluator', so the default works there.
+  //     already '/evaluator', so the default works. We also check the raw
+  //     codes as a defensive belt-and-braces so the Nav's "لوحة أعمالي"
+  //     always mirrors the user dropdown's routing regardless of how the
+  //     canonical Role was resolved upstream.
   const dashboardHref: string = (() => {
     if (!user) return '/login';
     const codes = user.roleCodes ?? [];
     if (codes.includes('supervisor') && !codes.includes('admin')) return '/supervisor';
+    if (codes.includes('evaluator') && !codes.includes('admin')) return '/evaluator';
     return ROLE_HOME[user.role];
   })();
 
@@ -148,17 +152,21 @@ export function LandingNav({
       <div className="hidden shrink-0 items-center gap-1.5 lg:flex xl:gap-2">
         {!hideLoginCta && (
           user ? (
-            // Round 30 §5a/§6: hide the "لوحتي" quick-jump for supervisors and
-            // evaluators — they enter their consoles via the primary login flow
-            // and don't need a duplicate CTA on the public landing header.
-            (user.roleCodes?.includes('supervisor') || user.roleCodes?.includes('evaluator')) ? null : (
-              <Button asChild variant="gold" size="sm">
-                <Link href={dashboardHref}>
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
-                </Link>
-              </Button>
-            )
+            // Round 32: restore "لوحة أعمالي" in the Nav Bar for EVERY signed-in
+            // role. The Round 30 hide-for-supervisor/evaluator rule was too
+            // aggressive — the intent was to remove the Hero CTA only, not the
+            // Nav CTA. The Hero CTA (in src/app/[locale]/page.tsx) still
+            // remains hidden for supervisor/evaluator, keeping the Hero clean
+            // while the Nav gives every role a persistent way to reach their
+            // own workboard. Routing uses dashboardHref above, which mirrors
+            // the RoleUserMenu dropdown (Supervisor → /supervisor, Evaluator
+            // → /evaluator, Innovator → /dashboard, Admin → /admin).
+            <Button asChild variant="gold" size="sm">
+              <Link href={dashboardHref}>
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="ms-2">{locale === 'ar' ? 'لوحة أعمالي' : 'My workboard'}</span>
+              </Link>
+            </Button>
           ) : (
             <Button asChild variant="ghost" size="sm">
               <Link href="/login">{t('nav.login')}</Link>
@@ -244,28 +252,21 @@ export function LandingNav({
         {!hideLoginCta && (
           <div className="shrink-0 space-y-2 border-t border-border p-4">
             {user ? (
-              // Round 30 §5a/§6: mirror the desktop rule — supervisors and
-              // evaluators still see the welcome greeting but not the "لوحتي"
-              // CTA (they have dedicated login routing already).
-              (user.roleCodes?.includes('supervisor') || user.roleCodes?.includes('evaluator')) ? (
+              // Round 32: mobile drawer mirrors the desktop rule — the
+              // "لوحة أعمالي" button is available to every signed-in role,
+              // with per-role routing driven by dashboardHref.
+              <>
                 <div className="mb-1 text-center text-xs text-muted-foreground">
                   {locale === 'ar' ? 'مرحباً، ' : 'Welcome, '}
                   <span className="font-semibold text-foreground">{user.displayName}</span>
                 </div>
-              ) : (
-                <>
-                  <div className="mb-1 text-center text-xs text-muted-foreground">
-                    {locale === 'ar' ? 'مرحباً، ' : 'Welcome, '}
-                    <span className="font-semibold text-foreground">{user.displayName}</span>
-                  </div>
-                  <Button asChild variant="gold" size="lg" className="w-full">
-                    <Link href={dashboardHref} onClick={() => setOpen(false)}>
-                      <LayoutDashboard className="h-4 w-4" />
-                      <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
-                    </Link>
-                  </Button>
-                </>
-              )
+                <Button asChild variant="gold" size="lg" className="w-full">
+                  <Link href={dashboardHref} onClick={() => setOpen(false)}>
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span className="ms-2">{locale === 'ar' ? 'لوحة أعمالي' : 'My workboard'}</span>
+                  </Link>
+                </Button>
+              </>
             ) : (
               <Button asChild variant="gold" size="lg" className="w-full">
                 <Link href="/login" onClick={() => setOpen(false)}>

@@ -251,9 +251,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/" className="flex min-w-0 shrink items-center gap-2.5 overflow-hidden" aria-label={t('nav.home')}>
               <CoBrand className="h-7 sm:h-10 md:h-12" locale={locale} />
             </Link>
-            {/* Round 30: explicit Home link pinned next to the admin logo, for
-                symmetry with the non-admin shell above and per the request to
-                keep "الصفحة الرئيسية" available for every role. */}
+            {/* Round 30 / Round 32: explicit Home link pinned next to the
+                admin logo. The parent div already groups [Logo + Home] as a
+                single flex cluster (see the sibling flex container above),
+                so Home hugs the logo on the inline-start edge across all
+                viewports. */}
             <Link
               href="/"
               className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
