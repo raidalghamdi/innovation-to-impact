@@ -177,10 +177,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="hidden 2xl:block">
               <HeaderSearch />
             </div>
-            {/* Role-scoped primary action: evaluators/judges get "Start
-                evaluation" instead of "Submit idea" — because a reviewer's
-                primary action is opening their queue, not creating an idea. */}
-            {(role === 'evaluator' || role === 'judge') ? (
+            {/* Role-scoped primary action:
+                 - evaluators/judges  → "Start evaluation" (opens their queue)
+                 - supervisor         → no primary CTA (their job is reviewing
+                                         the submitted-ideas queue, which is
+                                         already the page they land on;
+                                         "Submit idea" would be misleading)
+                 - everyone else      → "Submit idea" */}
+            {role === 'supervisor' ? null : (role === 'evaluator' || role === 'judge') ? (
               <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
                 <Link href={role === 'judge' ? '/committee' : '/evaluator'}>
                   <Plus className="h-4 w-4" />
