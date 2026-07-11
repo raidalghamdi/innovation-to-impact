@@ -21,7 +21,9 @@ export function formatNumber(value: number, opts?: Intl.NumberFormatOptions) {
 
 // Dates are always Gregorian (ميلادي) with Latin digits, even in Arabic —
 // never Hijri / Umm al-Qura. `ar-SA-u-ca-gregory-nu-latn` forces this.
-// Default now includes time (24-hour HH:mm) per user request Round 19.
+// Round 29 point 6: time is 12-hour with AM/PM across ALL four dashboards
+// (innovator / evaluator / supervisor / admin). Arabic renders as "1:17 م" /
+// "11:56 ص"; English as "1:17 PM" / "11:56 AM". No leading zero on the hour.
 export function formatDate(value: string | null | undefined, locale: string) {
   if (!value) return '—';
   try {
@@ -29,13 +31,20 @@ export function formatDate(value: string | null | undefined, locale: string) {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
-      hour12: false,
+      hour12: true,
     }).format(new Date(value));
   } catch {
     return value;
   }
+}
+
+// Alias with an explicit name so call sites that specifically want the
+// "date + 12h time" combo can be self-documenting. Identical output to
+// formatDate — both go through the same Intl formatter above.
+export function formatDateTime(value: string | null | undefined, locale: string) {
+  return formatDate(value, locale);
 }
 
 // Date-only formatter for headers/labels where time would be noise.

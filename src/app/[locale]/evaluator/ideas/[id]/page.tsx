@@ -19,10 +19,14 @@ export default async function EvaluatorIdeaDetailPage({
   const supabase = await createClient();
   if (!supabase) notFound();
 
+  // Round 29: mirror the submitter's own idea details page — the evaluator
+  // must see the same identity fields the innovator filled in the wizard:
+  // event (activity), track (strategic theme), challenge (from
+  // original_source_metadata), idea code, submitted-at, participation type.
   const { data: ideaRow } = await supabase
     .from('ideas')
     .select(
-      'id, code, title_ar, title_en, status, problem_statement, proposed_solution, strategic_theme_id, submitted_at, team_name, team_members'
+      'id, code, title_ar, title_en, status, proposed_solution, strategic_theme_id, activity_id, participation_type, original_source_metadata, submitted_at, attachments'
     )
     .eq('id', id)
     .maybeSingle();
@@ -42,21 +46,30 @@ export default async function EvaluatorIdeaDetailPage({
     if (th) trackName = isAr ? (th as any).name_ar || (th as any).name_en : (th as any).name_en || (th as any).name_ar;
   }
 
-  // Team members (inline columns written by the wizard)
-  const inlineMembers = Array.isArray(row.team_members) ? row.team_members : [];
-  const team = inlineMembers.map((m: any, i: number) => ({
-    name: m?.name ?? null,
-    isLeader: i === 0,
-  }));
+  // Activity (event) name
+  let activityName: string | null = null;
+  if (row.activity_id) {
+    const { data: act } = await supabase
+      .from('activities')
+      .select('name_ar, name_en')
+      .eq('id', row.activity_id)
+      .maybeSingle();
+    if (act) activityName = isAr ? (act as any).name_ar || (act as any).name_en : (act as any).name_en || (act as any).name_ar;
+  }
 
-  // Video presence
-  let videoUrl: string | null = null;
-  const { data: vid } = await supabase
-    .from('video_assets')
-    .select('idea_id')
-    .eq('idea_id', id)
-    .maybeSingle();
-  const hasVideo = !!vid;
+  // Challenge — stored as free text in the JSONB metadata blob by the wizard.
+  let challengeName: string | null = null;
+  const meta = row.original_source_metadata;
+  if (meta && typeof meta === 'object' && (meta as any).challenge) {
+    challengeName = String((meta as any).challenge);
+  }
+
+  // Participation type — no team member names, just the type itself
+  // (individual / team) per Round 29 point 3.
+  const participationType: 'individual' | 'team' | null =
+    row.participation_type === 'individual' || row.participation_type === 'team'
+      ? row.participation_type
+      : null;
 
   const attachments: EvidenceWithUrl[] = await listEvidence('idea', id);
 
@@ -72,13 +85,11 @@ export default async function EvaluatorIdeaDetailPage({
       status={row.status ?? 'submitted'}
       title={title}
       trackName={trackName}
-      problem={row.problem_statement ?? null}
-      solution={row.proposed_solution ?? null}
+      activityName={activityName}
+      challengeName={challengeName}
+      description={row.proposed_solution ?? null}
       submittedAt={row.submitted_at ?? null}
-      teamName={row.team_name ?? null}
-      team={team}
-      hasVideo={hasVideo}
-      videoUrl={videoUrl}
+      participationType={participationType}
       attachments={attachments.map((a) => ({
         id: a.id,
         filename: a.filename,
