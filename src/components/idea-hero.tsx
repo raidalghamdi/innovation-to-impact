@@ -127,25 +127,42 @@ export function IdeaHero({
           {title}
         </h1>
 
-        {/* Activity / Track / Challenge rows — dark-teal rounded fields,
-            each hidden when its value is empty. */}
+        {/* Activity / Track / Challenge chips — width fits content.
+            Row 1: activity alone. Row 2: track + challenge side-by-side.
+            Each chip hidden when its value is empty. */}
         {fields.length > 0 && (
-          <div className="mt-6 flex flex-col gap-[10px]">
-            {fields.map((f) => (
-              <div
-                key={f.key}
-                className="flex items-center gap-[14px] rounded-xl border border-white/10 px-5 py-3.5 min-h-[52px]"
-              >
-                <span className="text-[12.5px] font-medium text-white/50 whitespace-nowrap min-w-[62px]">
-                  {f.label}
-                </span>
-                <span className="w-px self-stretch bg-white/10 my-0.5" />
-                <span className="flex-1 inline-flex items-center gap-2.5 text-[15px] font-medium text-white/95 text-right">
-                  {f.icon}
-                  {f.value}
-                </span>
-              </div>
-            ))}
+          <div className="mt-6 flex flex-col gap-[10px] items-start">
+            {(() => {
+              const activity = fields.find((f) => f.key === 'activity');
+              const track = fields.find((f) => f.key === 'track');
+              const challenge = fields.find((f) => f.key === 'challenge');
+              const renderChip = (f: (typeof fields)[number]) => (
+                <div
+                  key={f.key}
+                  className="inline-flex w-fit max-w-full items-center gap-[14px] rounded-xl border border-white/10 px-5 py-3.5 min-h-[52px]"
+                >
+                  <span className="text-[12.5px] font-medium text-white/50 whitespace-nowrap min-w-[62px]">
+                    {f.label}
+                  </span>
+                  <span className="w-px self-stretch bg-white/10 my-0.5" />
+                  <span className="inline-flex items-center gap-2.5 text-[15px] font-medium text-white/95">
+                    {f.icon}
+                    <span className="break-words">{f.value}</span>
+                  </span>
+                </div>
+              );
+              return (
+                <>
+                  {activity && renderChip(activity)}
+                  {(track || challenge) && (
+                    <div className="flex flex-wrap gap-[10px]">
+                      {track && renderChip(track)}
+                      {challenge && renderChip(challenge)}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 
