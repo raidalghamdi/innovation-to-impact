@@ -85,19 +85,26 @@ const SUBMITTER_ITEMS: MenuItem[] = [
   { href: '/profile/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
 ];
 
+// Evaluator avatar dropdown — Round 27 rewrite.
+//   • 'Evaluator Workspace' entry removed (was a dead link duplicating
+//     'My Dashboard').
+//   • 'My Evaluations' (تقييماتي) removed — it duplicated the new
+//     'Evaluation queue' surface, which now lives in the top tab bar.
+//   • Single unified name for the completed-work page: 'Completed Evaluations'
+//     / 'التقييمات المكتملة' — same label everywhere it's referenced.
+//   • Added 'Evaluation queue' entry so the avatar menu mirrors the top nav.
 const EVALUATOR_ITEMS: MenuItem[] = [
-  { href: '/evaluator', labelAr: 'مساحة المقيّم', labelEn: 'Evaluator Workspace', icon: LayoutDashboard },
-  { href: '/evaluator/my-evaluations', labelAr: 'التقييمات المخصّصة لي', labelEn: 'My Evaluations', icon: ClipboardList },
-  { href: '/evaluator/my-evaluations?filter=completed', labelAr: 'التقييمات المكتملة', labelEn: 'Completed Evaluations', icon: CheckCircle2 },
+  { href: '/evaluator', labelAr: 'لوحة أعمالي', labelEn: 'My Dashboard', icon: LayoutDashboard },
+  { href: '/evaluator/ideas', labelAr: 'قائمة التقييم', labelEn: 'Evaluation Queue', icon: ClipboardList },
+  { href: '/evaluator/my-evaluations', labelAr: 'التقييمات المكتملة', labelEn: 'Completed Evaluations', icon: CheckCircle2 },
   { href: '/evaluator/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
 ];
 
-// Evaluator-specific tail overrides — route Notifications and Settings to the
-// themed evaluator equivalents (/evaluator/notifications, /evaluator/settings)
-// instead of the global platform pages, so the evaluator never leaves the
-// unified evaluator design (ev-root, gold/ink tokens, EvaluatorTabs).
+// Evaluator-specific tail — Round 27: Notifications entry removed from the
+// dropdown (bell icon in the header is now the sole entry point). Settings
+// stays, routed to the themed /evaluator/settings so the design context is
+// preserved.
 const EVALUATOR_TAIL: MenuItem[] = [
-  { href: '/evaluator/notifications', labelAr: 'الإشعارات', labelEn: 'Notifications', icon: Bell },
   { href: '/evaluator/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: SettingsIcon },
 ];
 

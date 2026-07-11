@@ -45,7 +45,7 @@ export function MyEvaluationsList({ locale, rows }: { locale: string; rows: Eval
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-[var(--ink)]">{t('navEvaluations')}</h1>
+        <h1 className="text-2xl font-extrabold text-[var(--ink)]">{t('navCompleted')}</h1>
         <p className="mt-1 text-sm text-[var(--ink-soft)]">{t('myEvaluationsSubtitle')}</p>
       </div>
 

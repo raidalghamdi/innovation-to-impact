@@ -12,10 +12,11 @@ import { Sparkles, X } from 'lucide-react';
 // every navigation within the same session.
 // Note: the innovator's own idea views (`/ideas`, `/ideas/[id]`) are
 // intentionally excluded — they surface no AI-assisted content, so the banner
-// was removed there. Evaluator/committee/admin routes keep it.
+// was removed there. The /evaluator dashboard was ALSO excluded (Round 27)
+// because the reminder was redundant on a page that's already all about
+// human review; the banner still fires on committee/admin AI screens.
 const AI_ASSISTED_PREFIXES = [
   '/admin/analytics',
-  '/evaluator',
   '/committee',
   '/admin/change-requests',
 ];
