@@ -256,7 +256,8 @@
     "usersManagement": "Users",
     "rolesCatalog": "Roles Catalog",
     "backup": "Backup",
-    "startEvaluation": "Start evaluation"
+    "startEvaluation": "Start evaluation",
+    "startJudging": "Start Judging"
   },
   "common": {
     "search": "Search",

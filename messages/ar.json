@@ -256,7 +256,8 @@
     "usersManagement": "المستخدمون",
     "rolesCatalog": "كتالوج الأدوار",
     "backup": "النسخ الاحتياطي",
-    "startEvaluation": "ابدأ التقييم"
+    "startEvaluation": "ابدأ التقييم",
+    "startJudging": "ابدأ التحكيم"
   },
   "common": {
     "search": "بحث",

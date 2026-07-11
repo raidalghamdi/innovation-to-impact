@@ -178,7 +178,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <HeaderSearch />
             </div>
             {/* Role-scoped primary action:
-                 - evaluators/judges  → "Start evaluation" (opens their queue)
+                 - evaluator          → "Start evaluation" (opens their queue)
+                 - judge              → "Start judging"    (opens committee)
                  - supervisor         → no primary CTA (their job is reviewing
                                          the submitted-ideas queue, which is
                                          already the page they land on;
@@ -188,7 +189,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
                 <Link href={role === 'judge' ? '/committee' : '/evaluator'}>
                   <Plus className="h-4 w-4" />
-                  <span className="ms-1 hidden xl:inline">{t('nav.startEvaluation')}</span>
+                  <span className="ms-1 hidden xl:inline">
+                    {role === 'judge' ? t('nav.startJudging') : t('nav.startEvaluation')}
+                  </span>
                 </Link>
               </Button>
             ) : (
