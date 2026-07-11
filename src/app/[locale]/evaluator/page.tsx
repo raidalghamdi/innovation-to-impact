@@ -117,8 +117,15 @@ export default async function EvaluatorDashboardPage({
           const Icon = k.icon;
           return (
             <div key={k.label} className="ev-card p-5">
+              {/* Round 28 KPI hierarchy: label is the primary line — same
+                  weight and size class as the number — so a glance reads
+                  "what is this?" before "how much?". The number is dimmed
+                  slightly (ink-soft) to keep it from dominating. The unit
+                  ('يوم') inherits the same font-display + font-bold as
+                  the number, only smaller, so the typography stays
+                  consistent across all four cards. */}
               <div className="flex items-start justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
+                <p className="font-display text-base font-bold leading-snug text-[var(--ink)]">
                   {k.label}
                 </p>
                 <span
@@ -128,9 +135,9 @@ export default async function EvaluatorDashboardPage({
                   <Icon className="h-4 w-4" />
                 </span>
               </div>
-              <p className="ev-num mt-3 flex items-baseline gap-1.5 font-display text-3xl font-bold leading-none text-[var(--ink)]">
+              <p className="ev-num mt-3 flex items-baseline gap-1.5 font-display text-xl font-bold leading-none text-[var(--ink-soft)]">
                 <span>{k.value}</span>
-                {k.unit && <span className="text-lg font-semibold text-[var(--ink-soft)]">{k.unit}</span>}
+                {k.unit && <span className="font-display text-base font-bold text-[var(--ink-soft)]">{k.unit}</span>}
               </p>
               {'hint' in k && k.hint && (
                 <p className="mt-1.5 text-[11px] text-[var(--ink-faint)]">{k.hint}</p>
