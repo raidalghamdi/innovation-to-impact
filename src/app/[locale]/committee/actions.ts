@@ -144,7 +144,7 @@ export async function recordDecision(input: DecideInput): Promise<DecisionResult
       if (evaluators.length)
         tasks.push(fanOut(evaluators, 'committee_decision', payload, { link }));
       if (supervisorIds.length)
-        tasks.push(fanOut(supervisorIds, 'committee_decision', payload, { link: '/supervisor' }));
+        tasks.push(fanOut(supervisorIds, 'committee_decision', payload, { link }));
       return tasks;
     })
   );
@@ -252,7 +252,7 @@ export async function bulkCommitteeDecide(input: BulkDecideInput): Promise<BulkD
       if (submitter) tasks.push(createNotification(submitter, notifType, payload, { email: true, link }));
       const supervisorIds = await getSupervisorIds(supabase);
       if (supervisorIds.length)
-        tasks.push(fanOut(supervisorIds, 'committee_decision', payload, { link: '/supervisor' }));
+        tasks.push(fanOut(supervisorIds, 'committee_decision', payload, { link }));
       await Promise.all(tasks);
 
       succeeded += 1;

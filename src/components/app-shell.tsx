@@ -89,7 +89,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           const key = decodeURIComponent(cookieRole).toLowerCase();
           if (key === 'admin') resolvedRole = 'admin';
           else if (key === 'judge' || key === 'committee') resolvedRole = 'judge';
-          else if (key === 'evaluator' || key === 'supervisor') resolvedRole = 'evaluator';
+          else if (key === 'supervisor') resolvedRole = 'supervisor';
+          else if (key === 'evaluator') resolvedRole = 'evaluator';
           else if (key === 'submitter' || key === 'innovator') resolvedRole = 'submitter';
         }
       }

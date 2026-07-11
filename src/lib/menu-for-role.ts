@@ -52,6 +52,15 @@ const DASHBOARD_ITEM: MenuItem = {
   icon: LayoutDashboard,
 };
 
+// Supervisor: 'لوحة أعمالي' points to the supervisor console, not the shared
+// /dashboard route (which is submitter-oriented).
+const SUPERVISOR_HUB_ITEM: MenuItem = {
+  href: '/supervisor',
+  labelAr: 'لوحة أعمالي',
+  labelEn: 'My Dashboard',
+  icon: LayoutDashboard,
+};
+
 // Admin never has a personal "my dashboard" — the console IS the dashboard.
 const ADMIN_HUB_ITEM: MenuItem = {
   href: '/admin',
@@ -110,11 +119,11 @@ const ADMIN_ITEMS: MenuItem[] = [
   { href: '/admin/email-log', labelAr: 'سجل البريد', labelEn: 'Email Log', icon: Mail },
 ];
 
-const SUPERVISOR_ITEMS: MenuItem[] = [
-  { href: '/team', labelAr: 'أفكار قطاعي', labelEn: 'Sector Ideas', icon: Users2 },
-  { href: '/admin/escalations', labelAr: 'التصعيدات', labelEn: 'Escalations', icon: ShieldCheck },
-  { href: '/analytics', labelAr: 'تقارير القطاع', labelEn: 'Sector Reports', icon: FileBarChart },
-];
+// Supervisor menu: intentionally minimal per Round 25 clarification —
+// 'My Dashboard' (as SUPERVISOR_HUB_ITEM) + Notifications + Settings. No
+// evaluator-style 'My evaluations / Completed evaluations' entries, no
+// sector/analytics deep links.
+const SUPERVISOR_ITEMS: MenuItem[] = [];
 
 const ROLE_ITEMS: Record<string, MenuItem[]> = {
   // canonical Role enum values
@@ -139,8 +148,15 @@ const ROLE_ITEMS: Record<string, MenuItem[]> = {
 export function getMenuForRole(roleCode: string | null | undefined): MenuItem[] {
   const key = (roleCode ?? '').toLowerCase();
   const roleItems = ROLE_ITEMS[key] ?? SUBMITTER_ITEMS;
-  const head = key === 'admin' ? ADMIN_HUB_ITEM : DASHBOARD_ITEM;
-  const tail = (key === 'evaluator' || key === 'supervisor') ? EVALUATOR_TAIL : TAIL_ITEMS;
+  const head =
+    key === 'admin'
+      ? ADMIN_HUB_ITEM
+      : key === 'supervisor'
+        ? SUPERVISOR_HUB_ITEM
+        : DASHBOARD_ITEM;
+  // Only evaluators get the themed /evaluator/{notifications,settings} tail;
+  // supervisors use the standard platform notifications/settings pages.
+  const tail = key === 'evaluator' ? EVALUATOR_TAIL : TAIL_ITEMS;
   return [head, ...roleItems, ...tail];
 }
 

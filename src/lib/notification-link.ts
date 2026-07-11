@@ -14,8 +14,11 @@ export function normalizeNotificationLink(link: string | null | undefined): stri
   const myIdeasDetail = trimmed.match(/^\/my-ideas\/([^/?#]+)(.*)$/);
   if (myIdeasDetail) return `/ideas/${myIdeasDetail[1]}${myIdeasDetail[2] ?? ''}`;
 
-  // Legacy: there is no per-idea supervisor route — send to the queue.
-  if (/^\/supervisor\/ideas\/[^/?#]+/.test(trimmed)) return '/supervisor';
+  // Legacy: no per-idea supervisor route — rewrite to the shared idea detail
+  // page (/ideas/{id}) so the supervisor can open the actual idea from the
+  // notification instead of landing on the queue.
+  const supervisorIdeaDetail = trimmed.match(/^\/supervisor\/ideas\/([^/?#]+)(.*)$/);
+  if (supervisorIdeaDetail) return `/ideas/${supervisorIdeaDetail[1]}${supervisorIdeaDetail[2] ?? ''}`;
 
   return trimmed;
 }

@@ -80,7 +80,7 @@ export async function saveEvaluation(input: SaveInput): Promise<EvaluationResult
     // Supervisors overseeing screening must also learn an evaluation landed.
     const supervisorIds = await getSupervisorIds(supabase);
     if (supervisorIds.length)
-      await fanOut(supervisorIds, 'evaluation_completed', { ideaId: input.ideaId }, { link: '/supervisor' });
+      await fanOut(supervisorIds, 'evaluation_completed', { ideaId: input.ideaId }, { link: `/ideas/${input.ideaId}` });
   }
 
   revalidatePath(`/[locale]/evaluation`, 'page');

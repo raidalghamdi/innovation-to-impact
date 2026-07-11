@@ -23,8 +23,8 @@ type Notif = {
 export function NotificationBell({ userId, role }: { userId: string | null; role?: string }) {
   // Route evaluators to their themed notifications page (/evaluator/notifications)
   // so the bell's "view all" stays inside the unified evaluator design.
-  const viewAllHref =
-    role === 'evaluator' || role === 'supervisor' ? '/evaluator/notifications' : '/notifications';
+  // Supervisors use the standard platform notifications page.
+  const viewAllHref = role === 'evaluator' ? '/evaluator/notifications' : '/notifications';
   const t = useTranslations('notifications');
   const locale = useLocale();
   const router = useRouter();

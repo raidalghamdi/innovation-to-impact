@@ -317,7 +317,7 @@ export async function notifyOnIdeaSubmission(ideaId: string): Promise<void> {
         supervisorIds,
         'idea_submitted',
         { ideaId, ideaCode },
-        { client: supabase, link: '/supervisor' }
+        { client: supabase, link: `/ideas/${ideaId}` }
       );
     }
   } catch (err) {

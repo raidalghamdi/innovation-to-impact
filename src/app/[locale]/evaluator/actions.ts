@@ -61,7 +61,7 @@ export async function submitEvaluatorScore(input: {
   await notifyByRole('judge', 'evaluation_completed', { ideaId: input.ideaId });
   const supervisorIds = await getSupervisorIds(supabase);
   if (supervisorIds.length)
-    await fanOut(supervisorIds, 'evaluation_completed', { ideaId: input.ideaId }, { link: '/supervisor' });
+    await fanOut(supervisorIds, 'evaluation_completed', { ideaId: input.ideaId }, { link: `/ideas/${input.ideaId}` });
 
   revalidatePath('/[locale]/evaluator', 'page');
   return { ok: true };

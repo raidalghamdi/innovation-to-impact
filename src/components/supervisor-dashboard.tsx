@@ -390,10 +390,10 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
           onClick={closeReview}
         >
           <Card
-            className="max-h-[92vh] w-full max-w-3xl overflow-hidden"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <CardHeader className="border-b">
+            <CardHeader className="shrink-0 border-b">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-xs text-muted-foreground">{viewIdea.code}</div>
@@ -428,7 +428,7 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
               </div>
             </CardHeader>
 
-            <div className="max-h-[60vh] overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               <CardContent className="space-y-5 py-5">
                 {(() => {
                   const title = isAr
