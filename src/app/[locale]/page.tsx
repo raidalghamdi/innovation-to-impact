@@ -1,6 +1,5 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
-import Image from 'next/image';
 import { Link } from '@/i18n/routing';
 import { SiteFooter } from '@/components/site-footer';
 import { Countdown } from '@/components/countdown';
@@ -15,7 +14,7 @@ import { TimelineModern, stages as defaultStages } from '@/components/timeline-m
 import { fetchThemes } from '@/lib/data';
 import { pickFromRow, pick } from '@/lib/i18n-content';
 import { getCurrentUser } from '@/lib/user';
-import { ROLE_HOME } from '@/lib/roles';
+import { getMyUserRoles } from '@/lib/db-roles';
 import { loadCms, getText } from '@/lib/cms';
 import { loadAllMediaAssets } from '@/lib/media-assets';
 import {
@@ -94,6 +93,12 @@ export default async function LandingPage({
   // Detect logged-in user so the landing nav can render the role menu instead
   // of the generic "Login" CTA (fixes the "looks-logged-out" regression).
   const currentUser = await getCurrentUser();
+  // Round 30 §5a/§5b/§6: raw DB role codes for the current user — needed by
+  // LandingNav to distinguish a real admin from a supervisor (both are coerced
+  // to Role='admin' at the canonical layer). Only fetched when logged in.
+  const currentUserRoleCodes: string[] = currentUser
+    ? (await getMyUserRoles()).map((r) => r.role_code)
+    : [];
   const faqItems = (t.raw('faq.items') as { q: string; a: string }[]).slice(0, 8);
   const partners = (t.raw('partners.partners') as { name: string }[]);
   const objectives = t.raw('landing.objectives.items') as string[];
@@ -135,12 +140,21 @@ export default async function LandingPage({
     <div className="min-h-screen bg-background">
       <SkipToContent />
 
-      {/* Unified public Nav Bar (shared across all pre-login pages) */}
+      {/* Unified public Nav Bar (shared across all pre-login pages).
+          Round 30 §5a/§5b/§6: also pass the raw DB role codes so LandingNav
+          can distinguish supervisor (currently coerced to Role='admin' at the
+          canonical layer) from a true admin, and route their "لوحتي" quick
+          jump to /supervisor — or, for supervisor/evaluator, suppress the CTA
+          entirely per the round’s spec. */}
       <LandingNav
         locale={locale}
         user={
           currentUser
-            ? { displayName: currentUser.fullName || currentUser.email || 'User', role: currentUser.role }
+            ? {
+                displayName: currentUser.fullName || currentUser.email || 'User',
+                role: currentUser.role,
+                roleCodes: currentUserRoleCodes,
+              }
             : null
         }
       />
@@ -167,19 +181,23 @@ export default async function LandingPage({
           <div className="pointer-events-none absolute end-0 top-0 h-64 w-64 rounded-full bg-brand-cyan/10 blur-3xl sm:h-80 sm:w-80" />
           <div className="pointer-events-none absolute bottom-0 start-0 h-64 w-64 rounded-full bg-brand-gold/10 blur-3xl sm:h-80 sm:w-80" />
 
-          {/* Layer 4: content, single centered column */}
-          <div className="relative mx-auto max-w-3xl space-y-6 px-4 text-center sm:px-8">
+          {/* Layer 4: content, single centered column. Round 30 hero polish
+             — keeps identity/colours untouched, only raises the typographic
+             hierarchy so the headline dominates and the slogan+sub read as one
+             breathable block. */}
+          <div className="relative mx-auto max-w-3xl space-y-7 px-4 text-center sm:space-y-8 sm:px-8">
             <p className="inline-flex items-center gap-2 rounded-full border border-brand-cyan/50 bg-brand-teal-dark/60 px-6 py-2.5 text-sm font-bold tracking-wider text-brand-cyan-light backdrop-blur-sm sm:text-base md:px-8 md:py-3 md:text-lg">
               <span className="h-2 w-2 rounded-full bg-brand-gold" aria-hidden="true" />
               {t('landing.hero.eyebrow')}
             </p>
 
-            <h1 className="hero-headline mx-auto max-w-2xl [text-shadow:0_2px_16px_rgba(0,0,0,0.35)]">
+            <h1 className="hero-headline mx-auto max-w-2xl [text-shadow:0_2px_18px_rgba(0,0,0,0.45)]">
               <HeroRotator words={heroWords} />
             </h1>
 
-            {/* Innovate · Compete · Impact — slogan pill row */}
-            <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-base font-semibold text-white/95 sm:text-lg">
+            {/* Innovate · Compete · Impact — slogan pill row, tighter spacing so
+               it reads as one visual line under the H1. */}
+            <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-base font-semibold text-white sm:text-lg [text-shadow:0_1px_10px_rgba(0,0,0,0.35)]">
               <span>{t('landing.hero.sloganInnovate')}</span>
               <span className="h-1.5 w-1.5 rounded-full bg-brand-cyan" aria-hidden="true" />
               <span className="text-brand-cyan-light">{t('landing.hero.sloganCompete')}</span>
@@ -187,24 +205,33 @@ export default async function LandingPage({
               <span className="text-brand-gold">{t('landing.hero.sloganImpact')}</span>
             </p>
 
-            <p className="mx-auto max-w-xl text-base text-white/85 sm:text-lg [text-shadow:0_1px_8px_rgba(0,0,0,0.35)]">
+            <p className="mx-auto max-w-xl text-base leading-relaxed text-white/90 sm:text-lg [text-shadow:0_1px_10px_rgba(0,0,0,0.4)]">
               {t('landing.hero.stable')}
             </p>
 
-            {/* CTA hierarchy (UX note batch 07/26):
-                Primary = "Register/My Dashboard" (gold, filled) — the action we
-                actually want users to take.
-                Secondary = "Learn about the program" (transparent outline) —
-                exploration option for those not ready to commit. */}
+            {/* Round 30 — role-scoped primary CTA:
+               • supervisor / evaluator → no primary CTA (they don't submit ideas,
+                 they review them). Only the "Learn about the program" secondary
+                 stays so the hero remains visually balanced.
+               • everyone else (innovator / submitter / judge / committee /
+                 admin / anonymous) → gold "قدّم فكرتك" that opens /ideas/new.
+               The old "سجّل الآن" wording was retired — the goal is submit-first,
+               not signup-first. */}
             <div className="flex flex-wrap justify-center gap-3">
-              <Button asChild size="lg" variant="gold">
-                <Link href={(currentUser ? ROLE_HOME[currentUser.role] : '/ideas/new') as any}>
-                  <Lightbulb className="h-5 w-5" />
-                  {currentUser
-                    ? (locale === 'ar' ? 'لوحتي' : 'My dashboard')
-                    : t('landing.hero.ctaRegister')}
-                </Link>
-              </Button>
+              {/* Supervisor's canonical Role is coerced to 'admin' — use the
+                  raw DB role codes so we correctly hide the CTA for real
+                  supervisors (and evaluators) without also hiding it for real
+                  admins who legitimately need to submit ideas on behalf of
+                  their org. */}
+              {(currentUserRoleCodes.includes('supervisor') && !currentUserRoleCodes.includes('admin')) ||
+              currentUserRoleCodes.includes('evaluator') ? null : (
+                <Button asChild size="lg" variant="gold">
+                  <Link href="/ideas/new">
+                    <Lightbulb className="h-5 w-5" />
+                    {locale === 'ar' ? 'قدّم فكرتك' : 'Submit your idea'}
+                  </Link>
+                </Button>
+              )}
               <a
                 href="#about"
                 className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-white/40 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
@@ -307,30 +334,6 @@ export default async function LandingPage({
                 </Link>
                 );
               })}
-            </div>
-          </div>
-        </section>
-
-        {/* ===== 4b. HOW IT WORKS (idea funnel diagram) ===== */}
-        <section id="how-it-works" className="scroll-mt-24 border-y border-border bg-card py-16 sm:py-24">
-          <div className="mx-auto max-w-5xl px-4 sm:px-8">
-            <h2 className="text-center text-2xl font-bold text-brand-teal sm:text-3xl">
-              {locale === 'ar' ? 'كيف تسير الفكرة' : 'How it works'}
-            </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-muted-foreground sm:text-base">
-              {locale === 'ar'
-                ? 'رحلة الفكرة من التقديم حتى التصفيات: 100 ← 80 ← 60 ← 40 ← 5'
-                : 'The journey of an idea from submission to the finals: 100 -> 80 -> 60 -> 40 -> 5'}
-            </p>
-            <div className="mt-8 flex justify-center">
-              <Image
-                src="/brand/idea-flow.png"
-                alt={locale === 'ar' ? 'مخطط تدفق الأفكار' : 'Idea flow diagram'}
-                width={1200}
-                height={675}
-                className="h-auto w-full max-w-3xl rounded-2xl border border-border"
-                priority={false}
-              />
             </div>
           </div>
         </section>
@@ -633,7 +636,7 @@ export default async function LandingPage({
               <Button asChild size="lg">
                 <Link href="/ideas/new">
                   <Lightbulb className="h-4 w-4" />
-                  {t('landing.heroCtaRegister')}
+                  {locale === 'ar' ? 'قدّم فكرتك' : 'Submit your idea'}
                   <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                 </Link>
               </Button>

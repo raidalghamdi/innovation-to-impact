@@ -341,7 +341,7 @@
     "recentActivities": "الفعاليات والحملات النشطة",
     "stagesTitle": "رحلة الفكرة في تسع مراحل",
     "stagesSubtitle": "من الإطار الاستراتيجي إلى قياس الأثر",
-    "heroEyebrow": "برنامج المنافسة",
+    "heroEyebrow": "برنامج ابتكار المنافسة",
     "ctaIHaveIdea": "لدي فكرة",
     "ctaIHaveIdeaDesc": "قدّمها وسنأخذها معك خطوة بخطوة عبر مراحل المراجعة",
     "ctaIHaveChallenge": "لدي تحدي",
@@ -1762,13 +1762,13 @@
     "submitter": "مقدّم فكرة",
     "evaluator": "مقيّم",
     "judge": "عضو لجنة",
-    "admin": "مسؤول النظام",
+    "admin": "مدير النظام",
     "selectRoleTitle": "اختر طريقة استخدامك للمنصة",
     "selectRoleSubtitle": "حدد دورك للمتابعة.",
     "code": {
       "innovator": "مبتكر",
       "judge": "محكم",
-      "committee": "لجنة",
+      "committee": "لجنة تحكيم",
       "supervisor": "مشرف",
       "admin": "مدير النظام"
     }

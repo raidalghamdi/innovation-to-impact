@@ -141,12 +141,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <CoBrand className="h-8 sm:h-10 xl:h-12" locale={locale} />
           </Link>
 
-          {/* Persistent Home link back to the public landing page — always
-              available, even on authenticated app routes where the marketing
-              anchor nav is hidden. */}
+          {/* Round 30: persistent Home link back to the public landing page,
+              pinned to the right of the logo (RTL: first element after the
+              logo). Visible on every viewport so all roles can jump home from
+              anywhere — label collapses to icon-only under lg. */}
           <Link
             href="/"
-            className="hidden shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal sm:inline-flex"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
+            aria-label={t('nav.homePage')}
           >
             <Home className="h-4 w-4" />
             <span className="hidden lg:inline">{t('nav.homePage')}</span>
@@ -248,6 +250,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 landing page from anywhere in the console. */}
             <Link href="/" className="flex min-w-0 shrink items-center gap-2.5 overflow-hidden" aria-label={t('nav.home')}>
               <CoBrand className="h-7 sm:h-10 md:h-12" locale={locale} />
+            </Link>
+            {/* Round 30: explicit Home link pinned next to the admin logo, for
+                symmetry with the non-admin shell above and per the request to
+                keep "الصفحة الرئيسية" available for every role. */}
+            <Link
+              href="/"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium text-foreground/80 transition hover:bg-brand-teal-light hover:text-brand-teal"
+              aria-label={t('nav.homePage')}
+            >
+              <Home className="h-4 w-4" />
+              <span className="hidden lg:inline">{t('nav.homePage')}</span>
             </Link>
           </div>
           <div className="flex items-center gap-2">

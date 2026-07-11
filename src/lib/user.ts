@@ -43,7 +43,11 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     );
     // Map DB role codes to the app's Role enum. Supervisor is treated as
     // 'admin'-level for landing/navigation purposes (they have supervisor UI),
-    // committee acts like a judge.
+    // committee acts like a judge. Note: the client-side AppShell separately
+    // reads the i2i_active_role cookie and downgrades to the canonical
+    // 'supervisor' role there — so the supervisor's own dropdown/nav renders
+    // as supervisor (dropdown "لوحة أعمالي" points at /supervisor, not
+    // /admin) while server-side /admin/* access is still allowed for them.
     if (codes.has('admin')) derivedRole = 'admin';
     else if (codes.has('supervisor')) derivedRole = 'admin';
     else if (codes.has('judge') || codes.has('committee')) derivedRole = 'judge';

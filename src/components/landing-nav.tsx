@@ -32,6 +32,11 @@ import { Menu, X, LayoutDashboard } from 'lucide-react';
 export type LandingNavUser = {
   displayName: string;
   role: Role;
+  // Round 30: raw DB role codes (from v_user_roles). Supervisor is coerced to
+  // 'admin' in the canonical Role enum — the raw codes let LandingNav render
+  // supervisor-specific behaviour (e.g. hide the "لوحتي" quick-jump per the
+  // Round 30 spec) without changing broader role semantics.
+  roleCodes?: string[];
 } | null;
 
 const ANCHOR_NAV = [
@@ -70,6 +75,20 @@ export function LandingNav({
 
   const buildHref = (anchor: string) =>
     isLandingRoot ? `#${anchor}` : `/${locale}/#${anchor}`;
+
+  // Round 30 §5b: pick the correct dashboard target for the user.
+  //   - Supervisor's canonical Role is coerced to 'admin' (see src/lib/user.ts),
+  //     so ROLE_HOME[user.role] would send them to /admin. Fall back to
+  //     '/supervisor' when the raw role codes include supervisor and no
+  //     stronger 'admin' code.
+  //   - Evaluator's canonical Role is 'evaluator' and ROLE_HOME.evaluator is
+  //     already '/evaluator', so the default works there.
+  const dashboardHref: string = (() => {
+    if (!user) return '/login';
+    const codes = user.roleCodes ?? [];
+    if (codes.includes('supervisor') && !codes.includes('admin')) return '/supervisor';
+    return ROLE_HOME[user.role];
+  })();
 
   // Close on route change.
   useEffect(() => {
@@ -129,12 +148,17 @@ export function LandingNav({
       <div className="hidden shrink-0 items-center gap-1.5 lg:flex xl:gap-2">
         {!hideLoginCta && (
           user ? (
-            <Button asChild variant="gold" size="sm">
-              <Link href={ROLE_HOME[user.role] as any}>
-                <LayoutDashboard className="h-4 w-4" />
-                <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
-              </Link>
-            </Button>
+            // Round 30 §5a/§6: hide the "لوحتي" quick-jump for supervisors and
+            // evaluators — they enter their consoles via the primary login flow
+            // and don't need a duplicate CTA on the public landing header.
+            (user.roleCodes?.includes('supervisor') || user.roleCodes?.includes('evaluator')) ? null : (
+              <Button asChild variant="gold" size="sm">
+                <Link href={dashboardHref}>
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
+                </Link>
+              </Button>
+            )
           ) : (
             <Button asChild variant="ghost" size="sm">
               <Link href="/login">{t('nav.login')}</Link>
@@ -220,18 +244,28 @@ export function LandingNav({
         {!hideLoginCta && (
           <div className="shrink-0 space-y-2 border-t border-border p-4">
             {user ? (
-              <>
+              // Round 30 §5a/§6: mirror the desktop rule — supervisors and
+              // evaluators still see the welcome greeting but not the "لوحتي"
+              // CTA (they have dedicated login routing already).
+              (user.roleCodes?.includes('supervisor') || user.roleCodes?.includes('evaluator')) ? (
                 <div className="mb-1 text-center text-xs text-muted-foreground">
                   {locale === 'ar' ? 'مرحباً، ' : 'Welcome, '}
                   <span className="font-semibold text-foreground">{user.displayName}</span>
                 </div>
-                <Button asChild variant="gold" size="lg" className="w-full">
-                  <Link href={ROLE_HOME[user.role] as any} onClick={() => setOpen(false)}>
-                    <LayoutDashboard className="h-4 w-4" />
-                    <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
-                  </Link>
-                </Button>
-              </>
+              ) : (
+                <>
+                  <div className="mb-1 text-center text-xs text-muted-foreground">
+                    {locale === 'ar' ? 'مرحباً، ' : 'Welcome, '}
+                    <span className="font-semibold text-foreground">{user.displayName}</span>
+                  </div>
+                  <Button asChild variant="gold" size="lg" className="w-full">
+                    <Link href={dashboardHref} onClick={() => setOpen(false)}>
+                      <LayoutDashboard className="h-4 w-4" />
+                      <span className="ms-2">{locale === 'ar' ? 'لوحتي' : 'My dashboard'}</span>
+                    </Link>
+                  </Button>
+                </>
+              )
             ) : (
               <Button asChild variant="gold" size="lg" className="w-full">
                 <Link href="/login" onClick={() => setOpen(false)}>
