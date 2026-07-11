@@ -69,6 +69,17 @@ const ADMIN_HUB_ITEM: MenuItem = {
   icon: LayoutDashboard,
 };
 
+// Evaluator: 'لوحة أعمالي' points to /evaluator (the evaluator console), not
+// the shared /dashboard route. Mirrors SUPERVISOR_HUB_ITEM so the avatar
+// dropdown 'My Dashboard' takes the evaluator to their own console instead
+// of the generic submitter one.
+const EVALUATOR_HUB_ITEM: MenuItem = {
+  href: '/evaluator',
+  labelAr: 'لوحة أعمالي',
+  labelEn: 'My Dashboard',
+  icon: LayoutDashboard,
+};
+
 const TAIL_ITEMS: MenuItem[] = [
   { href: '/notifications', labelAr: 'الإشعارات', labelEn: 'Notifications', icon: Bell },
   { href: '/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: SettingsIcon },
@@ -94,7 +105,6 @@ const SUBMITTER_ITEMS: MenuItem[] = [
 //     / 'التقييمات المكتملة' — same label everywhere it's referenced.
 //   • Added 'Evaluation queue' entry so the avatar menu mirrors the top nav.
 const EVALUATOR_ITEMS: MenuItem[] = [
-  { href: '/evaluator', labelAr: 'لوحة أعمالي', labelEn: 'My Dashboard', icon: LayoutDashboard },
   { href: '/evaluator/ideas', labelAr: 'قائمة التقييم', labelEn: 'Evaluation Queue', icon: ClipboardList },
   { href: '/evaluator/my-evaluations', labelAr: 'التقييمات المكتملة', labelEn: 'Completed Evaluations', icon: CheckCircle2 },
   { href: '/evaluator/level', labelAr: 'مستواي', labelEn: 'My Level', icon: Star },
@@ -160,7 +170,9 @@ export function getMenuForRole(roleCode: string | null | undefined): MenuItem[] 
       ? ADMIN_HUB_ITEM
       : key === 'supervisor'
         ? SUPERVISOR_HUB_ITEM
-        : DASHBOARD_ITEM;
+        : key === 'evaluator'
+          ? EVALUATOR_HUB_ITEM
+          : DASHBOARD_ITEM;
   // Only evaluators get the themed /evaluator/{notifications,settings} tail;
   // supervisors use the standard platform notifications/settings pages.
   const tail = key === 'evaluator' ? EVALUATOR_TAIL : TAIL_ITEMS;
