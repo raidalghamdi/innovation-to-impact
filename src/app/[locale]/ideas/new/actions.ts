@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUser } from '@/lib/user';
 import { createNotification, fanOut, getSupervisorIds } from '@/lib/notifications';
+import { logAudit } from '@/lib/audit';
 import { renderMailHtml, sendMail } from '@/lib/mailer';
 import { EVIDENCE_BUCKET, validateUploadFile } from '@/lib/evidence-types';
 
@@ -220,6 +221,17 @@ export async function notifyOnIdeaSubmission(ideaId: string): Promise<void> {
 
     const ideaCode = idea.code ?? ideaId;
     const submitterId = idea.submitter_id ?? null;
+
+    // Audit the privileged create/submit mutation (Missing 1.2). Best-effort —
+    // logAudit never throws, so it can't disturb the notification fan-out.
+    await logAudit(submitterId, 'idea.submitted', 'idea', ideaId, {
+      after: {
+        code: ideaCode,
+        status: 'submitted',
+        title_ar: idea.title_ar,
+        title_en: idea.title_en,
+      },
+    });
 
     // --- Submitter: locale + contact -----------------------------------------
     let submitterLocale: Locale = 'ar';
