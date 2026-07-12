@@ -4,14 +4,17 @@ import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { getCurrentUser } from '@/lib/user';
 import { ReportsCenter } from '@/components/reports-center';
+import { ReportsCenterCharts } from '@/components/reports-center-charts';
+import { getReportChartsData, getReportTitles } from '@/lib/reports-charts';
 
 /**
  * /admin/reports — Reports Center.
  *
- * Admin-only page. Presents a card for each of the 12 report types. Selecting
- * a card opens a right-side panel with format, date range, and delivery
- * options (download vs. email). All rendering happens server-side via
- * `/api/admin/reports/generate`.
+ * Admin-only page. Two surfaces stacked: an analytics dashboard of eight rich
+ * lifecycle charts (with admin-editable titles) on top, then the report
+ * generator — a card per report type that opens a right-side panel with format,
+ * date range, and delivery options. Generation runs server-side via
+ * `/api/admin/reports/generate`; chart data is fetched here in parallel.
  */
 export default async function ReportsPage({
   params,
@@ -28,17 +31,22 @@ export default async function ReportsPage({
 
   const isAr = locale === 'ar';
 
+  const [chartsData, titles] = await Promise.all([getReportChartsData(), getReportTitles()]);
+
   return (
     <AppShell>
       <PageHeader
         title={isAr ? 'مركز التقارير' : 'Reports Center'}
         subtitle={
           isAr
-            ? 'اختر نوع التقرير، الصيغة، والفترة الزمنية. حمّل مباشرة أو أرسل إلى البريد.'
-            : 'Pick a report type, format, and date range. Download directly or send to email.'
+            ? 'لوحة تحليلية تفاعلية ومولّد تقارير — استعرض المؤشرات ثم حمّل أو أرسل التقارير.'
+            : 'Interactive analytics dashboard and report generator — review indicators, then download or email reports.'
         }
       />
-      <ReportsCenter locale={locale} />
+      <ReportsCenterCharts data={chartsData} titles={titles} locale={locale} isAdmin={user.role === 'admin'} />
+      <div className="mt-10">
+        <ReportsCenter locale={locale} />
+      </div>
     </AppShell>
   );
 }
