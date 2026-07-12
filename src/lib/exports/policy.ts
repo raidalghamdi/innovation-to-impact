@@ -11,8 +11,10 @@
 export const SENSITIVE_SCREENS = [
   'admin.users',
   'admin.audit-logs',
+  'admin.auditLogs',
   'supervisor.users',
   'supervisor.audit-logs',
+  'supervisor.auditLogs',
 ] as const;
 
 // Internal-domain gate. Same shape the EmailExportModal validates against so
