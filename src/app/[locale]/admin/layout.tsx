@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { serializeJsonLd } from '@/lib/json-ld';
 
 /**
  * /admin/* wrapper layout — adds:
@@ -131,7 +132,7 @@ export default async function AdminLayout({
       {!isHubIndex && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
       )}
       {children}
