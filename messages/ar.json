@@ -36,7 +36,7 @@
     "qaSettings": "الإعدادات",
     "qaSettingsSub": "تفضيلات الحساب",
     "kpiAwaiting": "أفكار قيد التقييم",
-    "kpiEvaluatedMonth": "قيّمتها هذا الشهر",
+    "kpiEvaluatedMonth": "قيّمت الشهر",
     "kpiAvgTime": "متوسط زمن التقييم",
     "kpiPoints": "نقاطي الحالية",
     "unitDay": "يوم",
@@ -1309,6 +1309,7 @@
     "empty": "لا توجد إشعارات بعد.",
     "markRead": "تحديد كمقروء",
     "markAllRead": "تحديد الكل كمقروء",
+    "dismiss": "إخفاء",
     "unread": "غير مقروء",
     "all": "الكل",
     "none": "لا جديد الآن.",
@@ -1927,6 +1928,7 @@
     "referenceLabel": "مرجع الطلب"
   },
   "errors": {
+    "fileEmpty": "الملف فارغ (0 بايت). يرجى اختيار ملف صالح.",
     "fileTooLarge": "يتجاوز الملف الحد الأقصى 10 ميغابايت",
     "fileTypeNotAllowed": "نوع الملف غير مسموح"
   },

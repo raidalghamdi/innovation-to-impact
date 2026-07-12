@@ -1309,6 +1309,7 @@
     "empty": "No notifications yet.",
     "markRead": "Mark as read",
     "markAllRead": "Mark all as read",
+    "dismiss": "Dismiss",
     "unread": "Unread",
     "all": "All",
     "none": "Nothing new right now.",
@@ -1927,6 +1928,7 @@
     "referenceLabel": "Reference"
   },
   "errors": {
+    "fileEmpty": "File is empty (0 bytes). Please choose a valid file.",
     "fileTooLarge": "File exceeds the 10MB limit",
     "fileTypeNotAllowed": "File type not allowed"
   },
