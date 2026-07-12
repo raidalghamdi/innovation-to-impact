@@ -254,6 +254,7 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
           <div className="flex flex-wrap gap-3">
             <Input
               placeholder={isAr ? 'ابحث بالعنوان أو الرقم…' : 'Search title or code…'}
+              aria-label={isAr ? 'ابحث بالعنوان أو الرقم' : 'Search title or code'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-sm"
@@ -262,6 +263,7 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
               value={themeFilter}
               onChange={(e) => setThemeFilter(e.target.value)}
               className="rounded-md border border-input bg-background px-3 text-sm"
+              aria-label={isAr ? 'تصفية حسب المسار' : 'Filter by track'}
             >
               <option value="all">{isAr ? 'كل المسارات' : 'All tracks'}</option>
               {themes.map((t) => (
@@ -850,6 +852,7 @@ function TrackAssignmentsPanel({
                   setSelectedEval('');
                 }}
                 className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                aria-label={isAr ? 'المسار' : 'Track'}
               >
                 <option value="" disabled>
                   {isAr ? '— اختر المسار —' : '— Choose a track —'}
@@ -868,6 +871,7 @@ function TrackAssignmentsPanel({
                 onChange={(e) => setSelectedEval(e.target.value)}
                 disabled={!selectedTheme || evaluators.length === 0}
                 className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
+                aria-label={isAr ? 'المقيّم' : 'Evaluator'}
               >
                 <option value="">
                   {evaluators.length === 0
