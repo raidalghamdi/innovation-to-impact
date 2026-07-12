@@ -2,6 +2,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { Card, CardContent } from '@/components/ui/card';
 import { WorkloadHeatmap } from '@/components/workload-heatmap';
+import { EvaluatorAutoSuggest } from '@/components/evaluator-auto-suggest';
 import { AssignmentsManager } from '@/components/assignments-manager';
 import {
   fetchAssignmentsPage,
@@ -120,6 +121,8 @@ export default async function AssignmentsPage({
           </form>
         </CardContent>
       </Card>
+
+      <EvaluatorAutoSuggest locale={locale} />
 
       <div className="mt-6">
         <AssignmentsManager rows={rows} ideaOptions={ideaOptions} evaluatorOptions={evaluatorOptions} locale={locale} />
