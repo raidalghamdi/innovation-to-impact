@@ -21,6 +21,7 @@ import { formatFileSize } from '@/lib/evidence-types';
 import { EvRing, EvSuccessOverlay, EvToast } from '@/components/evaluator/ev-ui';
 import { submitEvaluatorScore } from '@/app/[locale]/evaluator/actions';
 import { EV_CRITERIA, type EvScores, type EvCriterion } from '@/lib/evaluator-criteria';
+import { IdeaJourneyTimeline, type JourneyTimelineStage } from '@/components/idea-journey-timeline';
 
 type Attachment = {
   id: string;
@@ -46,6 +47,8 @@ type Props = {
   submittedAt: string | null;
   updatedAt: string | null;
   participationType: 'individual' | 'team' | null;
+  journeyStages: JourneyTimelineStage[];
+  journeyStopped: boolean;
   attachments: Attachment[];
   readOnly: boolean;
   existingScores: Partial<EvScores> | null;
@@ -136,6 +139,16 @@ export function EvaluationDetail(props: Props) {
               ))}
             </dl>
           </section>
+
+          {/* Journey Timeline — mirrors the innovator idea detail page so
+              evaluators see the same six-stage progress. */}
+          <div className="ev-card p-6">
+            <IdeaJourneyTimeline
+              locale={locale}
+              stages={props.journeyStages}
+              stopped={props.journeyStopped}
+            />
+          </div>
 
           {/* Description */}
           <div className="ev-card p-6">
