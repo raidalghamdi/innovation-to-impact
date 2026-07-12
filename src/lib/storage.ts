@@ -150,6 +150,118 @@ export async function listEvidence(
   }
 }
 
+// Read a value as a non-empty trimmed string, else null.
+function jsonbStr(v: unknown): string | null {
+  return typeof v === 'string' && v.trim().length > 0 ? v.trim() : null;
+}
+function jsonbNum(v: unknown): number | null {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Map a single legacy `ideas.attachments` JSONB entry onto the EvidenceWithUrl
+// shape the attachment card renders. Field names vary between submission-form
+// versions, so we accept the common aliases for each attribute. When the entry
+// only carries a storage `path` we sign it (admin client, mirroring
+// listEvidence); when it already carries a usable `url` we pass it through.
+async function resolveJsonbAttachment(
+  raw: Record<string, unknown>,
+  ideaId: string,
+  index: number,
+  signer: NonNullable<Awaited<ReturnType<typeof createClient>>>
+): Promise<EvidenceWithUrl> {
+  const filename =
+    jsonbStr(raw.name) ?? jsonbStr(raw.filename) ?? jsonbStr(raw.file_name) ?? 'file';
+  const contentType =
+    jsonbStr(raw.mime) ??
+    jsonbStr(raw.mime_type) ??
+    jsonbStr(raw.content_type) ??
+    jsonbStr(raw.type);
+  const sizeBytes =
+    jsonbNum(raw.size) ?? jsonbNum(raw.size_bytes) ?? jsonbNum(raw.bytes);
+  const directUrl =
+    jsonbStr(raw.url) ?? jsonbStr(raw.signedUrl) ?? jsonbStr(raw.publicUrl);
+  const path =
+    jsonbStr(raw.path) ?? jsonbStr(raw.storage_path) ?? jsonbStr(raw.key);
+
+  let url: string | null = directUrl;
+  let downloadUrl: string | null = directUrl;
+  if (!url && path) {
+    try {
+      const bucket = signer.storage.from(EVIDENCE_BUCKET);
+      const [{ data: inline }, { data: dl }] = await Promise.all([
+        bucket.createSignedUrl(path, SIGNED_URL_TTL),
+        bucket.createSignedUrl(path, SIGNED_URL_TTL, { download: filename }),
+      ]);
+      url = inline?.signedUrl ?? null;
+      downloadUrl = dl?.signedUrl ?? inline?.signedUrl ?? null;
+    } catch (signErr) {
+      // eslint-disable-next-line no-console
+      console.error('[resolveJsonbAttachment] sign error for', path, signErr);
+    }
+  }
+
+  return {
+    id: `jsonb-${ideaId}-${index}`,
+    idea_id: ideaId,
+    uploader_id: null,
+    storage_path: path ?? '',
+    filename,
+    content_type: contentType,
+    size_bytes: sizeBytes,
+    context: 'idea_submission',
+    linked_entity_type: 'idea',
+    linked_entity_id: ideaId,
+    uploaded_at: '',
+    url,
+    downloadUrl,
+  };
+}
+
+// Full attachment list for an idea, merging the two places a submission may have
+// stored files: the evidence ledger (evidence_attachments + storage) and the
+// legacy `innovation.ideas.attachments` JSONB column written by earlier
+// submission-form versions. Deduped by filename+size so a file recorded in both
+// is shown once. Generic — works for every idea/innovator (RLS scopes the read).
+export async function listIdeaAttachments(ideaId: string): Promise<EvidenceWithUrl[]> {
+  const ledger = await listEvidence('idea', ideaId);
+
+  const supabase = await createClient();
+  if (!supabase) return ledger;
+
+  let jsonb: EvidenceWithUrl[] = [];
+  try {
+    const { data } = await supabase
+      .from('ideas')
+      .select('attachments')
+      .eq('id', ideaId)
+      .maybeSingle();
+    const rawList = (data as { attachments?: unknown } | null)?.attachments;
+    if (Array.isArray(rawList)) {
+      const signer = createAdminClient() ?? supabase;
+      jsonb = await Promise.all(
+        rawList
+          .filter((r): r is Record<string, unknown> => !!r && typeof r === 'object')
+          .map((r, i) => resolveJsonbAttachment(r, ideaId, i, signer))
+      );
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[listIdeaAttachments] jsonb read failed:', err);
+  }
+
+  const seen = new Set(ledger.map((a) => `${a.filename}|${a.size_bytes ?? ''}`));
+  const merged = [...ledger];
+  for (const a of jsonb) {
+    const key = `${a.filename}|${a.size_bytes ?? ''}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      merged.push(a);
+    }
+  }
+  return merged;
+}
+
 export async function deleteEvidence(id: string): Promise<{ ok: boolean; error?: string }> {
   if (!id) return { ok: false, error: 'missing_id' };
   const supabase = await createClient();

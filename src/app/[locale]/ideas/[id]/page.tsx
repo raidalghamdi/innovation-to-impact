@@ -11,9 +11,9 @@ import { FeedbackSection } from '@/components/feedback-section';
 import { IdeaHero } from '@/components/idea-hero';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
-import { listEvidence } from '@/lib/storage';
+import { listIdeaAttachments } from '@/lib/storage';
 import { formatFileSize, type EvidenceWithUrl } from '@/lib/evidence-types';
-import { computeIdeaStage } from '@/lib/idea-journey';
+import { STAGE_LABELS, type StageState } from '@/lib/idea-journey';
 import type { JourneyTimelineStage } from '@/components/idea-journey-timeline';
 
 /**
@@ -69,11 +69,9 @@ export default async function IdeaDetailPage({
   let createdAt: string | null = null;
   let currentStage = 0;
   let statusStr = 'draft';
-  // Cross-table signals used to derive the six-stage journey dynamically.
-  let assignmentRows: Array<{ created_at: string | null }> = [];
-  let evaluationRows: Array<{ submitted_at: string | null; total_score: number | null; criteria_scores: Record<string, unknown> | null }> = [];
-  let committeeRows: Array<{ decision: string | null; decided_at: string | null }> = [];
   let ideaTitle = '';
+  let problemStatement = '';
+  let proposedSolution = '';
   let ideaCode: string | null = null;
   let submitterId: string | null = null;
   let submitterName: string | null = null;
@@ -82,16 +80,16 @@ export default async function IdeaDetailPage({
   // written by the submission wizard; falls back to team-derived when absent.
   let participationType: 'individual' | 'team' = 'individual';
 
-  // Attachments come from the evidence ledger (bucket + evidence_attachments),
-  // which is where the submission wizard actually uploads files — not the
-  // legacy ideas.attachments JSONB column.
-  const evidenceAttachments: EvidenceWithUrl[] = await listEvidence('idea', id);
+  // Attachments — merged from the evidence ledger (bucket + evidence_attachments)
+  // AND the legacy ideas.attachments JSONB column, so files show regardless of
+  // which submission path stored them.
+  const attachments: EvidenceWithUrl[] = await listIdeaAttachments(id);
 
   if (supabase) {
     const { data: ideaRow } = await supabase
       .from('ideas')
       .select(
-        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, participation_type, submitter_id, team_id, team_name, team_members, original_source_metadata, submitted_at, updated_at, created_at'
+        'id, code, title_ar, title_en, problem_statement, proposed_solution, status, current_stage, strategic_theme_id, activity_id, participation_type, submitter_id, team_id, team_name, team_members, original_source_metadata, submitted_at, updated_at, created_at'
       )
       .eq('id', id)
       .maybeSingle();
@@ -104,21 +102,12 @@ export default async function IdeaDetailPage({
           ? (ideaRow as any).title_ar || (ideaRow as any).title_en || ''
           : (ideaRow as any).title_en || (ideaRow as any).title_ar || '';
       ideaCode = (ideaRow as any).code ?? null;
+      problemStatement = (ideaRow as any).problem_statement ?? '';
+      proposedSolution = (ideaRow as any).proposed_solution ?? '';
       submittedAt = (ideaRow as any).submitted_at ?? null;
       updatedAt = (ideaRow as any).updated_at ?? null;
       createdAt = (ideaRow as any).created_at ?? null;
       submitterId = (ideaRow as any).submitter_id ?? null;
-
-      // Related rows that advance the journey. Failures degrade gracefully to
-      // an empty list — the journey then falls back to the status signal alone.
-      const [{ data: asg }, { data: evals }, { data: cmte }] = await Promise.all([
-        supabase.from('assignments').select('created_at').eq('idea_id', id),
-        supabase.from('evaluations').select('submitted_at, total_score, criteria_scores').eq('idea_id', id),
-        supabase.from('committee_decisions').select('decision, decided_at').eq('idea_id', id),
-      ]);
-      assignmentRows = (asg as any[]) ?? [];
-      evaluationRows = (evals as any[]) ?? [];
-      committeeRows = (cmte as any[]) ?? [];
 
       // Challenge — free-text value chosen in the wizard, stored in the
       // source-metadata JSONB (no dedicated column).
@@ -232,6 +221,11 @@ export default async function IdeaDetailPage({
 
   // Fallback for demo data
   if (!ideaTitle) ideaTitle = locale === 'ar' ? idea.title_ar : idea.title_en;
+  if (!proposedSolution) proposedSolution = idea.proposed_solution ?? '';
+  if (!problemStatement) problemStatement = idea.problem_statement ?? '';
+  // Idea intro / description — prefer the proposed solution, fall back to the
+  // problem statement so the section is never blank when either field has data.
+  const ideaIntro = proposedSolution || problemStatement;
   if (!ideaCode) ideaCode = idea.code;
   if (!statusStr) statusStr = idea.status;
   if (!currentStage) currentStage = idea.current_stage;
@@ -240,26 +234,24 @@ export default async function IdeaDetailPage({
   const canEdit = isOwner && (statusStr === 'returned' || statusStr === 'draft');
   const isReturned = statusStr === 'returned';
 
-  // Dynamic six-stage journey — derived from real state, not the stored
-  // current_stage (which does not advance as the idea moves between reviewers).
-  const journey = computeIdeaStage(
-    {
-      status: statusStr,
-      current_stage: currentStage,
-      submitted_at: submittedAt,
-      updated_at: updatedAt,
-      created_at: createdAt,
-    },
-    assignmentRows,
-    evaluationRows,
-    committeeRows
-  );
-  const journeyStages: JourneyTimelineStage[] = journey.stages.map((s) => ({
-    index: s.index,
-    state: s.state,
-    completedAtISO: s.completedAt ? s.completedAt.toISOString() : null,
-    label: s.label,
-  }));
+  // Journey timeline — driven by the authoritative `current_stage` smallint.
+  // A stage is completed only once the idea has moved PAST it; the stage the
+  // idea currently sits on is highlighted (red when the idea is stopped, else
+  // gold); stages not yet reached stay neutral. This prevents «الاعتماد» and
+  // the post-program stages from ever showing complete before the idea reaches
+  // them.
+  const STOPPED_STATUSES = new Set(['returned', 'rejected', 'on_hold', 'withdrawn']);
+  const isStoppedStatus = STOPPED_STATUSES.has(statusStr);
+  // Draft/unsubmitted ideas sit at the first stage rather than before it.
+  const activeStage = currentStage < 1 ? 1 : currentStage;
+  const journeyStages: JourneyTimelineStage[] = STAGE_LABELS.map((label, i) => {
+    const oneBased = i + 1;
+    let state: StageState;
+    if (oneBased < activeStage) state = 'completed';
+    else if (oneBased === activeStage) state = isStoppedStatus ? 'stopped' : 'current';
+    else state = 'upcoming';
+    return { index: i, state, completedAtISO: null, label };
+  });
 
   return (
     <AppShell>
@@ -310,7 +302,7 @@ export default async function IdeaDetailPage({
             </CardHeader>
             <CardContent className="text-sm leading-relaxed text-muted-foreground">
               <p className="max-w-full whitespace-pre-wrap break-words">
-                {idea.proposed_solution || '—'}
+                {ideaIntro || '—'}
               </p>
             </CardContent>
           </Card>
@@ -323,9 +315,9 @@ export default async function IdeaDetailPage({
               <CardTitle className="text-brand-teal">{t('attachments')}</CardTitle>
             </CardHeader>
             <CardContent>
-              {evidenceAttachments.length > 0 ? (
+              {attachments.length > 0 ? (
                 <ul className="space-y-4">
-                  {evidenceAttachments.map((a) => (
+                  {attachments.map((a) => (
                     <AttachmentRow
                       key={a.id}
                       attachment={a}
@@ -432,7 +424,7 @@ export default async function IdeaDetailPage({
             <CardContent className="space-y-2 text-sm">
               <Row
                 label={locale === 'ar' ? 'تاريخ التقديم' : 'Submitted on'}
-                value={submittedAt ? formatDate(submittedAt, locale) : '—'}
+                value={formatDate(submittedAt ?? createdAt, locale)}
               />
               <Row
                 label={locale === 'ar' ? 'آخر تحديث' : 'Last updated'}
