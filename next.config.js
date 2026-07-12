@@ -34,10 +34,9 @@ const SECURITY_HEADERS = [
   { key: 'X-XSS-Protection', value: '0' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-  // Report-Only on first deploy so we can observe violations for ~24h before
-  // switching to enforcing mode. To enforce: rename this key to
-  // 'Content-Security-Policy'.
-  { key: 'Content-Security-Policy-Report-Only', value: CSP_DIRECTIVES },
+  // Enforced. The Report-Only observation window is complete; directives are
+  // unchanged from that rollout.
+  { key: 'Content-Security-Policy', value: CSP_DIRECTIVES },
 ];
 
 /** @type {import('next').NextConfig} */
