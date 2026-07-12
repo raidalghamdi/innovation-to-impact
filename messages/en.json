@@ -1309,6 +1309,7 @@
     "empty": "No notifications yet.",
     "markRead": "Mark as read",
     "markAllRead": "Mark all as read",
+    "dismiss": "Dismiss",
     "unread": "Unread",
     "all": "All",
     "none": "Nothing new right now.",

@@ -9,7 +9,7 @@ import { useNotificationsStream, type RealtimeNotification } from '@/lib/realtim
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
-import { Bell, Check } from 'lucide-react';
+import { Bell, Check, X } from 'lucide-react';
 
 type Notif = {
   id: string;
@@ -102,6 +102,19 @@ export function NotificationsList({
         .is('read_at', null);
   }
 
+  // Per-item dismiss. No `dismissed_at` column exists, so we mark the row read
+  // (read_at = now()) and drop it from the local list. Optimistic: remove first,
+  // then persist so the UI feels instant.
+  async function dismissNotification(id: string) {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    const supabase = createClient();
+    if (!supabase) return;
+    await supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('id', id);
+  }
+
   const filtered = filter === 'unread' ? items.filter((i) => !i.read_at) : items;
   const shown = typeof limit === 'number' ? filtered.slice(0, limit) : filtered;
 
@@ -174,7 +187,7 @@ export function NotificationsList({
           const title = locale === 'ar' ? n.title_ar : n.title_en;
           const body = locale === 'ar' ? n.body_ar : n.body_en;
           return (
-            <li key={n.id}>
+            <li key={n.id} className="relative">
               <Link href={normalizeNotificationLink(n.link) as any} className="block">
                 <Card
                   className={`transition hover:border-brand-teal/60 ${
@@ -182,7 +195,7 @@ export function NotificationsList({
                   }`}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2 pe-7">
                       <p className="text-sm font-medium text-foreground">{title}</p>
                       <span className="text-xs text-muted-foreground" dir="ltr">
                         {n.created_at?.slice(0, 10)}
@@ -192,6 +205,15 @@ export function NotificationsList({
                   </CardContent>
                 </Card>
               </Link>
+              <button
+                type="button"
+                onClick={() => dismissNotification(n.id)}
+                aria-label={t('dismiss')}
+                title={t('dismiss')}
+                className="absolute end-2 top-2 z-10 rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </li>
           );
         })}
