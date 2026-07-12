@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/user';
 import { ReportsCenter } from '@/components/reports-center';
 import { ReportsCenterCharts } from '@/components/reports-center-charts';
 import { getReportChartsData, getReportTitles } from '@/lib/reports-charts';
+import { ExportBar } from '@/components/exports/ExportBar';
 
 /**
  * /admin/reports — Reports Center.
@@ -16,10 +17,12 @@ import { getReportChartsData, getReportTitles } from '@/lib/reports-charts';
  * date range, and delivery options. Generation runs server-side via
  * `/api/admin/reports/generate`; chart data is fetched here in parallel.
  */
-export default async function ReportsPage({
+export async function ReportsView({
   params,
+  screenPrefix = 'admin',
 }: {
   params: Promise<{ locale: string }>;
+  screenPrefix?: 'admin' | 'supervisor';
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -42,6 +45,7 @@ export default async function ReportsPage({
             ? 'لوحة تحليلية تفاعلية ومولّد تقارير — استعرض المؤشرات ثم حمّل أو أرسل التقارير.'
             : 'Interactive analytics dashboard and report generator — review indicators, then download or email reports.'
         }
+        action={<ExportBar screenId={`${screenPrefix}.reports`} sensitive={false} />}
       />
       <ReportsCenterCharts data={chartsData} titles={titles} locale={locale} isAdmin={user.role === 'admin'} />
       <div className="mt-10">
@@ -49,4 +53,12 @@ export default async function ReportsPage({
       </div>
     </AppShell>
   );
+}
+
+export default function ReportsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  return <ReportsView params={params} screenPrefix="admin" />;
 }

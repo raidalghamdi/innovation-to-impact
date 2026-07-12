@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getCurrentUser } from '@/lib/user';
 import { isCurrentUserAdmin } from '@/lib/db-roles';
 import { fetchComplianceControls } from '@/lib/data';
+import { ExportBar } from '@/components/exports/ExportBar';
 
 // /admin/compliance — Standards & Compliance controls (Missing 1.5).
 // Read-only server component listing innovation.compliance_controls so admins
@@ -56,6 +57,7 @@ export default async function AdminCompliancePage({
             ? 'ضوابط الامتثال التنظيمية (DGA / NCA / SDAIA / WCAG) وحالتها والميزة المرتبطة بها.'
             : 'Regulatory compliance controls (DGA / NCA / SDAIA / WCAG), their status, and the linked feature.'
         }
+        action={<ExportBar screenId="admin.compliance" sensitive={false} />}
       />
 
       <Card className="mt-6 overflow-hidden">
