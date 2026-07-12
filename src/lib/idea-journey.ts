@@ -153,8 +153,10 @@ export function computeIdeaStage(
     completedUpTo = 5;
     current = 6;
   } else if (status === 'approved' || committeeApprove) {
-    // Rule H — final committee approval, no post-program status yet.
+    // Rule H — final committee approval. Stage 5 completed, stage 6 (pilot)
+    // becomes the current active stage until in_pilot/benefits_tracking kicks in.
     completedUpTo = 5;
+    current = 6;
   } else if (status === 'withdrawn') {
     // Rule K — the stage that was active becomes stopped; earlier stay completed.
     let active = 2;

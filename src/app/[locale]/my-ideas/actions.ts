@@ -12,13 +12,25 @@ export type WithdrawResult = { ok: boolean; error?: string };
  * Soft-withdraw an idea. Sets status='withdrawn' so the row stays queryable for
  * history/audit while dropping out of active queues. Guards:
  *   - caller must be the submitter
- *   - current_stage must be ≤ 2 (draft / submission / screening — before evaluation)
+ *   - idea must still be in a pre-evaluator status
+ *     (draft / submitted / screening / needs_completion / returned)
  *   - idea must not already be withdrawn
+ *
+ * Once a supervisor assigns the idea to an evaluator (status='evaluation' or
+ * later), withdrawal is locked — the check is on the real workflow `status`,
+ * NOT `current_stage`, which does not reliably advance in the database.
  *
  * Admin-reversible by design: nothing here prevents an admin from flipping the
  * status back later. On success, assigned evaluators are notified so their
  * queues can drop the item, and the change is written to the audit log.
  */
+const WITHDRAWABLE_STATUSES = new Set([
+  'draft',
+  'submitted',
+  'screening',
+  'needs_completion',
+  'returned',
+]);
 export async function withdrawIdea(ideaId: string): Promise<WithdrawResult> {
   if (!ideaId) return { ok: false, error: 'missing_id' };
 
@@ -51,7 +63,7 @@ export async function withdrawIdea(ideaId: string): Promise<WithdrawResult> {
 
   if (row.submitter_id !== user.id) return { ok: false, error: 'not_owner' };
   if (row.status === 'withdrawn') return { ok: false, error: 'already_withdrawn' };
-  if (row.current_stage > 2) return { ok: false, error: 'stage_locked' };
+  if (!WITHDRAWABLE_STATUSES.has(row.status)) return { ok: false, error: 'stage_locked' };
 
   const { error: updateErr } = await supabase
     .from('ideas')

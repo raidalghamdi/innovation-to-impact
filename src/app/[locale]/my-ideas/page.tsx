@@ -24,6 +24,13 @@ const STATUS_GROUPS: Record<string, string[]> = {
   returned: ['returned'],
 };
 
+// Statuses at which the innovator can still withdraw their idea. The idea has
+// NOT yet reached a technical evaluator. Once assigned to an evaluator
+// (status='evaluation'/'assigned'/anything downstream), withdrawal is locked.
+// Tied to the real workflow status — do NOT rely on `current_stage`, which does
+// not reliably advance in the database.
+const WITHDRAWABLE_STATUSES = new Set(['draft', 'submitted', 'screening', 'needs_completion', 'returned']);
+
 export default async function MyIdeasPage({
   params,
   searchParams,
@@ -50,10 +57,14 @@ export default async function MyIdeasPage({
   }
 
   // Fetch ideas - if user identified, filter by submitter_id; otherwise show empty.
+  // Sort ALL ideas (old + new) newest first by the most recent activity timestamp
+  // (updated_at falls back to created_at). Applies across every status tab.
   const allIdeas = await fetchIdeas();
-  const allMine = userId
-    ? allIdeas.filter((i) => i.submitter_id === userId)
-    : [];
+  const allMine = (userId ? allIdeas.filter((i) => i.submitter_id === userId) : []).slice().sort((a, b) => {
+    const ta = new Date(a.updated_at ?? a.created_at ?? 0).getTime();
+    const tb = new Date(b.updated_at ?? b.created_at ?? 0).getTime();
+    return tb - ta;
+  });
 
   // Preselect the status chip from the KPI deep-link. Unknown values fall back
   // to "all" so a stale/bad query param never renders an empty list.
@@ -158,7 +169,7 @@ export default async function MyIdeasPage({
                         <span>{t('viewFeedbackCta')}</span>
                       </Link>
                     )}
-                    {idea.current_stage <= 2 && idea.status !== 'withdrawn' && (
+                    {WITHDRAWABLE_STATUSES.has(idea.status) && (
                       <WithdrawIdeaButton ideaId={idea.id} />
                     )}
                     <Link
