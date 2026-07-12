@@ -37,6 +37,12 @@ export default async function EvaluatorIdeaDetailPage({
   const row = ideaRow as any;
   const title = (isAr ? row.title_ar : row.title_en) || row.title_en || row.title_ar || '';
 
+  // Anonymized submitter pseudonym — evaluators must never see the innovator's
+  // real name/email (PII). Mirrors innovation.anonymous_innovator_label():
+  // last 3 hex chars of the idea id, uppercased.
+  const idSuffix = String(id).replace(/-/g, '').slice(-3).toUpperCase();
+  const innovatorLabel = `${isAr ? 'مبتكر' : 'Innovator'} #${idSuffix}`;
+
   // Track name
   let trackName: string | null = null;
   if (row.strategic_theme_id) {
@@ -116,6 +122,7 @@ export default async function EvaluatorIdeaDetailPage({
       trackName={trackName}
       activityName={activityName}
       challengeName={challengeName}
+      innovatorLabel={innovatorLabel}
       description={row.proposed_solution ?? null}
       submittedAt={row.submitted_at ?? null}
       updatedAt={row.updated_at ?? null}
