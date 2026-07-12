@@ -2033,6 +2033,18 @@
       "days": "{n}d ago",
       "hours": "{n}h ago",
       "minutes": "{n}m ago"
+    },
+    "filters": {
+      "filterStatus": "Status",
+      "filterLevel": "Level",
+      "filterEntity": "Type",
+      "statusOpen": "Open",
+      "statusResolved": "Resolved",
+      "statusAll": "All",
+      "allLevels": "All levels",
+      "allEntities": "All types",
+      "apply": "Apply",
+      "reset": "Reset"
     }
   },
   "approvals": {
@@ -2221,7 +2233,7 @@
     "upcoming": "Upcoming",
     "stopped": "Stopped here"
   },
-"themes": {
+  "themes": {
     "strengthening-competition-in-digital-markets": {
       "description": "Promote fair competition across digital platforms and e-commerce."
     },

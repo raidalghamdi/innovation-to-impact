@@ -349,3 +349,50 @@ export async function getOpenEscalations(opts: { client?: Client } = {}): Promis
     return [];
   }
 }
+
+export type EscalationStatusFilter = 'open' | 'resolved' | 'all';
+
+export type EscalationQuery = {
+  status?: EscalationStatusFilter;
+  level?: number;
+  entityType?: EscalationEntity;
+};
+
+// Which raw statuses each UI filter bucket maps to. 'open' groups the active
+// ladder (open + acknowledged); 'resolved' groups the closed ones (resolved +
+// cancelled); 'all' applies no status filter.
+const STATUS_BUCKETS: Record<Exclude<EscalationStatusFilter, 'all'>, EscalationStatus[]> = {
+  open: ['open', 'acknowledged'],
+  resolved: ['resolved', 'cancelled'],
+};
+
+/**
+ * Filtered admin escalation query, newest first. Mirrors getOpenEscalations but
+ * honours the status/level/entity filter controls on the escalations page.
+ */
+export async function getEscalations(
+  query: EscalationQuery = {},
+  opts: { client?: Client } = {}
+): Promise<Escalation[]> {
+  const supabase = await resolveClient(opts.client);
+  if (!supabase) return [];
+  try {
+    let q = supabase.from('escalations').select('*');
+
+    const statusFilter = query.status ?? 'open';
+    if (statusFilter !== 'all') q = q.in('status', STATUS_BUCKETS[statusFilter]);
+    if (query.level && query.level >= 1 && query.level <= MAX_ESCALATION_LEVEL) {
+      q = q.eq('current_level', query.level);
+    }
+    if (query.entityType) q = q.eq('entity_type', query.entityType);
+
+    const { data } = await q
+      .order('current_level', { ascending: false })
+      .order('opened_at', { ascending: false });
+    return (data as Escalation[] | null) ?? [];
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[getEscalations] failed:', err);
+    return [];
+  }
+}
