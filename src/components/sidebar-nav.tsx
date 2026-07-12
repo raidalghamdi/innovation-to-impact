@@ -25,6 +25,13 @@ import {
   UserCog,
   Shapes,
   Database,
+  FileDown,
+  CalendarClock,
+  ShieldCheck,
+  Split,
+  Upload,
+  MailPlus,
+  ClipboardList,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -66,6 +73,22 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
       { href: '/admin/audit', key: 'audit', icon: History, roles: ['admin'] },
       { href: '/admin/backup', key: 'backup', icon: Database, roles: ['admin'] },
       { href: '/settings', key: 'settings', icon: Settings },
+    ],
+  },
+  {
+    // Supervisor parity — same organization-wide tools as admin, surfaced under
+    // /supervisor/* so supervisors get their own navigation into these features.
+    labelKey: 'supervisorTools',
+    items: [
+      { href: '/supervisor/reports', key: 'supReports', icon: FileDown, roles: ['supervisor'] },
+      { href: '/supervisor/analytics', key: 'supAnalytics', icon: BarChart3, roles: ['supervisor'] },
+      { href: '/supervisor/phases', key: 'supPhases', icon: CalendarClock, roles: ['supervisor'] },
+      { href: '/supervisor/escalations', key: 'supEscalations', icon: ShieldCheck, roles: ['supervisor'] },
+      { href: '/supervisor/cms', key: 'supCms', icon: FileText, roles: ['supervisor'] },
+      { href: '/supervisor/assignments', key: 'supAssignments', icon: Split, roles: ['supervisor'] },
+      { href: '/supervisor/employees/import', key: 'supEmployeesImport', icon: Upload, roles: ['supervisor'] },
+      { href: '/supervisor/invitation-templates', key: 'supInvitationTemplates', icon: MailPlus, roles: ['supervisor'] },
+      { href: '/supervisor/roster', key: 'supRoster', icon: ClipboardList, roles: ['supervisor'] },
     ],
   },
 ];
