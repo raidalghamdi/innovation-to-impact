@@ -2035,6 +2035,18 @@
       "days": "قبل {n} يوم",
       "hours": "قبل {n} ساعة",
       "minutes": "قبل {n} دقيقة"
+    },
+    "filters": {
+      "filterStatus": "الحالة",
+      "filterLevel": "المستوى",
+      "filterEntity": "النوع",
+      "statusOpen": "مفتوح",
+      "statusResolved": "تم الحل",
+      "statusAll": "الكل",
+      "allLevels": "كل المستويات",
+      "allEntities": "كل الأنواع",
+      "apply": "تطبيق",
+      "reset": "إعادة تعيين"
     }
   },
   "approvals": {
@@ -2223,7 +2235,7 @@
     "upcoming": "قادمة",
     "stopped": "متوقفة هنا"
   },
-"themes": {
+  "themes": {
     "strengthening-competition-in-digital-markets": {
       "description": "تعزيز المنافسة العادلة عبر المنصات الرقمية والتجارة الإلكترونية."
     },

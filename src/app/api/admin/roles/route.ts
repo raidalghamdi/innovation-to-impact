@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isCurrentUserAdmin } from '@/lib/db-roles';
+import { logAudit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,5 +47,9 @@ export async function POST(req: NextRequest) {
     const status = error.code === '23505' ? 409 : 500;
     return NextResponse.json({ error: error.message }, { status });
   }
+
+  await logAudit(user.id, 'role.created', 'role', data?.id ?? null, {
+    after: { code, name_ar, name_en },
+  });
   return NextResponse.json({ ok: true, role: data });
 }

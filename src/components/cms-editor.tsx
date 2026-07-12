@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Check, Loader2, Save, Eye, EyeOff, ExternalLink, FileText, ChevronRight, RotateCcw } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { defaultTextFor } from '@/lib/cms-defaults';
+import { logCmsSave } from '@/app/[locale]/admin/cms/actions';
 
 type Block = {
   id: string;
@@ -168,6 +169,12 @@ export function CmsEditor({ locale }: { locale: string }) {
           value_ar: r.value_ar,
         })
         .eq('id', r.id);
+    }
+    // Audit the privileged content edit (Missing 1.2). Fire-and-forget so a
+    // logging failure never blocks the save confirmation.
+    if (rows.length > 0) {
+      const changedKeys = rows.map((r) => `${r.page}.${r.section}.${r.key ?? r.kind}`);
+      void logCmsSave(rows[0].page, changedKeys);
     }
     setSaving(false);
     setDirty(new Set());

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isCurrentUserAdmin } from '@/lib/db-roles';
+import { logAudit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -102,6 +103,10 @@ export async function POST(req: NextRequest) {
     }));
     await admin.schema('innovation').from('user_roles').insert(insertRows);
   }
+
+  await logAudit(actor.id, 'user.created', 'user', uid, {
+    after: { email, user_category: userCategory, roleCodes },
+  });
 
   return NextResponse.json({
     ok: true,

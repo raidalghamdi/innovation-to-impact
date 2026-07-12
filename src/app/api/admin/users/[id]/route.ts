@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isCurrentUserAdmin } from '@/lib/db-roles';
+import { logAudit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +59,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: insErr.message }, { status: 500 });
     }
   }
+
+  await logAudit(actor.id, 'user.roles_changed', 'user', id, {
+    after: { roleIds, primaryRoleId },
+  });
 
   return NextResponse.json({ ok: true });
 }

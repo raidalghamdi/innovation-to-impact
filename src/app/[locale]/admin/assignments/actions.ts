@@ -6,8 +6,14 @@ import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
 import { createNotification } from '@/lib/notifications';
 import { openSlaTracker, closeSlaTracker } from '@/lib/sla';
+import { fetchEvaluatorOptions, fetchWorkloadHeatmap } from '@/lib/data';
 
 export type AssignmentResult = { ok: boolean; error?: string; count?: number };
+
+export type EvaluatorSuggestion = { id: string; label: string; openCount: number };
+export type SuggestResult =
+  | { ok: true; suggestions: EvaluatorSuggestion[] }
+  | { ok: false; error: string };
 
 const VALID_STATUSES = ['pending', 'completed', 'declined'];
 
@@ -33,6 +39,39 @@ async function requireAdmin() {
   const user = await getCurrentUser();
   if (!user || user.role !== 'admin') return { error: 'forbidden' as const };
   return { supabase, user };
+}
+
+// Auto-suggest (Missing 2.1): return the 3 evaluators with the fewest OPEN
+// assignments (pending + due-soon + overdue). This is a HINT only — it never
+// assigns anyone; the admin still picks and submits. Evaluators with no rows in
+// the heatmap count as zero open, so brand-new evaluators surface first.
+export async function suggestLeastLoadedEvaluators(): Promise<SuggestResult> {
+  const ctx = await requireAdmin();
+  if ('error' in ctx) return { ok: false, error: ctx.error ?? 'forbidden' };
+
+  const [evaluators, heatmap] = await Promise.all([
+    fetchEvaluatorOptions(),
+    fetchWorkloadHeatmap(),
+  ]);
+
+  const openByEvaluator = new Map<string, number>();
+  for (const row of heatmap) {
+    openByEvaluator.set(
+      row.evaluatorId,
+      row.cells.pending + row.cells.dueSoon + row.cells.overdue
+    );
+  }
+
+  const suggestions = evaluators
+    .map((e) => ({
+      id: e.id,
+      label: e.full_name || e.email || e.id,
+      openCount: openByEvaluator.get(e.id) ?? 0,
+    }))
+    .sort((a, b) => a.openCount - b.openCount || a.label.localeCompare(b.label))
+    .slice(0, 3);
+
+  return { ok: true, suggestions };
 }
 
 export async function createAssignment(input: CreateInput): Promise<AssignmentResult> {

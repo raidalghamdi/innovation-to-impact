@@ -24,6 +24,7 @@ import {
   CalendarClock,
   Split,
   FileText,
+  Inbox,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -137,6 +138,8 @@ const ADMIN_ITEMS: MenuItem[] = [
   { href: '/admin/backup', labelAr: 'النسخ الاحتياطي', labelEn: 'Backup', icon: Upload },
   { href: '/admin/settings', labelAr: 'إعدادات المنصة', labelEn: 'Platform Settings', icon: SlidersHorizontal },
   { href: '/admin/audit', labelAr: 'سجلات التدقيق', labelEn: 'Audit Logs', icon: FileBarChart },
+  { href: '/admin/compliance', labelAr: 'المعايير والامتثال', labelEn: 'Standards & Compliance', icon: ShieldCheck },
+  { href: '/admin/support', labelAr: 'صندوق الدعم', labelEn: 'Support Inbox', icon: Inbox },
   { href: '/admin/email-log', labelAr: 'سجل البريد', labelEn: 'Email Log', icon: Mail },
 ];
 

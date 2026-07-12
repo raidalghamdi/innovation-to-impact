@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isCurrentUserAdmin } from '@/lib/db-roles';
+import { logAudit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!data) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
+
+  await logAudit(user.id, 'role.updated', 'role', id, { after: patch });
   return NextResponse.json({ ok: true, role: data });
 }
 
@@ -81,5 +84,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await logAudit(user.id, 'role.deleted', 'role', id, { before: { is_system: role.is_system } });
   return NextResponse.json({ ok: true });
 }

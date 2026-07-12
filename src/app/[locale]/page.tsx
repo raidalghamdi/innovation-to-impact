@@ -1,5 +1,7 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/routing';
 import { SiteFooter } from '@/components/site-footer';
 import { Countdown } from '@/components/countdown';
@@ -10,7 +12,19 @@ import { BackToTop } from '@/components/back-to-top';
 import { LandingNav } from '@/components/landing-nav';
 import { HeroRotator } from '@/components/hero-rotator';
 import { HeroNetwork } from '@/components/hero-network';
-import { TimelineModern, stages as defaultStages } from '@/components/timeline-modern';
+import { stages as defaultStages } from '@/components/timeline-modern';
+
+// Below-the-fold: the animated timeline is the heaviest interactive chunk on the
+// landing page. Deferring its client bundle via next/dynamic keeps it out of the
+// critical path so it doesn't compete with LCP. Animation/behaviour is unchanged.
+const TimelineModern = dynamic(
+  () => import('@/components/timeline-modern').then((m) => m.TimelineModern),
+  {
+    loading: () => (
+      <div className="h-96 w-full animate-pulse rounded-3xl bg-brand-teal/5" aria-hidden="true" />
+    ),
+  },
+);
 import { fetchThemes } from '@/lib/data';
 import { pickFromRow, pick } from '@/lib/i18n-content';
 import { getCurrentUser } from '@/lib/user';
@@ -285,12 +299,14 @@ export default async function LandingPage({
               (() => {
                 const img = mediaBySlot.get('landing.about.image')!;
                 return (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
+                  <Image
                     src={img.url}
                     alt={pick(img.alt_ar, img.alt_en, locale) ?? t('landing.aboutImageAlt')}
+                    width={800}
+                    height={600}
+                    priority
+                    sizes="(min-width: 1024px) 50vw, 100vw"
                     className="aspect-[4/3] w-full rounded-3xl border border-border object-cover"
-                    loading="lazy"
                   />
                 );
               })()
