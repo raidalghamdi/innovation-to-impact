@@ -37,6 +37,10 @@ const SECURITY_HEADERS = [
   // Enforced. The Report-Only observation window is complete; directives are
   // unchanged from that rollout.
   { key: 'Content-Security-Policy', value: CSP_DIRECTIVES },
+  // Cross-origin isolation. `credentialless` (not `require-corp`) keeps
+  // third-party images/embeds working without an explicit CORP header.
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
 ];
 
 /** @type {import('next').NextConfig} */
