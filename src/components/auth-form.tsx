@@ -129,7 +129,13 @@ export function AuthForm({ mode: _mode }: { mode?: 'login' | 'signup' }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error === 'invalid_credentials' ? t('invalidCredentials') : t('loginFailed'));
+        setError(
+          data?.error === 'account_locked'
+            ? t('accountLocked')
+            : data?.error === 'invalid_credentials'
+              ? t('invalidCredentials')
+              : t('loginFailed')
+        );
         return;
       }
       await proceedAfterAuth(data);

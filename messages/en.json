@@ -1162,6 +1162,7 @@
     "continueToOtp": "Sign in",
     "pleaseWait": "Verifying…",
     "invalidCredentials": "Incorrect email or password.",
+    "accountLocked": "Too many failed attempts. This account is locked for 15 minutes — please try again later.",
     "loginFailed": "Sign-in failed. Please try again.",
     "forgotPassword": "Forgot password?",
     "otpTitle": "One-Time Code Verification",
