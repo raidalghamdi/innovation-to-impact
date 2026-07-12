@@ -7,6 +7,7 @@
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import * as demo from '@/lib/demo-data';
 import { isFullScope, scopeAllowsTheme, type Scope } from '@/lib/scope';
+import { getUsersByRole } from '@/lib/users/query-by-role';
 
 function logSupabaseError(fn: string, error: unknown) {
   if (!error) return;
@@ -635,11 +636,16 @@ export async function fetchIdeaOptions(): Promise<IdeaOption[]> {
 }
 
 export type EvaluatorOption = { id: string; email: string | null; full_name: string | null };
+// Evaluator picker options — sourced LIVE from the DB (v_user_roles →
+// user_profiles) via getUsersByRole. No demo/seed fallback: an unconfigured or
+// empty DB yields an empty picker rather than a hardcoded evaluator list.
 export async function fetchEvaluatorOptions(): Promise<EvaluatorOption[]> {
-  const users = await fetchUsers();
-  return users
-    .filter((u) => u.role === 'evaluator')
-    .map((u) => ({ id: u.id, email: u.email, full_name: u.full_name }));
+  const users = await getUsersByRole('evaluator');
+  return users.map((u) => ({
+    id: u.id,
+    email: u.email,
+    full_name: u.full_name_ar || u.full_name,
+  }));
 }
 
 // Evaluator's pending queue, ordered by soonest due first. Empty when
