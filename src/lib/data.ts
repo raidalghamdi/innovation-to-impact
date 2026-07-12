@@ -702,7 +702,7 @@ export async function fetchEvaluatorDashboard(evaluatorId: string): Promise<Eval
         .select(ASSIGNMENT_SELECT)
         .eq('evaluator_id', evaluatorId)
         .in('status', ['pending', 'completed'])
-        .order('due_at', { ascending: true });
+        .order('assigned_at', { ascending: false });
       logSupabaseError('fetchEvaluatorDashboard.assignments', error);
       assignments = (data as Assignment[]) ?? [];
 

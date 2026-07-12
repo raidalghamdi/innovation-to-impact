@@ -21,6 +21,7 @@ import { formatDate } from '@/lib/utils';
 const STATUS_GROUPS: Record<string, string[]> = {
   in_review: ['submitted', 'screening', 'evaluation', 'committee', 'needs_completion'],
   approved: ['approved', 'assigned', 'in_pilot', 'in_implementation', 'benefits_tracking', 'closed'],
+  returned: ['returned'],
 };
 
 export default async function MyIdeasPage({
@@ -67,6 +68,7 @@ export default async function MyIdeasPage({
     { key: 'all', label: isAr ? 'الكل' : 'All', href: '/my-ideas' },
     { key: 'in_review', label: isAr ? 'قيد المراجعة' : 'In Review', href: '/my-ideas?status=in_review' },
     { key: 'approved', label: isAr ? 'مقبولة' : 'Accepted', href: '/my-ideas?status=approved' },
+    { key: 'returned', label: t('returnedTab'), href: '/my-ideas?status=returned' },
   ];
 
   // Feedback counts — empty map when unauthenticated. Never one-query-per-idea.

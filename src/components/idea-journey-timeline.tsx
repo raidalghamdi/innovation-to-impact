@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { formatDate } from '@/lib/utils';
 import type { StageState } from '@/lib/idea-journey';
 import './idea-journey-timeline.css';
 
@@ -13,62 +12,58 @@ export type JourneyTimelineStage = {
 };
 
 /**
- * Dynamic six-stage idea journey Timeline. Reflects the idea's real state:
- * completed stages are solid sage with a check + timestamp, the current stage
- * pulses gold (or rust when the idea is stopped), and upcoming stages are dim.
+ * Eight-stage idea journey Timeline, in two groups (program / post-program) with
+ * a dashed divider between stage 5 and stage 6. Each stage reflects the idea's
+ * real state: completed stages are green with a check, the current stage is gold
+ * with its number, a stopped stage is red with its number, and upcoming stages
+ * are a neutral outline. The connector fills green up to the last completed stage
+ * (rose when the idea stopped).
  */
 export function IdeaJourneyTimeline({
-  locale,
   stages,
-  stopped = false,
 }: {
   locale: string;
   stages: JourneyTimelineStage[];
   stopped?: boolean;
 }) {
-  const t = useTranslations('ideaJourney');
-  const isAr = locale === 'ar';
+  const t = useTranslations('stages');
+  const tj = useTranslations('ideaJourney');
 
-  const currentIndex = stages.find((s) => s.state === 'current')?.index ?? stages.length;
   const segments = Math.max(stages.length - 1, 1);
-  const fillFraction = Math.min(Math.max(currentIndex, 0), stages.length) / segments;
-  const fillWidth = `calc(${fillFraction} * 83.4%)`;
-  const fillColor = stopped ? 'var(--ij-rust)' : 'var(--ij-sage-2)';
+  const stoppedIdx = stages.find((s) => s.state === 'stopped')?.index ?? null;
+  let lastCompletedIdx = -1;
+  for (const s of stages) if (s.state === 'completed') lastCompletedIdx = Math.max(lastCompletedIdx, s.index);
+  const fillToIdx = stoppedIdx != null ? stoppedIdx : lastCompletedIdx;
+  const fillFraction = Math.max(0, fillToIdx) / segments;
+  const fillWidth = `calc(${fillFraction} * 91%)`;
+  const fillColor = stoppedIdx != null ? 'var(--ij-stopped)' : 'var(--ij-completed)';
 
-  const displayState = (s: JourneyTimelineStage): StageState | 'stopped' =>
-    stopped && s.state === 'current' ? 'stopped' : s.state;
-
-  const stateLabel = (state: StageState | 'stopped'): string =>
-    state === 'completed'
-      ? t('completed')
-      : state === 'current'
-        ? t('current')
-        : state === 'stopped'
-          ? t('stopped')
-          : t('upcoming');
+  const stateLabel = (state: StageState): string => tj(state);
 
   return (
-    <div className="ij-track" role="list" aria-label={t('sectionLabel')}>
+    <div className="ij-track" role="list" aria-label={tj('sectionLabel')}>
+      <div className="ij-group-heads">
+        <div className="ij-group-head">{t('groupProgram')}</div>
+        <div className="ij-group-head">{t('groupPostProgram')}</div>
+      </div>
       <div className="ij-steps" dir="rtl">
         <div className="ij-track-line" />
         <div className="ij-track-line-fill" style={{ width: fillWidth, background: fillColor }} />
+        <div className="ij-divider" />
         {stages.map((s) => {
-          const state = displayState(s);
-          const label = isAr ? s.label.ar : s.label.en;
+          const n = s.index + 1;
           return (
             <div
               key={s.index}
-              className={`ij-step ${state}`}
+              className={`ij-step ${s.state}`}
               role="listitem"
-              aria-label={`${label} — ${stateLabel(state)}`}
+              aria-label={`${t(`s${n}` as any)} — ${stateLabel(s.state)}`}
             >
               <div className="ij-circle">
-                <span className="ij-num">{s.index + 1}</span>
+                <span className="ij-num">{n}</span>
               </div>
-              <div className="ij-label">{label}</div>
-              {s.completedAtISO && state === 'completed' && (
-                <div className="ij-time">{formatDate(s.completedAtISO, locale)}</div>
-              )}
+              <div className="ij-label">{t(`s${n}` as any)}</div>
+              {s.state === 'stopped' && <div className="ij-stop-pill">{t('stoppedHere')}</div>}
             </div>
           );
         })}

@@ -674,7 +674,8 @@
     "ipSignNote": "Each team member will independently sign the IP terms after submission.",
     "submitSuccessTitle": "Your idea has been submitted",
     "submitSuccessBody": "You can track its progress here. We'll notify you as it moves through the pipeline.",
-    "viewFeedbackCta": "View feedback"
+    "viewFeedbackCta": "View feedback",
+    "returnedTab": "Returned Ideas"
   },
   "migrate": {
     "title": "Legacy idea migration",

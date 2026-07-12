@@ -71,7 +71,7 @@ export default async function IdeaDetailPage({
   let statusStr = 'draft';
   // Cross-table signals used to derive the six-stage journey dynamically.
   let assignmentRows: Array<{ created_at: string | null }> = [];
-  let evaluationRows: Array<{ submitted_at: string | null }> = [];
+  let evaluationRows: Array<{ submitted_at: string | null; total_score: number | null; criteria_scores: Record<string, unknown> | null }> = [];
   let committeeRows: Array<{ decision: string | null; decided_at: string | null }> = [];
   let ideaTitle = '';
   let ideaCode: string | null = null;
@@ -113,7 +113,7 @@ export default async function IdeaDetailPage({
       // an empty list — the journey then falls back to the status signal alone.
       const [{ data: asg }, { data: evals }, { data: cmte }] = await Promise.all([
         supabase.from('assignments').select('created_at').eq('idea_id', id),
-        supabase.from('evaluations').select('submitted_at').eq('idea_id', id),
+        supabase.from('evaluations').select('submitted_at, total_score, criteria_scores').eq('idea_id', id),
         supabase.from('committee_decisions').select('decision, decided_at').eq('idea_id', id),
       ]);
       assignmentRows = (asg as any[]) ?? [];

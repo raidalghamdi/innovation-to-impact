@@ -84,7 +84,7 @@ export default async function EvaluatorIdeaDetailPage({
   // failures degrade gracefully to empty lists (status signal alone).
   const [{ data: asg }, { data: evals }, { data: cmte }] = await Promise.all([
     supabase.from('assignments').select('created_at').eq('idea_id', id),
-    supabase.from('evaluations').select('submitted_at').eq('idea_id', id),
+    supabase.from('evaluations').select('submitted_at, total_score, criteria_scores').eq('idea_id', id),
     supabase.from('committee_decisions').select('decision, decided_at').eq('idea_id', id),
   ]);
   const journey = computeIdeaStage(

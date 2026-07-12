@@ -120,17 +120,25 @@ export async function listEvidence(
     return Promise.all(
       rows.map(async (row) => {
         const bucket = signer.storage.from(EVIDENCE_BUCKET);
-        const [{ data: inline }, { data: dl }] = await Promise.all([
-          bucket.createSignedUrl(row.storage_path, SIGNED_URL_TTL),
-          bucket.createSignedUrl(row.storage_path, SIGNED_URL_TTL, {
-            download: row.filename,
-          }),
-        ]);
-        return {
-          ...row,
-          url: inline?.signedUrl ?? null,
-          downloadUrl: dl?.signedUrl ?? inline?.signedUrl ?? null,
-        };
+        try {
+          const [{ data: inline }, { data: dl }] = await Promise.all([
+            bucket.createSignedUrl(row.storage_path, SIGNED_URL_TTL),
+            bucket.createSignedUrl(row.storage_path, SIGNED_URL_TTL, {
+              download: row.filename,
+            }),
+          ]);
+          return {
+            ...row,
+            url: inline?.signedUrl ?? null,
+            downloadUrl: dl?.signedUrl ?? inline?.signedUrl ?? null,
+          };
+        } catch (signErr) {
+          // A single object failing to sign must not blank out the whole list —
+          // keep the row (so the attachment is still listed) with null URLs.
+          // eslint-disable-next-line no-console
+          console.error('[listEvidence] sign error for', row.storage_path, signErr);
+          return { ...row, url: null, downloadUrl: null };
+        }
       })
     );
   } catch (err) {

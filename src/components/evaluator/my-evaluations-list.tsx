@@ -101,7 +101,7 @@ export function MyEvaluationsList({ locale, rows }: { locale: string; rows: Eval
                   </p>
                 </div>
                 {r.score != null && (
-                  <span className="ev-num ev-badge-gold shrink-0">{r.score}/40</span>
+                  <span className="ev-num ev-badge-gold shrink-0">{r.score}/10</span>
                 )}
               </Link>
             </li>

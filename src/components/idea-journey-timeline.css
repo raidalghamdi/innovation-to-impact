@@ -1,25 +1,50 @@
 .ij-track {
-  --ij-sage: #2F6B4E;
-  --ij-sage-2: #3E8862;
-  --ij-gold: #E0A82E;
-  --ij-gold-2: #B0821D;
-  --ij-rust: #B14E33;
-  margin-top: 8px;
+  /* State colors — Item 2 four-state scheme. */
+  --ij-completed: #059669; /* emerald-600 */
+  --ij-current: #E0A82E;   /* brand gold */
+  --ij-current-deep: #B0821D;
+  --ij-stopped: #e11d48;   /* rose-600 */
+  --ij-neutral: #cbd5e1;   /* slate-300 */
+  margin-top: 28px;
   position: relative;
-  padding-top: 4px;
+  padding-top: 22px;
+}
+.ij-group-heads {
+  display: grid;
+  grid-template-columns: 5fr 3fr;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 0 8px;
+}
+.ij-group-head {
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+  color: rgba(232, 237, 245, 0.55);
+  font-weight: 600;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ij-group-head::before,
+.ij-group-head::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
 }
 .ij-steps {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   align-items: start;
   position: relative;
   padding: 0 4px;
 }
 .ij-track-line {
   position: absolute;
-  top: 15px;
-  right: 8.3%;
-  left: 8.3%;
+  top: 40px;
+  right: 4.5%;
+  left: 4.5%;
   height: 2px;
   background: rgba(255, 255, 255, 0.12);
   z-index: 0;
@@ -27,12 +52,22 @@
 }
 .ij-track-line-fill {
   position: absolute;
-  top: 15px;
-  right: 8.3%;
+  top: 40px;
+  right: 4.5%;
   height: 2px;
   z-index: 1;
   border-radius: 2px;
   transition: width 0.4s ease;
+}
+.ij-divider {
+  position: absolute;
+  top: 12px;
+  bottom: 22px;
+  right: calc(62.5% - 0.5px);
+  width: 1px;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0 4px, transparent 4px 8px);
+  background-size: 1px 8px;
+  z-index: 0;
 }
 .ij-step {
   position: relative;
@@ -41,6 +76,7 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  padding-top: 26px;
 }
 .ij-circle {
   width: 30px;
@@ -52,50 +88,43 @@
   font-family: var(--font-almarai, 'Almarai'), system-ui, sans-serif;
   font-weight: 800;
   font-size: 12.5px;
-  background: #2b3a57;
-  color: #7b8aa8;
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #8fa0bd;
+  border: 1.5px solid var(--ij-neutral);
   position: relative;
   transition: transform 0.2s ease;
 }
+/* completed — green filled with a checkmark */
 .ij-step.completed .ij-circle {
-  background: var(--ij-sage);
+  background: var(--ij-completed);
   color: #ffffff;
-  border-color: var(--ij-sage-2);
+  border-color: var(--ij-completed);
 }
 .ij-step.completed .ij-circle::after {
-  content: '✓';
+  content: "✓";
   font-size: 14px;
   font-weight: 800;
 }
 .ij-step.completed .ij-circle .ij-num {
   display: none;
 }
+/* current — gold filled with the stage number */
 .ij-step.current .ij-circle {
-  background: var(--ij-gold);
-  color: #1c4854;
-  border-color: var(--ij-gold-2);
+  background: var(--ij-current);
+  color: #1C4854;
+  border-color: var(--ij-current-deep);
   box-shadow: 0 0 0 4px rgba(224, 168, 46, 0.2);
   animation: ij-pulse 2.2s ease-in-out infinite;
 }
+/* stopped — red filled with the stage number */
 .ij-step.stopped .ij-circle {
-  background: var(--ij-rust);
+  background: var(--ij-stopped);
   color: #ffffff;
-  border-color: #922e17;
-  box-shadow: 0 0 0 4px rgba(177, 78, 51, 0.22);
-  animation: none;
-}
-.ij-step.stopped .ij-circle::after {
-  content: '!';
-  font-size: 14px;
-  font-weight: 800;
-}
-.ij-step.stopped .ij-circle .ij-num {
-  display: none;
+  border-color: #9f1239;
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.22);
 }
 @keyframes ij-pulse {
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 0 4px rgba(224, 168, 46, 0.2);
   }
   50% {
@@ -107,36 +136,35 @@
   color: rgba(232, 237, 245, 0.55);
   text-align: center;
   line-height: 1.35;
-  max-width: 96px;
+  max-width: 90px;
   font-weight: 500;
 }
 .ij-step.completed .ij-label {
-  color: rgba(232, 237, 245, 0.75);
+  color: #6ee7b7; /* emerald-300 */
 }
 .ij-step.current .ij-label {
-  color: #f2c76a;
+  color: #F2C76A;
   font-weight: 700;
 }
 .ij-step.stopped .ij-label {
-  color: #f2a48f;
+  color: #fda4af; /* rose-300 */
   font-weight: 700;
 }
-.ij-time {
-  font-size: 9.5px;
-  line-height: 1.3;
-  color: rgba(232, 237, 245, 0.45);
-  text-align: center;
-  max-width: 96px;
-  direction: ltr;
+.ij-stop-pill {
+  margin-top: 2px;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(225, 29, 72, 0.2);
+  color: #fda4af;
+  border: 1px solid rgba(225, 29, 72, 0.35);
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 @media (max-width: 720px) {
   .ij-label {
-    font-size: 9.5px;
-    max-width: 52px;
-  }
-  .ij-time {
-    font-size: 8px;
-    max-width: 56px;
+    font-size: 10px;
+    max-width: 60px;
   }
   .ij-circle {
     width: 26px;
@@ -145,6 +173,6 @@
   }
   .ij-track-line,
   .ij-track-line-fill {
-    top: 13px;
+    top: 38px;
   }
 }

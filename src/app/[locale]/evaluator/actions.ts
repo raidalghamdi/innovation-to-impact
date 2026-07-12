@@ -24,7 +24,10 @@ export async function submitEvaluatorScore(input: {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: 'unauthenticated' };
 
-  const total = EV_CRITERIA.reduce((sum, k) => sum + (Number(input.scores[k]) || 0), 0);
+  // Each criterion is scored 0–10; total_score is the average (0–10 scale),
+  // matching the overall score shown in the evaluator UI.
+  const sum = EV_CRITERIA.reduce((acc, k) => acc + (Number(input.scores[k]) || 0), 0);
+  const total = EV_CRITERIA.length ? Math.round((sum / EV_CRITERIA.length) * 100) / 100 : 0;
 
   const { error } = await supabase.from('evaluations').upsert(
     {
