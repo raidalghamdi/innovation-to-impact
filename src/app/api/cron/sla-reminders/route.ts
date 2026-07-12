@@ -5,11 +5,19 @@ import { openEscalationIfAbsent, type EscalationEntity } from '@/lib/escalations
 import type { SlaTracker, SlaPolicy } from '@/lib/sla';
 import { maybeRunWeeklyBriefing } from '@/lib/weekly-briefing';
 
-// Hourly Vercel Cron (see vercel.json). Marks overdue SLA trackers as breached
-// and fans out reminders:
+// Daily Vercel Cron (see vercel.json, schedule "0 6 * * *"). Marks overdue SLA
+// trackers as breached and fans out reminders:
 //   • target_at < now, not breached, not resolved  -> mark breached + sla_breached (email)
 //   • past warn threshold, not breached, not resolved -> deadline_approaching (in-app)
 // Secured with CRON_SECRET: caller must send `authorization: Bearer <CRON_SECRET>`.
+//
+// TODO(sla): Missing 3.1 wants this hourly ("0 * * * *"). Blocked by the Vercel
+// Hobby plan, which only allows a single cron firing once per day (see the
+// plan notes in src/lib/weekly-briefing.ts) — and maybeRunWeeklyBriefing()
+// guards only on day-of-week, so an hourly cron would re-send the Monday
+// briefing 24×. Until we're on a plan with sub-daily crons, this stays daily
+// and sql_pending/09_sla_warn_at_pct.sql tightens the 24h policy's warn
+// threshold (80%→60%) so the single daily pass surfaces warnings sooner.
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
