@@ -54,6 +54,15 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
 
+  // Allow next/image to optimize remotely-hosted media (Supabase storage) so
+  // CMS-managed landing imagery gets automatic resize + WebP + lazy-loading.
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: '*.supabase.in' },
+    ],
+  },
+
   async headers() {
     return [
       {
