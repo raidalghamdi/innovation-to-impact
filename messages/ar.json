@@ -1,4 +1,25 @@
 {
+  "exports": {
+    "pdf": "تصدير PDF",
+    "pptx": "تصدير PPTX",
+    "xlsx": "تصدير XLSX",
+    "sendEmail": "إرسال بالبريد",
+    "email": {
+      "title": "إرسال التقرير بالبريد الإلكتروني",
+      "format": "الصيغة",
+      "recipientSelf": "بريدي",
+      "recipientOther": "بريد آخر",
+      "invalidGac": "يجب أن ينتهي البريد بـ {domain}",
+      "subjectLabel": "الموضوع (اختياري)",
+      "bodyLabel": "نص الرسالة (اختياري)",
+      "subjectPrefix": "[GAC I2I]",
+      "send": "إرسال",
+      "sending": "جارٍ الإرسال…",
+      "sent": "تم الإرسال بنجاح",
+      "failed": "تعذّر الإرسال",
+      "close": "إغلاق"
+    }
+  },
   "evaluator": {
     "brandTitle": "برنامج ابتكار المنافسة",
     "brandSub": "لوحة المقيّم",

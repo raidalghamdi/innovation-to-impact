@@ -1,4 +1,25 @@
 {
+  "exports": {
+    "pdf": "Export PDF",
+    "pptx": "Export PPTX",
+    "xlsx": "Export XLSX",
+    "sendEmail": "Send by Email",
+    "email": {
+      "title": "Email this report",
+      "format": "Format",
+      "recipientSelf": "My email",
+      "recipientOther": "Another email",
+      "invalidGac": "Email must end with {domain}",
+      "subjectLabel": "Subject (optional)",
+      "bodyLabel": "Message (optional)",
+      "subjectPrefix": "[GAC I2I]",
+      "send": "Send",
+      "sending": "Sending…",
+      "sent": "Sent successfully",
+      "failed": "Could not send",
+      "close": "Close"
+    }
+  },
   "evaluator": {
     "brandTitle": "Competition Innovation Program",
     "brandSub": "Evaluator Panel",
