@@ -23,6 +23,7 @@ import {
   MailPlus,
   UserPlus,
   Bell,
+  Inbox,
   ArrowRight,
   ArrowLeft,
   type LucideIcon,
@@ -197,6 +198,14 @@ const ADMIN_CARDS: AdminCard[] = [
     descAr: '12 تقريراً بصيغ PDF/Excel/PowerPoint مع تحميل مباشر أو إرسال بالبريد.',
     descEn: '12 report types in PDF/Excel/PowerPoint with direct download or email delivery.',
     icon: FileDown,
+  },
+  {
+    href: '/admin/support',
+    labelAr: 'صندوق الدعم',
+    labelEn: 'Support Inbox',
+    descAr: 'الرسائل الواردة من نموذج الدعم ومتابعة معالجتها.',
+    descEn: 'Incoming support-form messages and their handling status.',
+    icon: Inbox,
   },
   {
     href: '/notifications',
