@@ -703,7 +703,9 @@
     "builder": "Activity builder",
     "scoreboard": "Scoreboard",
     "audience": "Target audience",
-    "period": "Period"
+    "period": "Period",
+    "approved": "Approved",
+    "inPilot": "In pilot"
   },
   "evaluation": {
     "title": "Evaluation queue",
@@ -856,6 +858,7 @@
   "ip": {
     "title": "IP & confidentiality register",
     "subtitle": "Manage intellectual property, NDAs and participation conditions.",
+    "idea": "Idea",
     "ipType": "IP type",
     "ownership": "Ownership party",
     "nda": "NDA required",
