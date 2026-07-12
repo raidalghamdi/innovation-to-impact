@@ -2185,5 +2185,12 @@
     "thankYou": "THANK YOU",
     "backLine": "{platform} · {program}",
     "localeLabel": "EN"
+  },
+  "ideaJourney": {
+    "sectionLabel": "Idea journey",
+    "completed": "Completed",
+    "current": "Current stage",
+    "upcoming": "Upcoming",
+    "stopped": "Stopped here"
   }
 }

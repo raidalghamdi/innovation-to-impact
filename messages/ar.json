@@ -2185,5 +2185,12 @@
     "thankYou": "شكراً لكم",
     "backLine": "{platform} · {program}",
     "localeLabel": "عربي"
+  },
+  "ideaJourney": {
+    "sectionLabel": "رحلة الفكرة",
+    "completed": "مكتملة",
+    "current": "المرحلة الحالية",
+    "upcoming": "قادمة",
+    "stopped": "متوقفة هنا"
   }
 }

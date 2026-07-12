@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { AlertTriangle } from 'lucide-react';
-import { StageTimelineHorizontal } from '@/components/stage-timeline-horizontal';
+import { IdeaJourneyTimeline, type JourneyTimelineStage } from '@/components/idea-journey-timeline';
 
 type TeamMember = {
   id: string;
@@ -17,7 +17,6 @@ type Props = {
   ideaId: string;
   ideaCode: string | null;
   title: string;
-  currentStage: number;
   status: string;
   campaignName: string | null;
   themeName: string | null;
@@ -28,6 +27,8 @@ type Props = {
   teamName: string | null;
   canEdit: boolean;
   isReturned: boolean;
+  /** Dynamic six-stage journey, computed from the idea's real state. */
+  journey: JourneyTimelineStage[];
 };
 
 /**
@@ -44,13 +45,13 @@ export function IdeaHero({
   locale,
   ideaId,
   title,
-  currentStage,
   status,
   campaignName,
   themeName,
   challengeName,
   canEdit,
   isReturned,
+  journey,
 }: Props) {
   const isAr = locale === 'ar';
   const t = useTranslations('ideas');
@@ -166,9 +167,9 @@ export function IdeaHero({
           </div>
         )}
 
-        {/* Horizontal timeline */}
+        {/* Dynamic six-stage journey timeline */}
         <div className="mt-6">
-          <StageTimelineHorizontal current={currentStage} isStopped={isStopped} />
+          <IdeaJourneyTimeline locale={locale} stages={journey} stopped={isStopped} />
         </div>
 
         {/* Returned-idea banner */}

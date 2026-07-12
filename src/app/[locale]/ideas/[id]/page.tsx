@@ -13,6 +13,8 @@ import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { listEvidence } from '@/lib/storage';
 import type { EvidenceWithUrl } from '@/lib/evidence-types';
+import { computeIdeaStage } from '@/lib/idea-journey';
+import type { JourneyTimelineStage } from '@/components/idea-journey-timeline';
 
 /**
  * /ideas/[id] — Idea details page.
@@ -64,8 +66,13 @@ export default async function IdeaDetailPage({
   }> = [];
   let submittedAt: string | null = null;
   let updatedAt: string | null = null;
+  let createdAt: string | null = null;
   let currentStage = 0;
   let statusStr = 'draft';
+  // Cross-table signals used to derive the six-stage journey dynamically.
+  let assignmentRows: Array<{ created_at: string | null }> = [];
+  let evaluationRows: Array<{ submitted_at: string | null }> = [];
+  let committeeRows: Array<{ decision: string | null; decided_at: string | null }> = [];
   let ideaTitle = '';
   let ideaCode: string | null = null;
   let submitterId: string | null = null;
@@ -84,7 +91,7 @@ export default async function IdeaDetailPage({
     const { data: ideaRow } = await supabase
       .from('ideas')
       .select(
-        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, participation_type, submitter_id, team_id, team_name, team_members, original_source_metadata, submitted_at, updated_at'
+        'id, code, title_ar, title_en, status, current_stage, strategic_theme_id, activity_id, participation_type, submitter_id, team_id, team_name, team_members, original_source_metadata, submitted_at, updated_at, created_at'
       )
       .eq('id', id)
       .maybeSingle();
@@ -99,7 +106,19 @@ export default async function IdeaDetailPage({
       ideaCode = (ideaRow as any).code ?? null;
       submittedAt = (ideaRow as any).submitted_at ?? null;
       updatedAt = (ideaRow as any).updated_at ?? null;
+      createdAt = (ideaRow as any).created_at ?? null;
       submitterId = (ideaRow as any).submitter_id ?? null;
+
+      // Related rows that advance the journey. Failures degrade gracefully to
+      // an empty list — the journey then falls back to the status signal alone.
+      const [{ data: asg }, { data: evals }, { data: cmte }] = await Promise.all([
+        supabase.from('assignments').select('created_at').eq('idea_id', id),
+        supabase.from('evaluations').select('submitted_at').eq('idea_id', id),
+        supabase.from('committee_decisions').select('decision, decided_at').eq('idea_id', id),
+      ]);
+      assignmentRows = (asg as any[]) ?? [];
+      evaluationRows = (evals as any[]) ?? [];
+      committeeRows = (cmte as any[]) ?? [];
 
       // Challenge — free-text value chosen in the wizard, stored in the
       // source-metadata JSONB (no dedicated column).
@@ -221,6 +240,27 @@ export default async function IdeaDetailPage({
   const canEdit = isOwner && (statusStr === 'returned' || statusStr === 'draft');
   const isReturned = statusStr === 'returned';
 
+  // Dynamic six-stage journey — derived from real state, not the stored
+  // current_stage (which does not advance as the idea moves between reviewers).
+  const journey = computeIdeaStage(
+    {
+      status: statusStr,
+      current_stage: currentStage,
+      submitted_at: submittedAt,
+      updated_at: updatedAt,
+      created_at: createdAt,
+    },
+    assignmentRows,
+    evaluationRows,
+    committeeRows
+  );
+  const journeyStages: JourneyTimelineStage[] = journey.stages.map((s) => ({
+    index: s.index,
+    state: s.state,
+    completedAtISO: s.completedAt ? s.completedAt.toISOString() : null,
+    label: s.label,
+  }));
+
   return (
     <AppShell>
       {justSubmitted && (
@@ -240,7 +280,6 @@ export default async function IdeaDetailPage({
         ideaId={id}
         ideaCode={ideaCode}
         title={ideaTitle}
-        currentStage={currentStage}
         status={statusStr}
         campaignName={campaignName}
         themeName={themeName}
@@ -251,6 +290,7 @@ export default async function IdeaDetailPage({
         teamName={teamName}
         canEdit={canEdit}
         isReturned={isReturned}
+        journey={journeyStages}
       />
 
       {/* Reviewer notes — only when the idea was returned for revision, pinned
