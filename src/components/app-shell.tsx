@@ -105,6 +105,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isAdmin = role === 'admin';
 
+  // Round 34: hide the "لوحة أعمالي" Nav CTA when the user is ALREADY inside
+  // their own role dashboard — a quick-jump to the page you're on is noise.
+  // The button still shows on the landing page and every other authenticated
+  // surface (e.g. /ideas/new, /my-ideas). dashboardRoute mirrors the per-role
+  // routing of the button's own Link href (see below). pathNoLocale is the
+  // locale-stripped path computed above, so '/ar/dashboard/x' → '/dashboard/x'.
+  const dashboardRoute =
+    role === 'admin'
+      ? '/admin'
+      : role === 'supervisor'
+      ? '/supervisor'
+      : role === 'evaluator'
+      ? '/evaluator'
+      : role === 'judge'
+      ? '/committee'
+      : '/dashboard';
+  const insideOwnDashboard =
+    pathNoLocale === dashboardRoute || pathNoLocale.startsWith(`${dashboardRoute}/`);
+
   // Landing-page anchors kept reachable from every authenticated sub-page,
   // matching <LandingNav /> so users get the same primary navigation regardless
   // of which shell is currently rendering.
@@ -217,8 +236,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   evaluator  → /evaluator
                   supervisor → /supervisor  (never /admin from the Nav)
                 (Admins have their own dedicated admin shell with its own
-                لوحة أعمالي below.) */}
-            {userId && (
+                لوحة أعمالي below.)
+                Round 34: suppressed when already inside the role's dashboard. */}
+            {userId && !insideOwnDashboard && (
               <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
                 <Link
                   href={
@@ -306,8 +326,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {/* Round 32: persistent "لوحة أعمالي" quick-jump in the admin
                 shell too, so the same primary Nav CTA is available in every
                 authenticated shell. Admins land on /admin — which is the same
-                target the RoleUserMenu dropdown uses. */}
-            {userId && (
+                target the RoleUserMenu dropdown uses.
+                Round 34: suppressed when already inside /admin. */}
+            {userId && !insideOwnDashboard && (
               <Button asChild size="sm" variant="gold" className="hidden md:inline-flex">
                 <Link href="/admin">
                   <LayoutDashboard className="h-4 w-4" />
