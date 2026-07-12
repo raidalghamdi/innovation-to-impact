@@ -47,7 +47,7 @@ export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 
 // Codes returned by validateUploadFile — each maps to an `errors.<code>` i18n
 // key so client and server surface the same localized message.
-export type UploadValidationCode = 'fileTooLarge' | 'fileTypeNotAllowed';
+export type UploadValidationCode = 'fileEmpty' | 'fileTooLarge' | 'fileTypeNotAllowed';
 
 // Whitelisted upload types: MIME → allowed file extensions. Anything not listed
 // (.zip, .exe, .bat, .sh, .js, .html, …) is rejected. Kept as the single source
@@ -90,6 +90,7 @@ export function validateUploadFile(file: {
   size: number;
   type?: string | null;
 }): UploadValidationCode | null {
+  if (file.size === 0) return 'fileEmpty';
   if (file.size > MAX_UPLOAD_BYTES) return 'fileTooLarge';
 
   const lower = file.name.toLowerCase();

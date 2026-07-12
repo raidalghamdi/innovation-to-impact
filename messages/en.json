@@ -1928,6 +1928,7 @@
     "referenceLabel": "Reference"
   },
   "errors": {
+    "fileEmpty": "File is empty (0 bytes). Please choose a valid file.",
     "fileTooLarge": "File exceeds the 10MB limit",
     "fileTypeNotAllowed": "File type not allowed"
   },
