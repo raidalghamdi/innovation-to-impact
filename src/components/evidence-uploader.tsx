@@ -8,9 +8,12 @@ import {
   listEvidence,
   deleteEvidence,
 } from '@/lib/storage';
-import type { EvidenceContext, EvidenceWithUrl } from '@/lib/evidence-types';
-
-const MAX_BYTES = 10 * 1024 * 1024;
+import {
+  validateUploadFile,
+  UPLOAD_ACCEPT_ATTR,
+  type EvidenceContext,
+  type EvidenceWithUrl,
+} from '@/lib/evidence-types';
 
 type PendingItem = { name: string; error?: string };
 
@@ -26,7 +29,7 @@ export function EvidenceUploader({
   entityId,
   ideaId,
   context,
-  accept = 'application/pdf,image/*,.doc,.docx,.xls,.xlsx,.csv',
+  accept = UPLOAD_ACCEPT_ATTR,
   locale,
 }: {
   entityType: string;
@@ -37,6 +40,7 @@ export function EvidenceUploader({
   locale: string;
 }) {
   const t = useTranslations('evidence');
+  const te = useTranslations('errors');
   const isAr = locale === 'ar';
   const [items, setItems] = useState<EvidenceWithUrl[]>([]);
   const [pending, setPending] = useState<PendingItem[]>([]);
@@ -63,9 +67,10 @@ export function EvidenceUploader({
     setPending((prev) => [...prev, ...list.map((f) => ({ name: f.name }))]);
 
     for (const file of list) {
-      if (file.size > MAX_BYTES) {
+      const invalid = validateUploadFile(file);
+      if (invalid) {
         setPending((prev) =>
-          prev.map((p) => (p.name === file.name ? { ...p, error: t('tooLarge') } : p))
+          prev.map((p) => (p.name === file.name ? { ...p, error: te(invalid) } : p))
         );
         continue;
       }

@@ -9,10 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { persistIdeaAttachments } from '@/app/[locale]/ideas/new/actions';
 import { getTrackChallenges } from '@/lib/tracks';
+import { validateUploadFile, UPLOAD_ACCEPT_ATTR } from '@/lib/evidence-types';
 import { AlertTriangle, Lock, Save, X, Paperclip, FileText, CheckCircle2 } from 'lucide-react';
-
-const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10MB — mirrors lib/storage.ts.
-const ATTACH_ALLOWED_EXT = /\.(pdf|jpe?g|png|docx?|xlsx?|pptx?)$/i;
 
 type Section =
   | 'activity_id'
@@ -117,13 +115,17 @@ export function IdeaEditForm({
     if (files.length === 0) return;
     for (const file of files) {
       const key = `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const extOk = ATTACH_ALLOWED_EXT.test(file.name);
-      if (!extOk) {
-        setUploads((prev) => [...prev, { id: key, name: file.name, status: 'error', error: isAr ? 'نوع ملف غير مسموح' : 'File type not allowed' }]);
-        continue;
-      }
-      if (file.size > ATTACH_MAX_BYTES) {
-        setUploads((prev) => [...prev, { id: key, name: file.name, status: 'error', error: isAr ? 'الحجم أكبر من 10 ميجابايت' : 'Larger than 10MB' }]);
+      const invalid = validateUploadFile(file);
+      if (invalid) {
+        const msg =
+          invalid === 'fileTooLarge'
+            ? isAr
+              ? 'الحجم أكبر من 10 ميجابايت'
+              : 'Larger than 10MB'
+            : isAr
+              ? 'نوع ملف غير مسموح'
+              : 'File type not allowed';
+        setUploads((prev) => [...prev, { id: key, name: file.name, status: 'error', error: msg }]);
         continue;
       }
       setUploads((prev) => [...prev, { id: key, name: file.name, status: 'uploading' }]);
@@ -455,7 +457,7 @@ export function IdeaEditForm({
               <Input
                 type="file"
                 multiple
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                accept={UPLOAD_ACCEPT_ATTR}
                 className="hidden"
                 onChange={(e) => {
                   onAttachmentsSelected(Array.from(e.target.files ?? []));

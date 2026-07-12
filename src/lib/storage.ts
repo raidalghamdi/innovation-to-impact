@@ -14,6 +14,7 @@ import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
 import {
   EVIDENCE_BUCKET,
+  validateUploadFile,
   type EvidenceContext,
   type EntityRef,
   type EvidenceRow,
@@ -21,7 +22,6 @@ import {
   type UploadResult,
 } from '@/lib/evidence-types';
 
-const MAX_BYTES = 10 * 1024 * 1024; // 10MB — mirrors the client-side guard.
 const SIGNED_URL_TTL = 60 * 60; // 1 hour
 
 // Strip path separators so a filename can never escape its {uid}/{type}/{id}/
@@ -37,7 +37,9 @@ export async function uploadEvidence(
   entityRef: EntityRef
 ): Promise<UploadResult> {
   if (!file) return { ok: false, error: 'no_file' };
-  if (file.size > MAX_BYTES) return { ok: false, error: 'too_large' };
+  // Server-side re-check (defense in depth) mirroring the client pre-check.
+  const invalid = validateUploadFile(file);
+  if (invalid) return { ok: false, error: invalid };
 
   const supabase = await createClient();
   if (!supabase) return { ok: false, error: 'not_configured' };

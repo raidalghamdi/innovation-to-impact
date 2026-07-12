@@ -1922,6 +1922,10 @@
     "homeCta": "Return to homepage",
     "referenceLabel": "Reference"
   },
+  "errors": {
+    "fileTooLarge": "File exceeds the 10MB limit",
+    "fileTypeNotAllowed": "File type not allowed"
+  },
   "evidence": {
     "dropzone": "Drop files here or click to upload",
     "hint": "PDF, images, or documents up to 10MB each",

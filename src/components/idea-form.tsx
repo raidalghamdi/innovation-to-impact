@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import type { StrategicTheme, Activity } from '@/lib/demo-data';
 import { pickFromRow } from '@/lib/i18n-content';
+import { validateUploadFile, UPLOAD_ACCEPT_ATTR } from '@/lib/evidence-types';
 
 // --- Smart title suggestion -----------------------------------------------
 const STOPWORDS_AR = new Set([
@@ -94,6 +95,7 @@ export function IdeaForm({
   const t = useTranslations('ideas');
   const tf = useTranslations('ideaForm');
   const tc = useTranslations('common');
+  const te = useTranslations('errors');
   const router = useRouter();
   const isAr = locale === 'ar';
   const Chevron = isAr ? ChevronLeft : ChevronRight;
@@ -223,9 +225,10 @@ export function IdeaForm({
     const rejected: string[] = [];
     const accepted: File[] = [];
     for (const f of incoming) {
-      // All file formats are accepted — only the size cap is enforced here.
-      if (f.size > ATTACH_MAX_BYTES) {
-        rejected.push(`${f.name} — ${tf('attachmentsRejectSize')}`);
+      // Enforce the shared size + type whitelist (mirrored server-side).
+      const invalid = validateUploadFile(f);
+      if (invalid) {
+        rejected.push(`${f.name} — ${te(invalid)}`);
         continue;
       }
       accepted.push(f);
@@ -702,6 +705,7 @@ export function IdeaForm({
                 <Input
                   type="file"
                   multiple
+                  accept={UPLOAD_ACCEPT_ATTR}
                   className="hidden"
                   onChange={(e) => {
                     ingestFiles(Array.from(e.target.files ?? []));
