@@ -234,6 +234,7 @@ export function UsersManager({ users, roles, kpi, locale }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={isAr ? 'ابحث بالاسم أو البريد أو القسم…' : 'Search name, email, or department…'}
+            aria-label={isAr ? 'ابحث بالاسم أو البريد أو القسم' : 'Search name, email, or department'}
             className={isAr ? 'pr-9' : 'pl-9'}
           />
         </div>
@@ -241,6 +242,7 @@ export function UsersManager({ users, roles, kpi, locale }: Props) {
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          aria-label={isAr ? 'تصفية حسب الدور' : 'Filter by role'}
         >
           <option value="">{isAr ? 'كل الأدوار' : 'All roles'}</option>
           {roles.map((r) => (
@@ -253,6 +255,7 @@ export function UsersManager({ users, roles, kpi, locale }: Props) {
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value as any)}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          aria-label={isAr ? 'تصفية حسب الفئة' : 'Filter by category'}
         >
           <option value="all">{isAr ? 'كل الفئات' : 'All categories'}</option>
           <option value="internal">{isAr ? 'داخلي' : 'Internal'}</option>
@@ -262,6 +265,7 @@ export function UsersManager({ users, roles, kpi, locale }: Props) {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as any)}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          aria-label={isAr ? 'تصفية حسب الحالة' : 'Filter by status'}
         >
           <option value="all">{isAr ? 'كل الحالات' : 'All statuses'}</option>
           <option value="active">{isAr ? 'نشط' : 'Active'}</option>
@@ -619,7 +623,7 @@ function NewUserModal({
           <h3 className="text-lg font-semibold text-slate-900">
             {isAr ? 'إضافة مستخدم جديد' : 'Add new user'}
           </h3>
-          <button onClick={onClose} className="rounded p-1 hover:bg-slate-100">
+          <button onClick={onClose} aria-label={isAr ? 'إغلاق' : 'Close'} className="rounded p-1 hover:bg-slate-100">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -766,7 +770,7 @@ function EditProfileModal({
             </h3>
             <p className="text-xs text-slate-500">{user.email}</p>
           </div>
-          <button onClick={onClose} className="rounded p-1 hover:bg-slate-100">
+          <button onClick={onClose} aria-label={isAr ? 'إغلاق' : 'Close'} className="rounded p-1 hover:bg-slate-100">
             <X className="h-4 w-4" />
           </button>
         </div>

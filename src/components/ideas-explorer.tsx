@@ -80,25 +80,25 @@ export function IdeasExplorer({
             className="ps-9"
           />
         </div>
-        <select value={theme} onChange={(e) => setTheme(e.target.value)} className={selectClass}>
+        <select value={theme} onChange={(e) => setTheme(e.target.value)} className={selectClass} aria-label={t('filterTheme')}>
           <option value="">{t('filterTheme')}: {tc('all')}</option>
           {themes.map((th) => (
             <option key={th.id} value={th.id}>{pickFromRow(th, 'name', locale)}</option>
           ))}
         </select>
-        <select value={activity} onChange={(e) => setActivity(e.target.value)} className={selectClass}>
+        <select value={activity} onChange={(e) => setActivity(e.target.value)} className={selectClass} aria-label={t('filterActivity')}>
           <option value="">{t('filterActivity')}: {tc('all')}</option>
           {activities.map((a) => (
             <option key={a.id} value={a.id}>{pickFromRow(a, 'name', locale)}</option>
           ))}
         </select>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectClass}>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectClass} aria-label={t('filterStatus')}>
           <option value="">{t('filterStatus')}: {tc('all')}</option>
           {STATUSES.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
-        <select value={stage} onChange={(e) => setStage(e.target.value)} className={selectClass}>
+        <select value={stage} onChange={(e) => setStage(e.target.value)} className={selectClass} aria-label={t('filterStage')}>
           <option value="">{t('filterStage')}: {tc('all')}</option>
           {Array.from({ length: 9 }).map((_, i) => (
             <option key={i} value={String(i)}>{i}</option>

@@ -35,8 +35,8 @@ export default async function ActivityDetailPage({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <KPICard label={t('scoreboard')} value={scoped.length} icon={Lightbulb} />
-        <KPICard label="Approved" value={approved} icon={CheckCircle2} accent="gold" />
-        <KPICard label="In pilot" value={piloting} icon={FlaskConical} />
+        <KPICard label={t('approved')} value={approved} icon={CheckCircle2} accent="gold" />
+        <KPICard label={t('inPilot')} value={piloting} icon={FlaskConical} />
       </div>
 
       <Card className="mt-6">

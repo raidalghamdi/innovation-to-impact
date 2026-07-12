@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { ChevronLeft, ChevronRight, Home } from 'lucide-react';
+import { serializeJsonLd } from '@/lib/json-ld';
 
 export type Crumb = { href?: string; label: string };
 
@@ -51,7 +52,7 @@ export async function Breadcrumbs({
       </ol>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
     </nav>
   );

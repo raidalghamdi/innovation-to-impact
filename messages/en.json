@@ -703,7 +703,9 @@
     "builder": "Activity builder",
     "scoreboard": "Scoreboard",
     "audience": "Target audience",
-    "period": "Period"
+    "period": "Period",
+    "approved": "Approved",
+    "inPilot": "In pilot"
   },
   "evaluation": {
     "title": "Evaluation queue",
@@ -856,6 +858,7 @@
   "ip": {
     "title": "IP & confidentiality register",
     "subtitle": "Manage intellectual property, NDAs and participation conditions.",
+    "idea": "Idea",
     "ipType": "IP type",
     "ownership": "Ownership party",
     "nda": "NDA required",
@@ -1162,6 +1165,7 @@
     "continueToOtp": "Sign in",
     "pleaseWait": "Verifying…",
     "invalidCredentials": "Incorrect email or password.",
+    "accountLocked": "Too many failed attempts. This account is locked for 15 minutes — please try again later.",
     "loginFailed": "Sign-in failed. Please try again.",
     "forgotPassword": "Forgot password?",
     "otpTitle": "One-Time Code Verification",
@@ -1921,6 +1925,10 @@
     "retry": "Try again",
     "homeCta": "Return to homepage",
     "referenceLabel": "Reference"
+  },
+  "errors": {
+    "fileTooLarge": "File exceeds the 10MB limit",
+    "fileTypeNotAllowed": "File type not allowed"
   },
   "evidence": {
     "dropzone": "Drop files here or click to upload",

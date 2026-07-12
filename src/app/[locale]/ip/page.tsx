@@ -28,7 +28,7 @@ export default async function IpPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="teal-header">
-                  <th className="px-4 py-3 text-start text-xs font-semibold uppercase">Idea</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold uppercase">{t('idea')}</th>
                   <th className="px-4 py-3 text-start text-xs font-semibold uppercase">{t('ipType')}</th>
                   <th className="px-4 py-3 text-start text-xs font-semibold uppercase">{t('ownership')}</th>
                   <th className="px-4 py-3 text-start text-xs font-semibold uppercase">{t('nda')}</th>
