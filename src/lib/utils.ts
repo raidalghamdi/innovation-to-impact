@@ -28,6 +28,7 @@ export function formatDate(value: string | null | undefined, locale: string) {
   if (!value) return '—';
   try {
     return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', {
+      timeZone: 'Asia/Riyadh',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -53,6 +54,7 @@ export function formatDateOnly(value: string | null | undefined, locale: string)
   if (!value) return '—';
   try {
     return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', {
+      timeZone: 'Asia/Riyadh',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
