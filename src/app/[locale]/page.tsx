@@ -79,6 +79,24 @@ function pickThemeIcon(theme: { id?: string; name_ar?: string | null; name_en?: 
   return Target;
 }
 
+// Stable slug for a strategic theme, used to look up its localized description
+// under the `themes.<slug>.description` message key. Known seed IDs map to
+// fixed slugs (stable across environments); anything else is slugified from the
+// English name so admin-added themes still resolve deterministically.
+function themeSlug(theme: { id?: string; name_en?: string | null }): string {
+  const idTail = (theme.id ?? '').slice(-4).toLowerCase();
+  const byId: Record<string, string> = {
+    '0001': 'strengthening-competition-in-digital-markets',
+    '0002': 'empowering-smes',
+    '0003': 'regulatory-efficiency-transparency',
+  };
+  if (byId[idTail]) return byId[idTail];
+  return (theme.name_en ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export default async function LandingPage({
   params,
 }: {
@@ -329,7 +347,12 @@ export default async function LandingPage({
                     {pickFromRow(theme, 'name', locale)}
                   </h3>
                   <p className="mt-1.5 line-clamp-3 text-sm text-muted-foreground">
-                    {theme.description}
+                    {(() => {
+                      const key = `themes.${themeSlug(theme)}.description`;
+                      // Localized copy when we have it; otherwise fall back to
+                      // the raw DB description so admin-added themes still show.
+                      return t.has(key) ? t(key) : theme.description;
+                    })()}
                   </p>
                 </Link>
                 );

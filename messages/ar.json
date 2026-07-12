@@ -2196,5 +2196,16 @@
     "current": "المرحلة الحالية",
     "upcoming": "قادمة",
     "stopped": "متوقفة هنا"
+  },
+  "themes": {
+    "strengthening-competition-in-digital-markets": {
+      "description": "تعزيز المنافسة العادلة عبر المنصات الرقمية والتجارة الإلكترونية."
+    },
+    "empowering-smes": {
+      "description": "خفض حواجز الدخول وحماية المنشآت الصغيرة والمتوسطة من الممارسات المخلة بالمنافسة."
+    },
+    "regulatory-efficiency-transparency": {
+      "description": "تبسيط إجراءات المراجعة وتحسين شفافية القرارات."
+    }
   }
 }
