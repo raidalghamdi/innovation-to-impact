@@ -2247,7 +2247,205 @@
     "pageOf": "{page} / {total}",
     "thankYou": "THANK YOU",
     "backLine": "{platform} · {program}",
-    "localeLabel": "EN"
+    "localeLabel": "EN",
+    "analytics": {
+      "title": "Analytics Report",
+      "subtitle": "Innovation pipeline performance and engagement overview",
+      "charts": {
+        "submissionsOverTime": {
+          "title": "Submissions Over Time"
+        },
+        "weeklyTrend": {
+          "title": "Weekly Submission Trend"
+        },
+        "ideasByStage": {
+          "title": "Ideas by Stage"
+        },
+        "ideasByTrack": {
+          "title": "Ideas by Track"
+        },
+        "ideasByChallenge": {
+          "title": "Ideas by Challenge"
+        },
+        "conversionFunnel": {
+          "title": "Conversion Funnel"
+        },
+        "evaluationWorkload": {
+          "title": "Evaluation Workload"
+        },
+        "top10Innovators": {
+          "title": "Top 10 Innovators"
+        }
+      }
+    },
+    "ideas": {
+      "title": "Ideas Report",
+      "subtitle": "Submitted ideas across status, stage and track",
+      "charts": {
+        "ideasByStatus": {
+          "title": "Ideas by Status"
+        },
+        "ideasByStage": {
+          "title": "Ideas by Stage"
+        },
+        "ideasByTrack": {
+          "title": "Ideas by Track"
+        },
+        "ideasByChallenge": {
+          "title": "Ideas by Challenge"
+        },
+        "submissionsOverTime": {
+          "title": "Submissions Over Time"
+        },
+        "topInnovators": {
+          "title": "Top Innovators"
+        }
+      }
+    },
+    "evaluations": {
+      "title": "Evaluations Report",
+      "subtitle": "Scoring, evaluator activity and turnaround",
+      "charts": {
+        "avgScores": {
+          "title": "Average Scores by Criterion"
+        },
+        "evaluatorDistribution": {
+          "title": "Evaluator Distribution"
+        },
+        "status": {
+          "title": "Evaluation Status"
+        },
+        "processingTime": {
+          "title": "Processing Time"
+        },
+        "interRaterAgreement": {
+          "title": "Inter-Rater Agreement"
+        }
+      }
+    },
+    "users": {
+      "title": "Users Report",
+      "subtitle": "Platform membership, roles and activity",
+      "charts": {
+        "byRole": {
+          "title": "Users by Role"
+        },
+        "byDepartment": {
+          "title": "Users by Department"
+        },
+        "monthlyActivity": {
+          "title": "Monthly Activity"
+        },
+        "lastLoginDistribution": {
+          "title": "Last Login Distribution"
+        }
+      }
+    },
+    "auditLogs": {
+      "title": "Audit Logs Report",
+      "subtitle": "System activity by action, entity and actor",
+      "charts": {
+        "byAction": {
+          "title": "Events by Action"
+        },
+        "byEntityType": {
+          "title": "Events by Entity Type"
+        },
+        "byActor": {
+          "title": "Events by Actor"
+        },
+        "overTime": {
+          "title": "Activity Over Time"
+        }
+      }
+    },
+    "escalations": {
+      "title": "Escalations Report",
+      "subtitle": "Escalation status, level and resolution",
+      "charts": {
+        "byStatus": {
+          "title": "Escalations by Status"
+        },
+        "byLevel": {
+          "title": "Escalations by Level"
+        },
+        "resolutionTime": {
+          "title": "Resolution Time"
+        },
+        "byType": {
+          "title": "Escalations by Type"
+        }
+      }
+    },
+    "support": {
+      "title": "Support Report",
+      "subtitle": "Ticket volume, responsiveness and resolution",
+      "charts": {
+        "volume": {
+          "title": "Ticket Volume"
+        },
+        "responseTime": {
+          "title": "Response Time"
+        },
+        "resolutionRate": {
+          "title": "Resolution Rate"
+        },
+        "byHandler": {
+          "title": "Tickets by Handler"
+        }
+      }
+    },
+    "compliance": {
+      "title": "Compliance Report",
+      "subtitle": "Control adherence across standards",
+      "charts": {
+        "complianceRate": {
+          "title": "Compliance Rate"
+        },
+        "byStandard": {
+          "title": "Compliance by Standard"
+        },
+        "status": {
+          "title": "Control Status"
+        }
+      }
+    },
+    "reports": {
+      "title": "Executive Summary",
+      "subtitle": "Cross-domain highlights from across the platform",
+      "charts": {
+        "submissionsOverTime": {
+          "title": "Submissions Over Time"
+        },
+        "conversionFunnel": {
+          "title": "Conversion Funnel"
+        },
+        "ideasByTrack": {
+          "title": "Ideas by Track"
+        },
+        "ideasByStatus": {
+          "title": "Ideas by Status"
+        },
+        "avgScores": {
+          "title": "Average Scores"
+        },
+        "top10Innovators": {
+          "title": "Top 10 Innovators"
+        },
+        "usersByRole": {
+          "title": "Users by Role"
+        },
+        "auditByAction": {
+          "title": "Audit Events by Action"
+        },
+        "escalationsByStatus": {
+          "title": "Escalations by Status"
+        },
+        "complianceByStandard": {
+          "title": "Compliance by Standard"
+        }
+      }
+    }
   },
   "ideaJourney": {
     "sectionLabel": "Idea journey",

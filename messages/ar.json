@@ -2247,7 +2247,205 @@
     "pageOf": "{page} / {total}",
     "thankYou": "شكراً لكم",
     "backLine": "{platform} · {program}",
-    "localeLabel": "عربي"
+    "localeLabel": "عربي",
+    "analytics": {
+      "title": "تقرير التحليلات",
+      "subtitle": "نظرة عامة على أداء مسار الابتكار والتفاعل",
+      "charts": {
+        "submissionsOverTime": {
+          "title": "المشاركات عبر الزمن"
+        },
+        "weeklyTrend": {
+          "title": "الاتجاه الأسبوعي للمشاركات"
+        },
+        "ideasByStage": {
+          "title": "الأفكار حسب المرحلة"
+        },
+        "ideasByTrack": {
+          "title": "الأفكار حسب المسار"
+        },
+        "ideasByChallenge": {
+          "title": "الأفكار حسب التحدي"
+        },
+        "conversionFunnel": {
+          "title": "مسار التحويل"
+        },
+        "evaluationWorkload": {
+          "title": "عبء التقييم"
+        },
+        "top10Innovators": {
+          "title": "أفضل ١٠ مبتكرين"
+        }
+      }
+    },
+    "ideas": {
+      "title": "تقرير الأفكار",
+      "subtitle": "الأفكار المقدَّمة حسب الحالة والمرحلة والمسار",
+      "charts": {
+        "ideasByStatus": {
+          "title": "الأفكار حسب الحالة"
+        },
+        "ideasByStage": {
+          "title": "الأفكار حسب المرحلة"
+        },
+        "ideasByTrack": {
+          "title": "الأفكار حسب المسار"
+        },
+        "ideasByChallenge": {
+          "title": "الأفكار حسب التحدي"
+        },
+        "submissionsOverTime": {
+          "title": "المشاركات عبر الزمن"
+        },
+        "topInnovators": {
+          "title": "أبرز المبتكرين"
+        }
+      }
+    },
+    "evaluations": {
+      "title": "تقرير التقييمات",
+      "subtitle": "الدرجات ونشاط المُحكِّمين وزمن الإنجاز",
+      "charts": {
+        "avgScores": {
+          "title": "متوسط الدرجات حسب المعيار"
+        },
+        "evaluatorDistribution": {
+          "title": "توزيع المُحكِّمين"
+        },
+        "status": {
+          "title": "حالة التقييم"
+        },
+        "processingTime": {
+          "title": "زمن المعالجة"
+        },
+        "interRaterAgreement": {
+          "title": "اتفاق المُحكِّمين"
+        }
+      }
+    },
+    "users": {
+      "title": "تقرير المستخدمين",
+      "subtitle": "عضوية المنصة والأدوار والنشاط",
+      "charts": {
+        "byRole": {
+          "title": "المستخدمون حسب الدور"
+        },
+        "byDepartment": {
+          "title": "المستخدمون حسب الإدارة"
+        },
+        "monthlyActivity": {
+          "title": "النشاط الشهري"
+        },
+        "lastLoginDistribution": {
+          "title": "توزيع آخر تسجيل دخول"
+        }
+      }
+    },
+    "auditLogs": {
+      "title": "تقرير سجلات التدقيق",
+      "subtitle": "نشاط النظام حسب الإجراء والكيان والفاعل",
+      "charts": {
+        "byAction": {
+          "title": "الأحداث حسب الإجراء"
+        },
+        "byEntityType": {
+          "title": "الأحداث حسب نوع الكيان"
+        },
+        "byActor": {
+          "title": "الأحداث حسب الفاعل"
+        },
+        "overTime": {
+          "title": "النشاط عبر الزمن"
+        }
+      }
+    },
+    "escalations": {
+      "title": "تقرير التصعيدات",
+      "subtitle": "حالة التصعيد ومستواه وزمن حلّه",
+      "charts": {
+        "byStatus": {
+          "title": "التصعيدات حسب الحالة"
+        },
+        "byLevel": {
+          "title": "التصعيدات حسب المستوى"
+        },
+        "resolutionTime": {
+          "title": "زمن الحل"
+        },
+        "byType": {
+          "title": "التصعيدات حسب النوع"
+        }
+      }
+    },
+    "support": {
+      "title": "تقرير الدعم",
+      "subtitle": "حجم التذاكر وسرعة الاستجابة والحل",
+      "charts": {
+        "volume": {
+          "title": "حجم التذاكر"
+        },
+        "responseTime": {
+          "title": "زمن الاستجابة"
+        },
+        "resolutionRate": {
+          "title": "معدّل الحل"
+        },
+        "byHandler": {
+          "title": "التذاكر حسب المسؤول"
+        }
+      }
+    },
+    "compliance": {
+      "title": "تقرير الامتثال",
+      "subtitle": "الالتزام بالضوابط عبر المعايير",
+      "charts": {
+        "complianceRate": {
+          "title": "معدّل الامتثال"
+        },
+        "byStandard": {
+          "title": "الامتثال حسب المعيار"
+        },
+        "status": {
+          "title": "حالة الضوابط"
+        }
+      }
+    },
+    "reports": {
+      "title": "الملخّص التنفيذي",
+      "subtitle": "أبرز المؤشرات عبر مجالات المنصة",
+      "charts": {
+        "submissionsOverTime": {
+          "title": "المشاركات عبر الزمن"
+        },
+        "conversionFunnel": {
+          "title": "مسار التحويل"
+        },
+        "ideasByTrack": {
+          "title": "الأفكار حسب المسار"
+        },
+        "ideasByStatus": {
+          "title": "الأفكار حسب الحالة"
+        },
+        "avgScores": {
+          "title": "متوسط الدرجات"
+        },
+        "top10Innovators": {
+          "title": "أفضل ١٠ مبتكرين"
+        },
+        "usersByRole": {
+          "title": "المستخدمون حسب الدور"
+        },
+        "auditByAction": {
+          "title": "أحداث التدقيق حسب الإجراء"
+        },
+        "escalationsByStatus": {
+          "title": "التصعيدات حسب الحالة"
+        },
+        "complianceByStandard": {
+          "title": "الامتثال حسب المعيار"
+        }
+      }
+    }
   },
   "ideaJourney": {
     "sectionLabel": "رحلة الفكرة",
