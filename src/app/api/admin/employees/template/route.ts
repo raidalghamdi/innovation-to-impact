@@ -1,49 +1,26 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { getCurrentUser } from '@/lib/user';
-import { getActiveRoles } from '@/lib/db-roles';
+import { EMPLOYEE_IMPORT_ROLES } from '@/lib/employee-import';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/admin/employees/template — src/app/api/admin/employees/template/route.ts:1
-// Generates a blank .xlsx template with the exact Arabic headers expected by
-// the import route, plus one role column per active innovation.roles row
-// (dynamic — never hardcoded) and a hint row showing accepted values.
+// Generates a blank .xlsx template with the exact headers expected by the
+// import route: full_name, email, role, department. A hint row documents the
+// accepted role values. Admin OR supervisor (getCurrentUser promotes
+// supervisor -> admin).
 export async function GET() {
   const user = await getCurrentUser();
   if (!user || user.role !== 'admin') {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
-  const roles = await getActiveRoles();
-
-  const baseHeaders = [
-    'رقم الموظف',
-    'الاسم بالعربي',
-    'الاسم بالإنجليزي',
-    'البريد الإلكتروني',
-    'الجوال',
-    'القطاع/الإدارة',
-    'المسمى الوظيفي',
-    'داخلي',
-  ];
-  const roleHeaders = roles.map((r) => r.name_ar);
-  const headers = [...baseHeaders, ...roleHeaders];
-
-  const hintRow = [
-    'EMP-0001',
-    'محمد أحمد',
-    'Mohammed Ahmed',
-    'name@gac.gov.sa',
-    '0500000000',
-    'الابتكار',
-    'محلل',
-    'نعم',
-    ...roles.map(() => 'نعم/لا'),
-  ];
+  const headers = ['full_name', 'email', 'role', 'department'];
+  const hintRow = ['Mohammed Ahmed', 'name@example.com', EMPLOYEE_IMPORT_ROLES.join(' | '), 'Innovation'];
 
   const ws = XLSX.utils.aoa_to_sheet([headers, hintRow]);
-  ws['!cols'] = headers.map(() => ({ wch: 20 }));
+  ws['!cols'] = [{ wch: 28 }, { wch: 28 }, { wch: 48 }, { wch: 24 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Employees');
 
