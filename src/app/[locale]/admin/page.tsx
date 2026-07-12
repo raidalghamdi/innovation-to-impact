@@ -143,6 +143,14 @@ const ADMIN_CARDS: AdminCard[] = [
     icon: FileBarChart,
   },
   {
+    href: '/admin/compliance',
+    labelAr: 'المعايير والامتثال',
+    labelEn: 'Standards & Compliance',
+    descAr: 'ضوابط الامتثال التنظيمية (DGA/NCA/SDAIA/WCAG) وحالتها.',
+    descEn: 'Regulatory compliance controls (DGA/NCA/SDAIA/WCAG) and their status.',
+    icon: ShieldCheck,
+  },
+  {
     href: '/admin/escalations',
     labelAr: 'الترقيات والاعتراضات',
     labelEn: 'Escalations & Approvals',
