@@ -95,7 +95,9 @@ export default async function EvaluatorIdeaDetailPage({
         id: a.id,
         filename: a.filename,
         url: a.url,
+        downloadUrl: a.downloadUrl,
         contentType: a.content_type ?? null,
+        sizeBytes: a.size_bytes ?? null,
       }))}
       readOnly={!!already}
       existingScores={existingScores}

@@ -15,10 +15,32 @@ const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10 MB per file
 const ATTACH_ALLOWED_MIME = new Set([
   'application/pdf',
   'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  'application/vnd.ms-excel', // xls
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+  'application/vnd.ms-powerpoint', // ppt
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
   'image/png',
   'image/jpeg',
   'image/jpg',
+]);
+
+// Extension fallback for the platform-advertised types. Browsers frequently
+// send an empty or generic (application/octet-stream) MIME for Office files,
+// so we accept a file whose extension is allowed even when the reported MIME
+// is missing or unrecognised — otherwise valid XLSX/PPTX/DOCX uploads were
+// silently rejected server-side while passing the client's size-only guard.
+const ATTACH_ALLOWED_EXT = new Set([
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'png',
+  'jpg',
+  'jpeg',
 ]);
 
 function safeAttachmentName(name: string): string {
@@ -75,7 +97,13 @@ export async function persistIdeaAttachments(
       return { ok: false, uploaded, error: `too_large:${file.name}` };
     }
     const mime = (file.type || '').toLowerCase();
-    if (mime && !ATTACH_ALLOWED_MIME.has(mime)) {
+    const ext = (file.name.split('.').pop() ?? '').toLowerCase();
+    // Accept when EITHER the reported MIME is on the allow-list OR (the MIME is
+    // missing/generic and) the extension is allowed. Only reject on a MIME that
+    // is present, specific, and disallowed with no allowed extension to rescue.
+    const mimeOk = ATTACH_ALLOWED_MIME.has(mime);
+    const extOk = ATTACH_ALLOWED_EXT.has(ext);
+    if (!mimeOk && !extOk) {
       return { ok: false, uploaded, error: `bad_type:${file.name}` };
     }
 

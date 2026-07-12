@@ -31,6 +31,24 @@ export type EvidenceRow = {
   uploaded_at: string;
 };
 
-export type EvidenceWithUrl = EvidenceRow & { url: string | null };
+// `url` opens/previews inline (images, PDFs) in a new tab; `downloadUrl`
+// carries a Content-Disposition: attachment hint so an explicit Download
+// button always forces a save regardless of the file type.
+export type EvidenceWithUrl = EvidenceRow & {
+  url: string | null;
+  downloadUrl: string | null;
+};
 
 export type UploadResult = { ok: boolean; row?: EvidenceRow; error?: string };
+
+// Human-readable file size with adaptive units. Fixes the "0 KB" / "0.0 MB"
+// display bug where small files were always rendered in megabytes and rounded
+// away to zero.
+export function formatFileSize(bytes: number | null | undefined): string {
+  if (bytes == null || !Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb < 10 ? kb.toFixed(1) : Math.round(kb)} KB`;
+  const mb = kb / 1024;
+  return `${mb < 10 ? mb.toFixed(1) : Math.round(mb)} MB`;
+}

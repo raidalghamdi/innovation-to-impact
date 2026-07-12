@@ -5,14 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchIdeas } from '@/lib/data';
 import { ideas as demoIdeas } from '@/lib/demo-data';
 import { formatDate } from '@/lib/utils';
-import { CheckCircle2, Download, FileText } from 'lucide-react';
+import { CheckCircle2, Download, Eye, FileText } from 'lucide-react';
 import { getFeedbackForIdea } from '@/lib/feedback';
 import { FeedbackSection } from '@/components/feedback-section';
 import { IdeaHero } from '@/components/idea-hero';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { listEvidence } from '@/lib/storage';
-import type { EvidenceWithUrl } from '@/lib/evidence-types';
+import { formatFileSize, type EvidenceWithUrl } from '@/lib/evidence-types';
 import { computeIdeaStage } from '@/lib/idea-journey';
 import type { JourneyTimelineStage } from '@/components/idea-journey-timeline';
 
@@ -326,7 +326,12 @@ export default async function IdeaDetailPage({
               {evidenceAttachments.length > 0 ? (
                 <ul className="space-y-4">
                   {evidenceAttachments.map((a) => (
-                    <AttachmentRow key={a.id} attachment={a} downloadLabel={tc('download')} />
+                    <AttachmentRow
+                      key={a.id}
+                      attachment={a}
+                      downloadLabel={tc('download')}
+                      previewLabel={tc('openPreview')}
+                    />
                   ))}
                 </ul>
               ) : (
@@ -455,11 +460,13 @@ const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 function AttachmentRow({
   attachment,
   downloadLabel,
+  previewLabel,
 }: {
   attachment: EvidenceWithUrl;
   downloadLabel: string;
+  previewLabel: string;
 }) {
-  const { filename, content_type, size_bytes, url } = attachment;
+  const { filename, content_type, size_bytes, url, downloadUrl } = attachment;
   const ext = (filename.split('.').pop() ?? '').toLowerCase();
   const isImage =
     IMAGE_EXT.includes(ext) || (content_type?.startsWith('image/') ?? false);
@@ -481,24 +488,31 @@ function AttachmentRow({
           )}
           <div className="min-w-0">
             <div className="truncate font-medium">{filename}</div>
-            {typeof size_bytes === 'number' && (
-              <div className="text-xs text-muted-foreground">
-                {(size_bytes / 1024 / 1024).toFixed(1)} MB
-              </div>
-            )}
+            <div className="text-xs text-muted-foreground">{formatFileSize(size_bytes)}</div>
           </div>
         </div>
-        {url && (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-brand-teal hover:underline"
-          >
-            <Download className="h-3.5 w-3.5" />
-            {downloadLabel}
-          </a>
-        )}
+        <div className="flex shrink-0 items-center gap-3">
+          {url && (isImage || isPdf) && (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-brand-teal hover:underline"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              {previewLabel}
+            </a>
+          )}
+          {(downloadUrl || url) && (
+            <a
+              href={downloadUrl || url || undefined}
+              className="inline-flex items-center gap-1 text-xs font-medium text-brand-teal hover:underline"
+            >
+              <Download className="h-3.5 w-3.5" />
+              {downloadLabel}
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Inline preview */}

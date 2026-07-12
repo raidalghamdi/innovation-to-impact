@@ -69,6 +69,7 @@
     "blockAttachments": "Attachments",
     "noAttachments": "No attachments",
     "download": "Download",
+    "openPreview": "Open preview",
     "blockTeam": "Team",
     "individualParticipation": "Individual participation",
     "teamLeader": "Leader",
@@ -316,7 +317,8 @@
     "logout": "Sign out",
     "genericError": "Something went wrong. Please try again.",
     "retry": "Try again",
-    "download": "Download"
+    "download": "Download",
+    "openPreview": "Open preview"
   },
   "brand": {
     "logo": {

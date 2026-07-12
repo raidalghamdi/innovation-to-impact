@@ -69,6 +69,7 @@
     "blockAttachments": "المرفقات",
     "noAttachments": "لا توجد مرفقات",
     "download": "تنزيل",
+    "openPreview": "فتح المعاينة",
     "blockTeam": "الفريق",
     "individualParticipation": "مشاركة فردية",
     "teamLeader": "قائد الفريق",
@@ -316,7 +317,8 @@
     "logout": "تسجيل الخروج",
     "genericError": "حدث خطأ ما. يُرجى المحاولة مرة أخرى.",
     "retry": "إعادة المحاولة",
-    "download": "تنزيل"
+    "download": "تنزيل",
+    "openPreview": "فتح المعاينة"
   },
   "brand": {
     "logo": {

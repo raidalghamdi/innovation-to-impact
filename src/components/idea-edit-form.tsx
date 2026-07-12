@@ -12,7 +12,7 @@ import { getTrackChallenges } from '@/lib/tracks';
 import { AlertTriangle, Lock, Save, X, Paperclip, FileText, CheckCircle2 } from 'lucide-react';
 
 const ATTACH_MAX_BYTES = 10 * 1024 * 1024; // 10MB — mirrors lib/storage.ts.
-const ATTACH_ALLOWED_EXT = /\.(pdf|jpe?g|png|docx)$/i;
+const ATTACH_ALLOWED_EXT = /\.(pdf|jpe?g|png|docx?|xlsx?|pptx?)$/i;
 
 type Section =
   | 'activity_id'
@@ -450,12 +450,12 @@ export function IdeaEditForm({
                 {isAr ? 'اسحب الملفات هنا أو اضغط للاختيار' : 'Drag files here or click to choose'}
               </span>
               <span className="text-xs text-muted-foreground">
-                {isAr ? 'PDF أو صور أو Word — حتى 10 ميجابايت لكل ملف' : 'PDF, images, or Word — up to 10MB each'}
+                {isAr ? 'PDF أو صور أو Office — حتى 10 ميجابايت لكل ملف' : 'PDF, images, or Office files — up to 10MB each'}
               </span>
               <Input
                 type="file"
                 multiple
-                accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation"
                 className="hidden"
                 onChange={(e) => {
                   onAttachmentsSelected(Array.from(e.target.files ?? []));

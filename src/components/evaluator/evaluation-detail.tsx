@@ -8,6 +8,7 @@ import {
   ArrowRight,
   CalendarDays,
   Download,
+  Eye,
   FileText,
   Hash,
   Route as RouteIcon,
@@ -16,11 +17,21 @@ import {
   Users,
 } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
+import { formatFileSize } from '@/lib/evidence-types';
 import { EvRing, EvSuccessOverlay, EvToast } from '@/components/evaluator/ev-ui';
 import { submitEvaluatorScore } from '@/app/[locale]/evaluator/actions';
 import { EV_CRITERIA, type EvScores, type EvCriterion } from '@/lib/evaluator-criteria';
 
-type Attachment = { id: string; filename: string; url: string | null; contentType: string | null };
+type Attachment = {
+  id: string;
+  filename: string;
+  url: string | null;
+  downloadUrl: string | null;
+  contentType: string | null;
+  sizeBytes: number | null;
+};
+
+const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
 type Props = {
   locale: string;
@@ -141,20 +152,37 @@ export function EvaluationDetail(props: Props) {
               <p className="mt-3 text-sm text-[var(--ink-faint)]">{t('noAttachments')}</p>
             ) : (
               <ul className="mt-3 space-y-2">
-                {props.attachments.map((a) => (
-                  <li key={a.id} className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--line)] p-3">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <FileText className="h-4 w-4 shrink-0 text-[var(--gold-deep)]" />
-                      <span className="truncate text-sm">{a.filename}</span>
-                    </span>
-                    {a.url && (
-                      <a href={a.url} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[var(--gold-deep)] hover:underline">
-                        <Download className="h-3.5 w-3.5" />
-                        {t('download')}
-                      </a>
-                    )}
-                  </li>
-                ))}
+                {props.attachments.map((a) => {
+                  const ext = (a.filename.split('.').pop() ?? '').toLowerCase();
+                  const isImage =
+                    IMAGE_EXT.includes(ext) || (a.contentType?.startsWith('image/') ?? false);
+                  const isPdf = ext === 'pdf' || a.contentType === 'application/pdf';
+                  return (
+                    <li key={a.id} className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--line)] p-3">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <FileText className="h-4 w-4 shrink-0 text-[var(--gold-deep)]" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm">{a.filename}</span>
+                          <span className="block text-xs text-[var(--ink-faint)]">{formatFileSize(a.sizeBytes)}</span>
+                        </span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-3">
+                        {a.url && (isImage || isPdf) && (
+                          <a href={a.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--gold-deep)] hover:underline">
+                            <Eye className="h-3.5 w-3.5" />
+                            {t('openPreview')}
+                          </a>
+                        )}
+                        {(a.downloadUrl || a.url) && (
+                          <a href={a.downloadUrl || a.url || undefined} className="inline-flex items-center gap-1 text-xs font-medium text-[var(--gold-deep)] hover:underline">
+                            <Download className="h-3.5 w-3.5" />
+                            {t('download')}
+                          </a>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

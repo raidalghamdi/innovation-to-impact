@@ -9,6 +9,7 @@
 // Types and constants live in `@/lib/evidence-types` so client components can
 // import them without pulling this 'use server' module.
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
 import {
@@ -106,12 +107,30 @@ export async function listEvidence(
       return [];
     }
     const rows = (data as EvidenceRow[]) ?? [];
+
+    // Authorization is already enforced by the RLS-scoped SELECT above: a row
+    // is only in `rows` if the current user is allowed to see this idea's
+    // evidence. Sign the objects with the service-role client so the signed
+    // URL never trips storage.objects RLS — objects submitted at idea time are
+    // keyed under `ideas/{ideaId}/…` (not the viewer's uid folder), which the
+    // owner-folder read policy would otherwise reject for innovators,
+    // evaluators and supervisors. Falls back to the session client when the
+    // service-role key is unset (local/preview).
+    const signer = createAdminClient() ?? supabase;
     return Promise.all(
       rows.map(async (row) => {
-        const { data: signed } = await supabase.storage
-          .from(EVIDENCE_BUCKET)
-          .createSignedUrl(row.storage_path, SIGNED_URL_TTL);
-        return { ...row, url: signed?.signedUrl ?? null };
+        const bucket = signer.storage.from(EVIDENCE_BUCKET);
+        const [{ data: inline }, { data: dl }] = await Promise.all([
+          bucket.createSignedUrl(row.storage_path, SIGNED_URL_TTL),
+          bucket.createSignedUrl(row.storage_path, SIGNED_URL_TTL, {
+            download: row.filename,
+          }),
+        ]);
+        return {
+          ...row,
+          url: inline?.signedUrl ?? null,
+          downloadUrl: dl?.signedUrl ?? inline?.signedUrl ?? null,
+        };
       })
     );
   } catch (err) {
