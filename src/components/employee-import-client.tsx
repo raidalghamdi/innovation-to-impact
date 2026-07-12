@@ -1,62 +1,44 @@
 'use client';
 
 // src/components/employee-import-client.tsx:1
-// Admin-only Excel employee importer. Drag-drop or file-picker input accepts
-// .xlsx/.xls/.csv, parsed client-side with SheetJS ("xlsx" package). Shows a
-// preview table (first 20 rows) with per-row validation before submit.
+// Employee importer (admin + supervisor). Drag-drop or file-picker accepts
+// .xlsx/.xls/.csv, parsed client-side with SheetJS ("xlsx"). Columns:
+// full_name, email, role, department. Shows a preview table with per-row
+// validation before submit; the server re-validates and creates pending
+// invitations.
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { UploadCloud, Download, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import {
+  normalizeHeader,
+  validateImportRow,
+  EMPLOYEE_IMPORT_ROLES,
+  type EmployeeImportRow,
+} from '@/lib/employee-import';
 
-type RoleDef = { code: string; name_ar: string; name_en: string };
+type ValidatedRow = Partial<EmployeeImportRow> & { _errors: string[]; _rowNum: number };
 
-type ParsedRow = {
-  employee_number?: string;
-  full_name_ar?: string;
-  full_name_en?: string;
-  email?: string;
-  phone?: string;
-  department?: string;
-  job_title?: string;
-  is_internal?: boolean;
-  [roleKey: string]: any;
+type ImportResult = {
+  total: number;
+  imported: number;
+  skipped: number;
+  errors: { row: number; email?: string; message: string }[];
 };
 
-type ValidatedRow = ParsedRow & { _errors: string[]; _rowNum: number };
-
-const YES_VALUES = new Set(['نعم', 'yes', 'y', 'true', '1']);
-
-function toBool(value: unknown, defaultVal = false): boolean {
-  if (value === undefined || value === null || value === '') return defaultVal;
-  return YES_VALUES.has(String(value).trim().toLowerCase());
-}
-
-export function EmployeeImportClient({ locale, roles }: { locale: string; roles: RoleDef[] }) {
+export function EmployeeImportClient({ locale }: { locale: string; roles?: unknown }) {
   const t = useTranslations('employeeImport');
-  const isAr = locale === 'ar';
   const [rows, setRows] = useState<ValidatedRow[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ imported: number; updated: number; skipped: number; errors: any[] } | null>(
-    null
-  );
+  const [result, setResult] = useState<ImportResult | null>(null);
 
-  const validate = useCallback(
-    (raw: ParsedRow[]): ValidatedRow[] => {
-      return raw.map((r, idx) => {
-        const errors: string[] = [];
-        if (!r.full_name_ar) errors.push(t('errRequiredName'));
-        if (!r.email) errors.push(t('errRequiredEmail'));
-        else if (r.is_internal !== false && !/^[^@]+@gac\.gov\.sa$/i.test(r.email)) {
-          errors.push(t('errDomain'));
-        }
-        return { ...r, _errors: errors, _rowNum: idx + 1 };
-      });
-    },
+  const errText = useCallback(
+    (code: 'name' | 'email' | 'role') =>
+      code === 'name' ? t('errRequiredName') : code === 'email' ? t('errEmail') : t('errRole'),
     [t]
   );
 
@@ -70,54 +52,24 @@ export function EmployeeImportClient({ locale, roles }: { locale: string; roles:
         if (!data) return;
         const wb = XLSX.read(data, { type: 'binary' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
-        const json: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        const json: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-        const baseKeyMap: Record<string, string> = {
-          'رقم الموظف': 'employee_number',
-          'الاسم بالعربي': 'full_name_ar',
-          'الاسم بالإنجليزي': 'full_name_en',
-          'البريد الإلكتروني': 'email',
-          الجوال: 'phone',
-          'القطاع/الإدارة': 'department',
-          المسمى_الوظيفي: 'job_title',
-          'المسمى الوظيفي': 'job_title',
-          داخلي: 'is_internal',
-        };
-
-        const parsed: ParsedRow[] = json.map((row) => {
-          const out: ParsedRow = {};
-          const keys = Object.keys(row);
-          keys.forEach((k, colIdx) => {
-            const normalized = baseKeyMap[k.trim()];
-            if (normalized) {
-              out[normalized] = row[k];
-              return;
-            }
-            // Role columns: match by Arabic or English role name.
-            const role = roles.find((rl) => rl.name_ar === k.trim() || rl.name_en === k.trim());
-            if (role) {
-              out[`role_${role.code}`] = toBool(row[k]);
-              return;
-            }
-            // Fallback: positional mapping for the 8 base columns.
-            if (colIdx < 8) {
-              const positional = ['employee_number', 'full_name_ar', 'full_name_en', 'email', 'phone', 'department', 'job_title', 'is_internal'][
-                colIdx
-              ];
-              if (positional && out[positional] === undefined) out[positional] = row[k];
-            }
-          });
-          out.is_internal = toBool(out.is_internal, true);
-          if (out.employee_number) out.employee_number = String(out.employee_number).trim();
-          if (out.email) out.email = String(out.email).trim().toLowerCase();
-          return out;
+        const parsed: ValidatedRow[] = json.map((raw, idx) => {
+          const out: Partial<EmployeeImportRow> = {};
+          for (const key of Object.keys(raw)) {
+            const field = normalizeHeader(key);
+            if (field) out[field] = String(raw[key] ?? '').trim();
+          }
+          if (out.email) out.email = out.email.toLowerCase();
+          if (out.role) out.role = out.role.toLowerCase();
+          return { ...out, _errors: validateImportRow(out, errText), _rowNum: idx + 2 };
         });
 
-        setRows(validate(parsed));
+        setRows(parsed);
       };
       reader.readAsBinaryString(file);
     },
-    [roles, validate]
+    [errText]
   );
 
   const onDrop = useCallback(
@@ -137,7 +89,9 @@ export function EmployeeImportClient({ locale, roles }: { locale: string; roles:
     setSubmitting(true);
     setResult(null);
     try {
-      const validRows = rows.filter((r) => r._errors.length === 0).map(({ _errors, _rowNum, ...rest }) => rest);
+      const validRows = rows
+        .filter((r) => r._errors.length === 0)
+        .map(({ full_name, email, role, department }) => ({ full_name, email, role, department }));
       const res = await fetch('/api/admin/employees/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -146,7 +100,7 @@ export function EmployeeImportClient({ locale, roles }: { locale: string; roles:
       const data = await res.json();
       setResult(data);
     } catch (err) {
-      setResult({ imported: 0, updated: 0, skipped: rows.length, errors: [{ message: String(err) }] });
+      setResult({ total: rows.length, imported: 0, skipped: rows.length, errors: [{ row: 0, message: String(err) }] });
     } finally {
       setSubmitting(false);
     }
@@ -159,6 +113,12 @@ export function EmployeeImportClient({ locale, roles }: { locale: string; roles:
           <div>
             <p className="text-sm font-semibold text-foreground">{t('templateTitle')}</p>
             <p className="mt-1 text-xs text-muted-foreground">{t('templateHint')}</p>
+            <p className="mt-1 text-xs text-muted-foreground" dir="ltr">
+              full_name, email, role, department
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground" dir="ltr">
+              {t('rolesHint')}: {EMPLOYEE_IMPORT_ROLES.join(', ')}
+            </p>
           </div>
           <Button asChild variant="outline" className="border-brand-teal text-brand-teal hover:bg-brand-teal-light">
             <a href="/api/admin/employees/template" download>
@@ -202,6 +162,7 @@ export function EmployeeImportClient({ locale, roles }: { locale: string; roles:
         <Card>
           <CardContent className="p-4 sm:p-6">
             <div className="mb-4 flex flex-wrap items-center gap-4 text-sm">
+              <span className="text-muted-foreground">{t('totalRows', { count: rows.length })}</span>
               <span className="inline-flex items-center gap-1.5 text-green-700">
                 <CheckCircle2 className="h-4 w-4" /> {t('validRows', { count: validCount })}
               </span>
@@ -219,24 +180,19 @@ export function EmployeeImportClient({ locale, roles }: { locale: string; roles:
                     <th className="px-3 py-2 text-start">#</th>
                     <th className="px-3 py-2 text-start">{t('colName')}</th>
                     <th className="px-3 py-2 text-start">{t('colEmail')}</th>
+                    <th className="px-3 py-2 text-start">{t('colRole')}</th>
                     <th className="px-3 py-2 text-start">{t('colDept')}</th>
-                    <th className="px-3 py-2 text-start">{t('colRoles')}</th>
                     <th className="px-3 py-2 text-start">{t('colStatus')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.slice(0, 20).map((r) => (
+                  {rows.slice(0, 50).map((r) => (
                     <tr key={r._rowNum} className={`border-t border-border ${r._errors.length ? 'bg-red-50' : ''}`}>
                       <td className="px-3 py-2">{r._rowNum}</td>
-                      <td className="px-3 py-2">{r.full_name_ar || '—'}</td>
+                      <td className="px-3 py-2">{r.full_name || '—'}</td>
                       <td className="px-3 py-2" dir="ltr">{r.email || '—'}</td>
+                      <td className="px-3 py-2" dir="ltr">{r.role || '—'}</td>
                       <td className="px-3 py-2">{r.department || '—'}</td>
-                      <td className="px-3 py-2">
-                        {roles
-                          .filter((role) => r[`role_${role.code}`])
-                          .map((role) => (isAr ? role.name_ar : role.name_en))
-                          .join(', ') || '—'}
-                      </td>
                       <td className="px-3 py-2">
                         {r._errors.length ? (
                           <span className="inline-flex items-center gap-1 text-red-700">
@@ -251,7 +207,7 @@ export function EmployeeImportClient({ locale, roles }: { locale: string; roles:
                 </tbody>
               </table>
             </div>
-            {rows.length > 20 && (
+            {rows.length > 50 && (
               <p className="mt-2 text-xs text-muted-foreground">{t('previewLimited', { total: rows.length })}</p>
             )}
 
@@ -269,13 +225,13 @@ export function EmployeeImportClient({ locale, roles }: { locale: string; roles:
           <CardContent className="p-4 sm:p-6">
             <p className="text-sm font-semibold text-brand-teal">{t('resultTitle')}</p>
             <div className="mt-2 grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg bg-blue-50 p-3">
+                <p className="text-lg font-bold text-blue-700">{result.total}</p>
+                <p className="text-xs text-muted-foreground">{t('total')}</p>
+              </div>
               <div className="rounded-lg bg-green-50 p-3">
                 <p className="text-lg font-bold text-green-700">{result.imported}</p>
                 <p className="text-xs text-muted-foreground">{t('imported')}</p>
-              </div>
-              <div className="rounded-lg bg-blue-50 p-3">
-                <p className="text-lg font-bold text-blue-700">{result.updated}</p>
-                <p className="text-xs text-muted-foreground">{t('updated')}</p>
               </div>
               <div className="rounded-lg bg-amber-50 p-3">
                 <p className="text-lg font-bold text-amber-700">{result.skipped}</p>
@@ -284,7 +240,7 @@ export function EmployeeImportClient({ locale, roles }: { locale: string; roles:
             </div>
             {result.errors?.length > 0 && (
               <ul className="mt-3 space-y-1 text-xs text-red-700">
-                {result.errors.map((e: any, i: number) => (
+                {result.errors.map((e, i) => (
                   <li key={i}>
                     {t('rowLabel')} {e.row}: {e.email ? `${e.email} — ` : ''}
                     {e.message}

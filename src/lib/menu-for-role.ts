@@ -20,6 +20,10 @@ import {
   Settings as SettingsIcon,
   Users as UsersIcon,
   Mail,
+  FileDown,
+  CalendarClock,
+  Split,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -136,11 +140,19 @@ const ADMIN_ITEMS: MenuItem[] = [
   { href: '/admin/email-log', labelAr: 'سجل البريد', labelEn: 'Email Log', icon: Mail },
 ];
 
-// Supervisor menu: intentionally minimal per Round 25 clarification —
-// 'My Dashboard' (as SUPERVISOR_HUB_ITEM) + Notifications + Settings. No
-// evaluator-style 'My evaluations / Completed evaluations' entries, no
-// sector/analytics deep links.
-const SUPERVISOR_ITEMS: MenuItem[] = [];
+// Supervisor menu: parity with admin — supervisors see the same
+// organization-wide tools, surfaced under /supervisor/* (see feat/supervisor-parity).
+const SUPERVISOR_ITEMS: MenuItem[] = [
+  { href: '/supervisor/reports', labelAr: 'مركز التقارير', labelEn: 'Reports Center', icon: FileDown },
+  { href: '/supervisor/analytics', labelAr: 'التحليلات', labelEn: 'Analytics', icon: FileBarChart },
+  { href: '/supervisor/phases', labelAr: 'جدولة المراحل', labelEn: 'Phase Scheduling', icon: CalendarClock },
+  { href: '/supervisor/escalations', labelAr: 'الترقيات والاعتراضات', labelEn: 'Escalations & Approvals', icon: ShieldCheck },
+  { href: '/supervisor/cms', labelAr: 'محرر المحتوى', labelEn: 'Content Editor', icon: FileText },
+  { href: '/supervisor/assignments', labelAr: 'التعيينات', labelEn: 'Assignments', icon: Split },
+  { href: '/supervisor/employees/import', labelAr: 'استيراد الموظفين', labelEn: 'Employees Import', icon: Upload },
+  { href: '/supervisor/invitation-templates', labelAr: 'قوالب الدعوات', labelEn: 'Invitation Templates', icon: Mail },
+  { href: '/supervisor/roster', labelAr: 'الأدوار والدعوات', labelEn: 'Roster & Invitations', icon: ClipboardList },
+];
 
 const ROLE_ITEMS: Record<string, MenuItem[]> = {
   // canonical Role enum values

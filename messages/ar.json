@@ -276,7 +276,17 @@
     "rolesCatalog": "كتالوج الأدوار",
     "backup": "النسخ الاحتياطي",
     "startEvaluation": "ابدأ التقييم",
-    "startJudging": "ابدأ التحكيم"
+    "startJudging": "ابدأ التحكيم",
+    "supervisorTools": "أدوات المشرف",
+    "supReports": "مركز التقارير",
+    "supAnalytics": "التحليلات",
+    "supPhases": "جدولة المراحل",
+    "supEscalations": "الترقيات والاعتراضات",
+    "supCms": "محرر المحتوى",
+    "supAssignments": "التعيينات",
+    "supEmployeesImport": "استيراد الموظفين",
+    "supInvitationTemplates": "قوالب الدعوات",
+    "supRoster": "الأدوار والدعوات"
   },
   "common": {
     "search": "بحث",
@@ -2099,7 +2109,7 @@
   "welcomeFirstTime": "مرحباً",
   "employeeImport": {
     "title": "استيراد الموظفين",
-    "subtitle": "ارفع ملف إكسل لاستيراد بيانات الموظفين وأدوارهم المسبقة.",
+    "subtitle": "ارفع ملف إكسل (full_name، email، role، department) لدعوة الموظفين.",
     "templateTitle": "قالب إكسل",
     "templateHint": "نزّل القالب الفارغ بالأعمدة الصحيحة قبل التعبئة.",
     "downloadTemplate": "تنزيل القالب",
@@ -2113,7 +2123,7 @@
     "colRoles": "الأدوار",
     "colStatus": "الحالة",
     "ok": "جاهز",
-    "previewLimited": "تُعرض أول 20 صفاً فقط من أصل {total}.",
+    "previewLimited": "عرض أول 50 من {total} صف.",
     "importing": "جارٍ الاستيراد…",
     "importButton": "استيراد {count} صف",
     "resultTitle": "نتيجة الاستيراد",
@@ -2121,9 +2131,15 @@
     "updated": "مُحدَّث",
     "skipped": "متجاوَز",
     "rowLabel": "صف",
-    "errRequiredName": "الاسم بالعربي مطلوب",
+    "errRequiredName": "الاسم الكامل مطلوب",
     "errRequiredEmail": "البريد الإلكتروني مطلوب",
-    "errDomain": "يجب أن ينتهي بريد الموظف الداخلي بـ @gac.gov.sa"
+    "errDomain": "يجب أن ينتهي بريد الموظف الداخلي بـ @gac.gov.sa",
+    "colRole": "الدور",
+    "totalRows": "{count} إجمالي الصفوف",
+    "total": "الإجمالي",
+    "rolesHint": "الأدوار المسموحة",
+    "errEmail": "البريد الإلكتروني غير صالح",
+    "errRole": "يجب أن يكون الدور ضمن القيم المسموحة"
   },
   "roster": {
     "title": "إدارة الأدوار والدعوات",
@@ -2197,7 +2213,7 @@
     "upcoming": "قادمة",
     "stopped": "متوقفة هنا"
   },
-  "themes": {
+"themes": {
     "strengthening-competition-in-digital-markets": {
       "description": "تعزيز المنافسة العادلة عبر المنصات الرقمية والتجارة الإلكترونية."
     },
@@ -2207,5 +2223,22 @@
     "regulatory-efficiency-transparency": {
       "description": "تبسيط إجراءات المراجعة وتحسين شفافية القرارات."
     }
+  },
+  "tracksManager": {
+    "title": "إدارة المسارات",
+    "subtitle": "أضف أو عدّل أو احذف المسارات الاستراتيجية. متاحة للمدراء والمشرفين.",
+    "empty": "لا توجد مسارات بعد.",
+    "addTitle": "إضافة مسار جديد",
+    "addButton": "إضافة مسار",
+    "nameAr": "الاسم (بالعربية)",
+    "nameEn": "الاسم (بالإنجليزية)",
+    "descAr": "الوصف (بالعربية)",
+    "descEn": "الوصف (بالإنجليزية)",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "confirmDelete": "حذف هذا المسار؟ سيتم إلغاء ربط الأفكار المرتبطة به.",
+    "errNames": "الاسم بالعربية والإنجليزية مطلوبان."
   }
 }

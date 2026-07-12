@@ -42,12 +42,12 @@ export function homeForRoleCode(roleCode: string | null | undefined): string {
 // Note: /admin/analytics is intentionally allowed for both admin and judge
 // — see analytics page role check. /admin (non-analytics) remains admin-only.
 export const ROLE_DENY: Record<Role, string[]> = {
-  submitter: ['/evaluator', '/committee', '/admin', '/analytics'],
-  innovator: ['/evaluator', '/committee', '/admin', '/analytics'],
-  evaluator: ['/committee', '/admin', '/analytics'],
+  submitter: ['/evaluator', '/committee', '/admin', '/supervisor', '/analytics'],
+  innovator: ['/evaluator', '/committee', '/admin', '/supervisor', '/analytics'],
+  evaluator: ['/committee', '/admin', '/supervisor', '/analytics'],
   supervisor: ['/committee', '/admin', '/analytics'],
-  judge: ['/admin', '/analytics'],
-  committee: ['/admin', '/analytics'],
+  judge: ['/admin', '/supervisor', '/analytics'],
+  committee: ['/admin', '/supervisor', '/analytics'],
   admin: [],
 };
 

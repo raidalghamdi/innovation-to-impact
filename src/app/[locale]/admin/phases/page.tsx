@@ -3,9 +3,11 @@ import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { PhasesEditor } from '@/components/phases-editor';
+import { TracksManager, type Track } from '@/components/tracks-manager';
 import { getCurrentUser } from '@/lib/user';
 import { isCurrentUserAdmin } from '@/lib/db-roles';
 import { loadPhaseSchedule } from '@/lib/phase-schedule';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function AdminPhasesPage({
   params,
@@ -23,6 +25,14 @@ export default async function AdminPhasesPage({
 
   const phases = await loadPhaseSchedule();
 
+  const supabase = await createClient();
+  const { data: trackRows } = supabase
+    ? await supabase
+        .from('strategic_themes')
+        .select('id, name_ar, name_en, description_ar, description_en')
+        .order('name_en')
+    : { data: [] as Track[] };
+
   return (
     <AppShell>
       <PageHeader
@@ -36,6 +46,7 @@ export default async function AdminPhasesPage({
       <div className="mt-6">
         <PhasesEditor locale={locale} initialPhases={phases} />
       </div>
+      <TracksManager locale={locale} initialTracks={(trackRows as Track[]) ?? []} />
     </AppShell>
   );
 }

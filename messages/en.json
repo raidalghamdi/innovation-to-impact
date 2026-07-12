@@ -276,7 +276,17 @@
     "rolesCatalog": "Roles Catalog",
     "backup": "Backup",
     "startEvaluation": "Start evaluation",
-    "startJudging": "Start Judging"
+    "startJudging": "Start Judging",
+    "supervisorTools": "Supervisor Tools",
+    "supReports": "Reports Center",
+    "supAnalytics": "Analytics",
+    "supPhases": "Phase Scheduling",
+    "supEscalations": "Escalations & Approvals",
+    "supCms": "Content Editor",
+    "supAssignments": "Assignments",
+    "supEmployeesImport": "Employees Import",
+    "supInvitationTemplates": "Invitation Templates",
+    "supRoster": "Roster & Invitations"
   },
   "common": {
     "search": "Search",
@@ -2099,7 +2109,7 @@
   "welcomeFirstTime": "Welcome",
   "employeeImport": {
     "title": "Employee Import",
-    "subtitle": "Upload an Excel file to import employees and their pre-assigned roles.",
+    "subtitle": "Upload an Excel file (full_name, email, role, department) to invite employees.",
     "templateTitle": "Excel Template",
     "templateHint": "Download the blank template with the correct columns before filling it in.",
     "downloadTemplate": "Download Template",
@@ -2113,7 +2123,7 @@
     "colRoles": "Roles",
     "colStatus": "Status",
     "ok": "Ready",
-    "previewLimited": "Showing first 20 of {total} rows.",
+    "previewLimited": "Showing first 50 of {total} rows.",
     "importing": "Importing…",
     "importButton": "Import {count} rows",
     "resultTitle": "Import Result",
@@ -2121,9 +2131,15 @@
     "updated": "Updated",
     "skipped": "Skipped",
     "rowLabel": "Row",
-    "errRequiredName": "Arabic full name is required",
+    "errRequiredName": "Full name is required",
     "errRequiredEmail": "Email is required",
-    "errDomain": "Internal employees must use an @gac.gov.sa email"
+    "errDomain": "Internal employees must use an @gac.gov.sa email",
+    "colRole": "Role",
+    "totalRows": "{count} total rows",
+    "total": "Total",
+    "rolesHint": "Allowed roles",
+    "errEmail": "A valid email is required",
+    "errRole": "Role must be one of the allowed values"
   },
   "roster": {
     "title": "Roster & Invitations",
@@ -2197,7 +2213,7 @@
     "upcoming": "Upcoming",
     "stopped": "Stopped here"
   },
-  "themes": {
+"themes": {
     "strengthening-competition-in-digital-markets": {
       "description": "Promote fair competition across digital platforms and e-commerce."
     },
@@ -2207,5 +2223,22 @@
     "regulatory-efficiency-transparency": {
       "description": "Streamline review processes and improve transparency of decisions."
     }
+  },
+  "tracksManager": {
+    "title": "Manage Tracks",
+    "subtitle": "Add, edit, or delete strategic tracks. Available to admins and supervisors.",
+    "empty": "No tracks yet.",
+    "addTitle": "Add a new track",
+    "addButton": "Add track",
+    "nameAr": "Name (Arabic)",
+    "nameEn": "Name (English)",
+    "descAr": "Description (Arabic)",
+    "descEn": "Description (English)",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirmDelete": "Delete this track? Ideas assigned to it will be unassigned.",
+    "errNames": "Arabic and English names are required."
   }
 }

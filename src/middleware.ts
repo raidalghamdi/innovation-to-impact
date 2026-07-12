@@ -18,6 +18,7 @@ const PROTECTED_PREFIXES = [
   '/pilots',
   '/analytics',
   '/admin',
+  '/supervisor',
   '/settings',
   '/notifications',
   '/team',

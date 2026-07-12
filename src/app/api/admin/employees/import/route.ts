@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getActiveRoles, getPlatformSetting } from '@/lib/db-roles';
+import { getAdminSetting } from '@/lib/invitations';
+import {
+  isValidEmail,
+  isValidImportRole,
+  EMPLOYEE_IMPORT_ROLES,
+} from '@/lib/employee-import';
 
 export const dynamic = 'force-dynamic';
 
 // POST /api/admin/employees/import — src/app/api/admin/employees/import/route.ts:1
-// Body: { rows: Array<Record<string, any>> } — one object per Excel row, keys
-// already normalized client-side (see import page). Admin-only.
-// Upserts innovation.employees by email, then replaces innovation.employee_roles
-// for each employee based on the Yes/No role columns.
+// Body: { rows: Array<{ full_name, email, role, department }> }.
+// Admin OR supervisor (getCurrentUser promotes supervisor -> admin).
+// Each valid row is written as a pending row in innovation.invitations
+// (the same table the invite flow uses via createInvitations). The invitee's
+// auth.users account is created lazily on first sign-in; department is kept in
+// the invitation metadata so it can be applied to the profile on activation.
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'admin') {
@@ -22,105 +29,77 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null);
-  const rows: Record<string, any>[] = Array.isArray(body?.rows) ? body.rows : [];
-  if (rows.length === 0) {
-    return NextResponse.json({ error: 'no_rows' }, { status: 400 });
+  const rows: Record<string, unknown>[] = Array.isArray(body?.rows) ? body.rows : [];
+  const total = rows.length;
+  if (total === 0) {
+    return NextResponse.json({ error: 'no_rows', total: 0, imported: 0, skipped: 0, errors: [] }, { status: 400 });
   }
 
-  const internalDomain = await getPlatformSetting<string>('internal_email_domain', 'gac.gov.sa');
-  const roles = await getActiveRoles();
-  const roleByCode = new Map(roles.map((r) => [r.code, r]));
+  const defaults = await getAdminSetting<{ expires_days: number }>('invitation_defaults');
+  const expiresDays = defaults?.expires_days ?? 14;
+  const deadline = new Date(Date.now() + expiresDays * 24 * 3600 * 1000).toISOString();
 
   let imported = 0;
-  let updated = 0;
   let skipped = 0;
   const errors: { row: number; email?: string; message: string }[] = [];
 
   for (let i = 0; i < rows.length; i++) {
+    // Row number matches the spreadsheet (header is row 1, first data row is 2).
+    const rowNum = i + 2;
     const r = rows[i];
+    const fullName = String(r.full_name ?? '').trim();
     const email = String(r.email ?? '').trim().toLowerCase();
-    const fullNameAr = String(r.full_name_ar ?? '').trim();
-    const isInternal = r.is_internal !== false; // default true
+    const role = String(r.role ?? '').trim().toLowerCase();
+    const department = String(r.department ?? '').trim();
 
-    if (!email || !fullNameAr) {
+    if (!fullName) {
       skipped++;
-      errors.push({ row: i + 1, email, message: 'Missing required field (email or full_name_ar)' });
+      errors.push({ row: rowNum, email, message: 'full_name is required' });
       continue;
     }
-    if (isInternal && internalDomain && !email.endsWith(`@${internalDomain}`)) {
+    if (!isValidEmail(email)) {
       skipped++;
-      errors.push({ row: i + 1, email, message: `Internal employees must use @${internalDomain}` });
+      errors.push({ row: rowNum, email, message: 'Invalid email' });
+      continue;
+    }
+    if (!isValidImportRole(role)) {
+      skipped++;
+      errors.push({ row: rowNum, email, message: `Invalid role (allowed: ${EMPLOYEE_IMPORT_ROLES.join(', ')})` });
       continue;
     }
 
-    // Upsert employee by email
+    // Skip if a non-terminal invitation already exists for this email+role.
     const { data: existing } = await admin
-      .from('employees')
-      .select('id')
-      .eq('email', email)
+      .from('invitations')
+      .select('id, status')
+      .eq('target_email', email)
+      .eq('role', role)
+      .in('status', ['pending', 'sent', 'viewed', 'accepted'])
       .maybeSingle();
 
-    const payload = {
-      employee_number: r.employee_number ? String(r.employee_number).trim() : null,
-      full_name_ar: fullNameAr,
-      full_name_en: r.full_name_en ? String(r.full_name_en).trim() : null,
-      email,
-      phone: r.phone ? String(r.phone).trim() : null,
-      department: r.department ? String(r.department).trim() : null,
-      job_title: r.job_title ? String(r.job_title).trim() : null,
-      is_internal: isInternal,
-      is_active: true,
-      imported_by: user.id,
-    };
-
-    let employeeId: string;
     if (existing?.id) {
-      const { error: updErr } = await admin.from('employees').update(payload).eq('id', existing.id);
-      if (updErr) {
-        skipped++;
-        errors.push({ row: i + 1, email, message: updErr.message });
-        continue;
-      }
-      employeeId = existing.id;
-      updated++;
-    } else {
-      const { data: inserted, error: insErr } = await admin
-        .from('employees')
-        .insert(payload)
-        .select('id')
-        .single();
-      if (insErr || !inserted) {
-        skipped++;
-        errors.push({ row: i + 1, email, message: insErr?.message ?? 'insert failed' });
-        continue;
-      }
-      employeeId = inserted.id;
-      imported++;
+      skipped++;
+      errors.push({ row: rowNum, email, message: 'Invitation already exists for this email + role' });
+      continue;
     }
 
-    // NOTE: This import only writes to innovation.employees (not auth.users
-    // and not innovation.user_profiles). The employee's auth.users account
-    // is created lazily on their first sign-in via the unified /login flow.
-    // If we ever add a code path that pre-creates auth.users rows for
-    // imported employees, that path MUST also insert a matching
-    // innovation.user_profiles row with must_change_password = true so the
-    // user is routed through /activate to choose their own password.
+    const { error: insErr } = await admin.from('invitations').insert({
+      role,
+      target_email: email,
+      target_name: fullName,
+      deadline_at: deadline,
+      sent_by: user.id,
+      status: 'pending',
+      metadata: { department: department || null, source: 'employee_import' },
+    });
 
-    // Replace employee_roles: delete existing, insert Yes columns.
-    await admin.from('employee_roles').delete().eq('employee_id', employeeId);
-    const roleInserts: { employee_id: string; role_id: string; is_primary: boolean }[] = [];
-    let primarySet = false;
-    for (const role of roles) {
-      const colKey = `role_${role.code}`;
-      if (r[colKey] === true) {
-        roleInserts.push({ employee_id: employeeId, role_id: role.id, is_primary: !primarySet });
-        primarySet = true;
-      }
+    if (insErr) {
+      skipped++;
+      errors.push({ row: rowNum, email, message: insErr.message });
+      continue;
     }
-    if (roleInserts.length > 0) {
-      await admin.from('employee_roles').insert(roleInserts);
-    }
+    imported++;
   }
 
-  return NextResponse.json({ imported, updated, skipped, errors });
+  return NextResponse.json({ total, imported, skipped, errors });
 }
