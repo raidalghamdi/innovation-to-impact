@@ -43,6 +43,7 @@ type Props = {
   trackName: string | null;
   activityName: string | null;
   challengeName: string | null;
+  innovatorLabel: string;
   description: string | null;
   submittedAt: string | null;
   updatedAt: string | null;
@@ -94,6 +95,7 @@ export function EvaluationDetail(props: Props) {
     { icon: RouteIcon, label: t('infoTrack'), value: props.trackName ?? '—' },
     { icon: Target, label: t('infoChallenge'), value: props.challengeName ?? '—' },
     { icon: Hash, label: t('infoCode'), value: props.code ?? '—' },
+    { icon: Users, label: t('infoInnovator'), value: props.innovatorLabel },
   ];
 
   return (

@@ -111,6 +111,7 @@
     "infoTrack": "المسار",
     "infoChallenge": "التحدي",
     "infoCode": "رقم الفكرة",
+    "infoInnovator": "المبتكر",
     "infoSubmittedAt": "تاريخ ووقت التقديم",
     "participationIndividual": "مشاركة فردية",
     "participationTeam": "مشاركة جماعية",
@@ -2195,5 +2196,16 @@
     "current": "المرحلة الحالية",
     "upcoming": "قادمة",
     "stopped": "متوقفة هنا"
+  },
+  "themes": {
+    "strengthening-competition-in-digital-markets": {
+      "description": "تعزيز المنافسة العادلة عبر المنصات الرقمية والتجارة الإلكترونية."
+    },
+    "empowering-smes": {
+      "description": "خفض حواجز الدخول وحماية المنشآت الصغيرة والمتوسطة من الممارسات المخلة بالمنافسة."
+    },
+    "regulatory-efficiency-transparency": {
+      "description": "تبسيط إجراءات المراجعة وتحسين شفافية القرارات."
+    }
   }
 }

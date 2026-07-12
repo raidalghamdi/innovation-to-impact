@@ -111,6 +111,7 @@
     "infoTrack": "Track",
     "infoChallenge": "Challenge",
     "infoCode": "Idea ID",
+    "infoInnovator": "Innovator",
     "infoSubmittedAt": "Submitted at",
     "participationIndividual": "Individual",
     "participationTeam": "Team",
@@ -2195,5 +2196,16 @@
     "current": "Current stage",
     "upcoming": "Upcoming",
     "stopped": "Stopped here"
+  },
+  "themes": {
+    "strengthening-competition-in-digital-markets": {
+      "description": "Promote fair competition across digital platforms and e-commerce."
+    },
+    "empowering-smes": {
+      "description": "Lower barriers to entry and protect SMEs from anti-competitive practices."
+    },
+    "regulatory-efficiency-transparency": {
+      "description": "Streamline review processes and improve transparency of decisions."
+    }
   }
 }
