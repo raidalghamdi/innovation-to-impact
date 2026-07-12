@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchAuditPage, type AuditFilters } from '@/lib/data';
 import { verifyAuditChain } from '@/lib/audit';
+import { ExportBar } from '@/components/exports/ExportBar';
 
 const ENTITY_TYPES = ['idea', 'api_request', 'knowledge_article', 'compliance_control', 'support_message'];
 const PAGE_SIZE = 25;
@@ -78,12 +79,17 @@ export default async function AuditPage({
           >
             {t('export')}
           </a>
-          <a
-            href={`/api/exports/audit.xlsx${buildQuery(baseQuery, { locale })}`}
-            className="rounded-md border border-brand-teal px-4 py-2 text-sm font-medium text-brand-teal hover:bg-brand-teal/10"
-          >
-            {t('exportXlsx')}
-          </a>
+          <ExportBar
+            screenId="admin.auditLogs"
+            sensitive
+            filters={{
+              entityType: filters.entityType,
+              action: filters.action,
+              actorId: filters.actorId,
+              from: filters.from,
+              to: filters.to,
+            }}
+          />
         </div>
       </div>
 

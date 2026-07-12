@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/user';
 import { isCurrentUserAdmin } from '@/lib/db-roles';
 import { createClient } from '@/lib/supabase/server';
 import { SupportHandledButton } from '@/components/support-handled-button';
+import { ExportBar } from '@/components/exports/ExportBar';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,6 +87,7 @@ export default async function AdminSupportPage({
             ? 'الرسائل الواردة من نموذج الدعم، الأحدث أولاً. ضع علامة على الرسائل التي عالجتها.'
             : 'Messages from the support form, newest first. Mark the ones you have handled.'
         }
+        action={<ExportBar screenId="admin.support" sensitive={false} />}
       />
 
       <Card className="mt-6 overflow-hidden">

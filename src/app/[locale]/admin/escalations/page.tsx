@@ -10,6 +10,7 @@ import {
 } from '@/lib/escalations';
 import { fetchUsers } from '@/lib/data';
 import { EscalationBoard, type EscalationRow } from '@/components/escalation-board';
+import { ExportBar } from '@/components/exports/ExportBar';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,12 +29,14 @@ function first(v: string | string[] | undefined): string {
   return (Array.isArray(v) ? v[0] : v) ?? '';
 }
 
-export default async function EscalationsPage({
+export async function EscalationsView({
   params,
   searchParams,
+  screenPrefix = 'admin',
 }: {
   params: Promise<{ locale: string }>;
   searchParams: Promise<SearchParams>;
+  screenPrefix?: 'admin' | 'supervisor';
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -74,7 +77,17 @@ export default async function EscalationsPage({
 
   return (
     <AppShell>
-      <PageHeader title={t('title')} subtitle={t('subtitle')} />
+      <PageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        action={
+          <ExportBar
+            screenId={`${screenPrefix}.escalations`}
+            sensitive={false}
+            filters={{ status, level, entityType }}
+          />
+        }
+      />
 
       <Card className="mb-6">
         <CardContent className="p-4">
@@ -132,4 +145,14 @@ export default async function EscalationsPage({
       <EscalationBoard initial={rows} locale={locale} />
     </AppShell>
   );
+}
+
+export default function EscalationsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<SearchParams>;
+}) {
+  return <EscalationsView params={params} searchParams={searchParams} screenPrefix="admin" />;
 }

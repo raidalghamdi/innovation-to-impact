@@ -26,6 +26,7 @@ import {
   ConversionStatCard,
 } from '@/components/executive-analytics';
 import { PillarBarChart } from '@/components/charts/PillarBarChart';
+import { ExportBar } from '@/components/exports/ExportBar';
 import {
   Send,
   CheckCircle2,
@@ -164,10 +165,12 @@ function CohortChart({
   );
 }
 
-export default async function AdminAnalyticsPage({
+export async function AnalyticsView({
   params,
+  screenPrefix = 'admin',
 }: {
   params: Promise<{ locale: string }>;
+  screenPrefix?: 'admin' | 'supervisor';
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -224,14 +227,7 @@ export default async function AdminAnalyticsPage({
       <PageHeader
         title={t('adminTitle')}
         subtitle={t('adminSubtitle')}
-        action={
-          <a
-            href={`/api/exports/ideas.xlsx?locale=${locale}`}
-            className="rounded-md bg-brand-teal px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-          >
-            {t('exportXlsx')}
-          </a>
-        }
+        action={<ExportBar screenId={`${screenPrefix}.analytics`} sensitive={false} />}
       />
 
       {/* ===== Executive Dashboard (5 charts) ===== */}
@@ -449,4 +445,12 @@ export default async function AdminAnalyticsPage({
       </div>
     </AppShell>
   );
+}
+
+export default function AdminAnalyticsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  return <AnalyticsView params={params} screenPrefix="admin" />;
 }

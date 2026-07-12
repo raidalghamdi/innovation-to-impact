@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isCurrentUserAdmin, getActiveRoles } from '@/lib/db-roles';
 import { UsersManager } from '@/components/users-manager';
+import { ExportBar } from '@/components/exports/ExportBar';
 
 // src/app/[locale]/admin/users/page.tsx
 // Comprehensive user management: search, filters, KPI strip, and inline
@@ -22,6 +23,7 @@ export default async function AdminUsersPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const isAr = locale === 'ar';
+  const sp = await searchParams;
 
   const user = await getCurrentUser();
   if (!user || !(await isCurrentUserAdmin(user.role))) {
@@ -107,6 +109,14 @@ export default async function AdminUsersPage({
             isAr
               ? 'ابحث، عدِّل، أضف مستخدمين، وأدر الأدوار وكلمات المرور والحالة من مكان واحد.'
               : 'Search, edit, add users, and manage roles, passwords, and status \u2014 all from one place.'
+          }
+          action={
+            <ExportBar
+              screenId="admin.users"
+              sensitive
+              filters={{ q: sp.q, role: sp.role, category: sp.category, status: sp.status }}
+              selfEmail={user.email ?? undefined}
+            />
           }
         />
         <UsersManager
