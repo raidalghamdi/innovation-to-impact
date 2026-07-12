@@ -22,6 +22,9 @@ type Props = ChartProps & {
   // Fired when a bar is clicked, with the underlying data row. Used by the
   // pillar chart to drill into a theme.
   onSelect?: (row: Record<string, unknown>) => void;
+  // When true, multiple series stack onto one bar instead of sitting side by
+  // side. Used by the committee approve/reject trend.
+  stacked?: boolean;
 };
 
 export function BarChart({
@@ -32,6 +35,7 @@ export function BarChart({
   height = 260,
   className,
   onSelect,
+  stacked = false,
 }: Props) {
   const { locale, isRtl } = useChartLocale();
   const fmt = (v: number) => formatChartNumber(locale, v);
@@ -67,7 +71,8 @@ export function BarChart({
               dataKey={s.key}
               name={s.name ?? s.key}
               fill={s.color ?? seriesColor(i)}
-              radius={[3, 3, 0, 0]}
+              stackId={stacked ? 'a' : undefined}
+              radius={stacked ? undefined : [3, 3, 0, 0]}
               cursor={onSelect ? 'pointer' : undefined}
               onClick={onSelect ? (entry: { payload?: Record<string, unknown> }) => entry.payload && onSelect(entry.payload) : undefined}
             />
