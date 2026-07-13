@@ -8,6 +8,9 @@ import { isCurrentUserAdmin } from '@/lib/db-roles';
 import { RosterManager } from '@/components/roster-manager';
 import type { RoleCode } from '@/lib/invitations';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // src/app/[locale]/admin/roster/[role]/page.tsx
 // Per-role roster management: shows active members + all invitations,
 // with bulk-select, invite/remind/withdraw actions.

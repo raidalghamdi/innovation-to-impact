@@ -8,6 +8,9 @@ import { isCurrentUserAdmin, getActiveRoles } from '@/lib/db-roles';
 import { UsersManager } from '@/components/users-manager';
 import { ExportBar } from '@/components/exports/ExportBar';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // src/app/[locale]/admin/users/page.tsx
 // Comprehensive user management: search, filters, KPI strip, and inline
 // actions (edit / roles / reset password / activate / deactivate / delete).
@@ -55,8 +58,9 @@ export default async function AdminUsersPage({
       getActiveRoles(),
       admin
         .schema('innovation')
-        .from('user_roles')
-        .select('user_id, is_primary, roles!inner(code, name_ar, name_en)'),
+        .from('v_user_roles')
+        .select('user_id, is_primary, role_code, role_name_ar, role_name_en')
+        .eq('role_active', true),
       admin.auth.admin.listUsers({ perPage: 500 }),
     ]);
 
@@ -69,9 +73,9 @@ export default async function AdminUsersPage({
   for (const r of (userRoleRows ?? []) as any[]) {
     const list = rolesByUser.get(r.user_id) ?? [];
     list.push({
-      code: r.roles.code,
-      name_ar: r.roles.name_ar,
-      name_en: r.roles.name_en,
+      code: r.role_code,
+      name_ar: r.role_name_ar,
+      name_en: r.role_name_en,
       is_primary: r.is_primary,
     });
     rolesByUser.set(r.user_id, list);

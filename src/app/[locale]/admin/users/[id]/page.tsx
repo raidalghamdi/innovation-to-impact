@@ -7,6 +7,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getActiveRoles, isCurrentUserAdmin } from '@/lib/db-roles';
 import { UserRoleEditorClient } from '@/components/user-role-editor-client';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // src/app/[locale]/admin/users/[id]/page.tsx:1
 // Phase 11.3 — role assignment editor for a single user: checkboxes for every
 // active role + one radio for "primary". Saves to innovation.user_roles via
@@ -43,7 +46,12 @@ export default async function AdminUserDetailPage({
 
   const [allRoles, { data: assignedRows }] = await Promise.all([
     getActiveRoles(),
-    admin.from('user_roles').select('role_id, is_primary').eq('user_id', id),
+    admin
+      .schema('innovation')
+      .from('v_user_roles')
+      .select('role_id, is_primary')
+      .eq('user_id', id)
+      .eq('role_active', true),
   ]);
 
   return (

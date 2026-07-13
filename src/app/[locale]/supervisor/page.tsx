@@ -7,6 +7,9 @@ import { getCurrentUser } from '@/lib/user';
 import { userHasRole } from '@/lib/user-role-check';
 import { createClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * /supervisor — screening + track-assignment console.
  *

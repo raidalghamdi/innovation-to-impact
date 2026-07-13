@@ -9,6 +9,9 @@ import { isCurrentUserAdmin } from '@/lib/db-roles';
 import { getRoleIcon } from '@/lib/role-icons';
 import { Users, Mail, Bell, Settings2 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // src/app/[locale]/admin/roster/page.tsx
 // Roster hub: shows every role with counts (active members, pending invites, accepted, declined)
 // and quick links to the per-role management page + settings + templates.
