@@ -26,6 +26,7 @@ import {
 import type { StrategicTheme, Activity } from '@/lib/demo-data';
 import { pickFromRow } from '@/lib/i18n-content';
 import { validateUploadFile, UPLOAD_ACCEPT_ATTR } from '@/lib/evidence-types';
+import { MIN_ADDITIONAL_MEMBERS, MAX_ADDITIONAL_MEMBERS } from '@/lib/team-constraints';
 
 // --- Smart title suggestion -----------------------------------------------
 const STOPWORDS_AR = new Set([
@@ -62,14 +63,12 @@ function smartTitle(text: string, locale: string): string {
 
 type TeamMember = { email: string; name: string };
 
-// R42-later Item 4/7: `teamMembers` holds only the ADDITIONAL members — the
-// account owner (submitter) is always the team leader and is counted
-// implicitly. Minimum team size is 3 = leader + 2 additional members, so the
-// additional-member minimum is 2. Max total is 5 (leader + 4 additional was
-// the prior cap; we keep 5 additional rows available but the effective team is
-// leader + up to 5).
-const MIN_TEAM_MEMBERS = 2;
-const MAX_TEAM_MEMBERS = 5;
+// R42-later Item 4/7 + R44 Item 1: `teamMembers` holds only the ADDITIONAL
+// members — the account owner (submitter) is always the team leader and is
+// counted implicitly. Team total is 3 to 5 inclusive; the submitter is one of
+// those, so the additional-member count runs from 2 (minimum) to 4 (maximum).
+const MIN_TEAM_MEMBERS = MIN_ADDITIONAL_MEMBERS;
+const MAX_TEAM_MEMBERS = MAX_ADDITIONAL_MEMBERS;
 
 // Character limits per field.
 const LIMITS = { title: 120, summary: 300, description: 2000 };
@@ -102,6 +101,7 @@ export function IdeaForm({
   const tf = useTranslations('ideaForm');
   const tc = useTranslations('common');
   const te = useTranslations('errors');
+  const tteam = useTranslations('innovator.team');
   const router = useRouter();
   const isAr = locale === 'ar';
   const Chevron = isAr ? ChevronLeft : ChevronRight;
@@ -640,11 +640,13 @@ export function IdeaForm({
                       </li>
                     ))}
                   </ul>
-                  {teamMembers.length < MAX_TEAM_MEMBERS && (
+                  {teamMembers.length < MAX_TEAM_MEMBERS ? (
                     <Button type="button" size="sm" variant="outline" onClick={addMember}>
                       <Plus className="h-4 w-4" />
                       {tf('teamMemberAdd')}
                     </Button>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{tteam('maxReached')}</p>
                   )}
                 </div>
               )}

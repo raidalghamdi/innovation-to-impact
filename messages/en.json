@@ -2598,6 +2598,11 @@
     },
     "withdraw": "Withdraw",
     "withdrawConfirm": "Withdraw this idea? You can no longer edit it.",
-    "teamLeaderBadge": "Team Leader"
+    "teamLeaderBadge": "Team Leader",
+    "team": {
+      "submitterBadge": "Idea Submitter",
+      "maxReached": "Maximum of 4 additional members (5 total including submitter)",
+      "mustReduceToMax": "Please reduce team size to 5 or fewer before saving"
+    }
   }
 }

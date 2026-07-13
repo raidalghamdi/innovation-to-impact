@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { persistIdeaAttachments } from '@/app/[locale]/ideas/new/actions';
 import { getTrackChallenges } from '@/lib/tracks';
 import { validateUploadFile, UPLOAD_ACCEPT_ATTR } from '@/lib/evidence-types';
+import { MIN_ADDITIONAL_MEMBERS, MAX_ADDITIONAL_MEMBERS } from '@/lib/team-constraints';
 import { AlertTriangle, Lock, Save, X, Paperclip, FileText, CheckCircle2 } from 'lucide-react';
 
 type Section =
@@ -25,14 +26,10 @@ type Section =
 type TeamMemberInput = { name: string; email: string };
 type Option = { id: string; name_ar: string | null; name_en: string | null };
 
-// A team must keep at least (submitter + 2) = 3 total. The submitter is the
-// implicit leader, so the edit form (which lists the ADDITIONAL members only)
-// must retain at least two rows. Mirrors the server-side resubmit guard.
-const MIN_ADDITIONAL_MEMBERS = 2;
-
 type Props = {
   locale: string;
   ideaId: string;
+  submitter: { name: string | null; email: string | null };
   initial: {
     title_ar: string | null;
     title_en: string | null;
@@ -64,6 +61,7 @@ type Props = {
 export function IdeaEditForm({
   locale,
   ideaId,
+  submitter,
   initial,
   activities,
   themes,
@@ -117,6 +115,13 @@ export function IdeaEditForm({
   const belowTeamMin =
     participation === 'team' && filledMembers.length < MIN_ADDITIONAL_MEMBERS;
   const atTeamMin = teamMembers.length <= MIN_ADDITIONAL_MEMBERS;
+  // R44 Item 1/3: cap the ADDITIONAL members at 4 (team total 5 including the
+  // submitter). Grandfathered ideas may load with more rows than the cap — the
+  // "Add member" control hides at the cap, and save is blocked until the roster
+  // drops back to 4 or fewer additional members.
+  const atTeamMax = teamMembers.length >= MAX_ADDITIONAL_MEMBERS;
+  const aboveTeamMax =
+    participation === 'team' && filledMembers.length > MAX_ADDITIONAL_MEMBERS;
 
   // Attachment uploads (only relevant when 'attachments' is editable). Files
   // upload immediately to the evidence bucket linked to this idea; there is no
@@ -174,6 +179,16 @@ export function IdeaEditForm({
         msg: isAr
           ? 'يجب أن يضم الفريق قائدًا وعضوين على الأقل (3 أفراد).'
           : 'A team must include the leader and at least two members (3 total).',
+      });
+      return;
+    }
+    // R44 Item 3: block save for a grandfathered idea that still exceeds the cap.
+    if (isEditable('team') && aboveTeamMax) {
+      setFlash({
+        ok: false,
+        msg: isAr
+          ? 'يجب تقليص أعضاء الفريق إلى ٥ أو أقل قبل الحفظ'
+          : 'Please reduce team size to 5 or fewer before saving',
       });
       return;
     }
@@ -423,6 +438,27 @@ export function IdeaEditForm({
             </div>
             <div className="space-y-2">
               <Label>{isAr ? 'أعضاء الفريق' : 'Team members'}</Label>
+              {/* R44 Item 2: the submitter is always the first team member and
+                  counts toward the total of 5. Rendered read-only — the
+                  innovator cannot rename, re-email, or remove themselves. */}
+              <div className="grid items-center gap-2 rounded-md border border-dashed border-border bg-muted/30 p-2 sm:grid-cols-[1fr_1fr_auto]">
+                <Input
+                  value={submitter.name ?? ''}
+                  readOnly
+                  disabled
+                  aria-label={isAr ? 'الاسم' : 'Name'}
+                />
+                <Input
+                  value={submitter.email ?? ''}
+                  readOnly
+                  disabled
+                  dir="ltr"
+                  aria-label={isAr ? 'البريد الإلكتروني' : 'Email'}
+                />
+                <span className="justify-self-start rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 sm:justify-self-center">
+                  {isAr ? 'مقدم الفكرة' : 'Idea Submitter'}
+                </span>
+              </div>
               {teamMembers.map((m, idx) => (
                 <div key={idx} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
                   <Input
@@ -457,11 +493,26 @@ export function IdeaEditForm({
                     : 'A team must include the leader and at least two members (3 total).'}
                 </p>
               )}
-              {isEditable('team') && (
-                <Button type="button" variant="outline" onClick={addMember}>
-                  {isAr ? 'إضافة عضو' : 'Add member'}
-                </Button>
+              {aboveTeamMax && (
+                <p className="flex items-center gap-1.5 text-xs text-red-700">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  {isAr
+                    ? 'يجب تقليص أعضاء الفريق إلى ٥ أو أقل قبل الحفظ'
+                    : 'Please reduce team size to 5 or fewer before saving'}
+                </p>
               )}
+              {isEditable('team') &&
+                (atTeamMax ? (
+                  <p className="text-xs text-muted-foreground">
+                    {isAr
+                      ? 'الحد الأقصى ٤ أعضاء إضافيين (المجموع ٥ مع مقدم الفكرة)'
+                      : 'Maximum of 4 additional members (5 total including submitter)'}
+                  </p>
+                ) : (
+                  <Button type="button" variant="outline" onClick={addMember}>
+                    {isAr ? 'إضافة عضو' : 'Add member'}
+                  </Button>
+                ))}
             </div>
           </div>
         ) : (

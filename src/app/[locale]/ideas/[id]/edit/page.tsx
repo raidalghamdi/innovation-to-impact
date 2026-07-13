@@ -102,6 +102,24 @@ export default async function IdeaEditPage({
       ? row.rejection_reason_ar || row.rejection_reason || null
       : row.rejection_reason || row.rejection_reason_ar || null;
 
+  // Submitter profile — the submitter is always the first (read-only) team
+  // member (R44 Item 2). Page access is already gated to the submitter, so this
+  // resolves the current user's display name + email.
+  const { data: submitterProfile } = await supabase
+    .from('user_profiles')
+    .select('full_name, full_name_ar, email')
+    .eq('id', row.submitter_id)
+    .maybeSingle();
+  const submitter = {
+    name:
+      (locale === 'ar'
+        ? (submitterProfile as any)?.full_name_ar || (submitterProfile as any)?.full_name
+        : (submitterProfile as any)?.full_name || (submitterProfile as any)?.full_name_ar) ??
+      user.fullName ??
+      null,
+    email: (submitterProfile as any)?.email ?? user.email ?? null,
+  };
+
   return (
     <AppShell>
       <PageHeader
@@ -115,6 +133,7 @@ export default async function IdeaEditPage({
       <IdeaEditForm
         locale={locale}
         ideaId={id}
+        submitter={submitter}
         initial={{
           title_ar: row.title_ar,
           title_en: row.title_en,

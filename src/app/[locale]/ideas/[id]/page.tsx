@@ -15,7 +15,6 @@ import { listIdeaAttachments } from '@/lib/storage';
 import { formatFileSize, type EvidenceWithUrl } from '@/lib/evidence-types';
 import { computeIdeaStage } from '@/lib/idea-journey';
 import type { JourneyTimelineStage } from '@/components/idea-journey-timeline';
-import { getTeamLeader } from '@/lib/team-leader';
 import { PostProgramStages } from '@/components/post-program-stages';
 import { WithdrawIdeaButton } from '@/components/withdraw-idea-button';
 
@@ -259,38 +258,42 @@ export default async function IdeaDetailPage({
   const canWithdraw = isOwner && WITHDRAWABLE_STATUSES.has(statusStr);
   const showPostProgram = isOwner && POST_PROGRAM_STATUSES.has(statusStr);
 
-  // Unified team-leader resolution (R42-later Item 7): the v_team_leader view is
-  // the single source for "قائد الفريق / Team Leader". When it resolves a leader
-  // for a team idea, that member is rendered first with the leader badge. This
-  // is innovator-side only — evaluators never see team/leader identity.
-  const teamLeader = participationType === 'team' ? await getTeamLeader(id) : null;
-  if (teamLeader && teamMembers.length > 0) {
-    const leaderEmail = teamLeader.email.trim().toLowerCase();
-    const leaderName = teamLeader.name.trim().toLowerCase();
-    teamMembers = teamMembers.map((m) => {
-      const emailMatch =
-        !!m.email && !!leaderEmail && m.email.trim().toLowerCase() === leaderEmail;
-      const nameMatch =
-        !!m.full_name && !!leaderName && m.full_name.trim().toLowerCase() === leaderName;
-      return { ...m, is_leader: m.is_leader || emailMatch || nameMatch };
-    });
-    // No member matched the view leader → treat the first as leader so the badge
-    // always renders exactly once.
-    if (!teamMembers.some((m) => m.is_leader)) {
-      teamMembers = teamMembers.map((m, i) => ({ ...m, is_leader: i === 0 }));
+  // R44 Item 2: the submitter is always the first team member and carries the
+  // "مقدم الفكرة / Idea Submitter" badge. The stored team_members JSONB holds
+  // only the ADDITIONAL members (the submitter is implicit), so we surface the
+  // submitter explicitly as the first entry. Innovator-side only — evaluators
+  // never see team/leader identity.
+  if (participationType === 'team') {
+    const submitterEmailNorm = (submitterEmail ?? '').trim().toLowerCase();
+    const alreadyListed =
+      (!!submitterId && teamMembers.some((m) => m.id === submitterId)) ||
+      (!!submitterEmailNorm &&
+        teamMembers.some((m) => (m.email ?? '').trim().toLowerCase() === submitterEmailNorm));
+    // Only the submitter row keeps the badge — clear any legacy leader flags.
+    teamMembers = teamMembers.map((m) => ({ ...m, is_leader: false }));
+    if (alreadyListed) {
+      teamMembers = teamMembers.map((m) => {
+        const isSubmitter =
+          (!!submitterId && m.id === submitterId) ||
+          (!!submitterEmailNorm &&
+            (m.email ?? '').trim().toLowerCase() === submitterEmailNorm);
+        return isSubmitter ? { ...m, is_leader: true } : m;
+      });
+      teamMembers.sort((a, b) => (a.is_leader === b.is_leader ? 0 : a.is_leader ? -1 : 1));
+    } else {
+      teamMembers = [
+        {
+          id: submitterId ?? 'submitter',
+          full_name: submitterName,
+          email: submitterEmail,
+          role_title: null,
+          is_leader: true,
+        },
+        ...teamMembers,
+      ];
     }
-    // Ensure a single leader, placed first.
-    let flagged = false;
-    teamMembers = teamMembers.map((m) => {
-      if (m.is_leader && !flagged) {
-        flagged = true;
-        return m;
-      }
-      return { ...m, is_leader: false };
-    });
-    teamMembers.sort((a, b) => (a.is_leader === b.is_leader ? 0 : a.is_leader ? -1 : 1));
   }
-  const tLeaderBadge = await getTranslations('innovator');
+  const tTeam = await getTranslations('innovator.team');
 
   // Journey timeline — R42-later Item 6: derive the stage from the idea's REAL
   // status via computeIdeaStage, not the stored `current_stage` smallint. The
@@ -468,7 +471,7 @@ export default async function IdeaDetailPage({
                       </div>
                       {m.is_leader && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                          {tLeaderBadge('teamLeaderBadge')}
+                          {tTeam('submitterBadge')}
                         </span>
                       )}
                     </li>

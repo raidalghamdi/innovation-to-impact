@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { fanOut } from '@/lib/notifications';
+import { MIN_ADDITIONAL_MEMBERS, MAX_ADDITIONAL_MEMBERS, MIN_TEAM_TOTAL, MAX_TEAM_TOTAL } from '@/lib/team-constraints';
 
 /**
  * POST /api/ideas/[id]/resubmit
@@ -140,9 +141,17 @@ export async function POST(
       : Array.isArray(row.team_members)
         ? row.team_members
         : [];
-    if (effectiveMembers.length < 2) {
+    if (effectiveMembers.length < MIN_ADDITIONAL_MEMBERS) {
       return NextResponse.json(
-        { error: 'team_min_members', min: 3 },
+        { error: 'team_min_members', min: MIN_TEAM_TOTAL },
+        { status: 400 }
+      );
+    }
+    // R44 Item 1/3: enforce the upper cap on resubmit. A grandfathered idea
+    // that still carries too many members must be trimmed before it can save.
+    if (effectiveMembers.length > MAX_ADDITIONAL_MEMBERS) {
+      return NextResponse.json(
+        { error: 'team_max_members', max: MAX_TEAM_TOTAL },
         { status: 400 }
       );
     }
