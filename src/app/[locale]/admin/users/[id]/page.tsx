@@ -48,7 +48,7 @@ export default async function AdminUserDetailPage({
     getActiveRoles(),
     admin
       .schema('innovation')
-      .from('v_user_roles')
+      .schema('innovation').from('v_user_roles')
       .select('role_id, is_primary')
       .eq('user_id', id)
       .eq('role_active', true),

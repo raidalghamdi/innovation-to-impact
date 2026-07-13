@@ -68,7 +68,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   }
 
   const { count: userRefCount } = await admin
-    .from('user_roles')
+    .schema('innovation').from('user_roles')
     .select('id', { count: 'exact', head: true })
     .eq('role_id', id);
   const { count: empRefCount } = await admin

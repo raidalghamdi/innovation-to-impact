@@ -40,7 +40,7 @@ async function getRosterStats(): Promise<RoleStat[]> {
 
   const { data: userRoles } = await admin
     .schema('innovation')
-    .from('v_user_roles')
+    .schema('innovation').from('v_user_roles')
     .select('role_code, role_active');
   const { data: invitations } = await admin
     .schema('innovation')

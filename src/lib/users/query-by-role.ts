@@ -25,7 +25,7 @@ export async function getUsersByRole(roleCode: string): Promise<UserByRole[]> {
 
   // 1. Resolve the user ids that currently hold this role.
   const { data: roleRows, error: roleErr } = await supabase
-    .from('v_user_roles')
+    .schema('innovation').from('v_user_roles')
     .select('user_id, role_code')
     .eq('role_code', roleCode)
     .eq('role_active', true);

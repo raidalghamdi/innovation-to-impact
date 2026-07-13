@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
     // (canonical multi-role source) rather than user_profiles.role which is
     // often stale/'member' for supervisors.
     const { data: supRows } = await supabase
-      .from('v_user_roles')
+      .schema('innovation').from('v_user_roles')
       .select('user_id')
       .eq('role_code', 'supervisor')
       .eq('role_active', true);

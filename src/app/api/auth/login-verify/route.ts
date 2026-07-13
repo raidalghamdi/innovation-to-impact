@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
           role_id: er.role_id,
           is_primary: er.is_primary,
         }));
-        await admin.from('user_roles').upsert(inserts, { onConflict: 'user_id,role_id' });
+        await admin.schema('innovation').from('user_roles').upsert(inserts, { onConflict: 'user_id,role_id' });
       }
 
       await admin
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     // Load current roles (post-mirror) to decide role-selection routing.
     const { data: roleRows } = await admin
-      .from('v_user_roles')
+      .schema('innovation').from('v_user_roles')
       .select('role_code, is_primary')
       .eq('user_id', userId);
 

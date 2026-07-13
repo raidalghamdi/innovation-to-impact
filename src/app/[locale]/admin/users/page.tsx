@@ -58,7 +58,7 @@ export default async function AdminUsersPage({
       getActiveRoles(),
       admin
         .schema('innovation')
-        .from('v_user_roles')
+        .schema('innovation').from('v_user_roles')
         .select('user_id, is_primary, role_code, role_name_ar, role_name_en')
         .eq('role_active', true),
       admin.auth.admin.listUsers({ perPage: 500 }),

@@ -63,7 +63,7 @@ export async function getUserRoles(userId: string): Promise<UserRoleRow[]> {
   const admin = createAdminClient();
   if (!admin) return [];
   const { data, error } = await admin
-    .from('v_user_roles')
+    .schema('innovation').from('v_user_roles')
     .select('*')
     .eq('user_id', userId)
     .eq('role_active', true)
@@ -80,7 +80,7 @@ export async function getMyUserRoles(): Promise<UserRoleRow[]> {
   const uid = auth?.user?.id;
   if (!uid) return [];
   const { data, error } = await supabase
-    .from('v_user_roles')
+    .schema('innovation').from('v_user_roles')
     .select('*')
     .eq('user_id', uid)
     .eq('role_active', true)

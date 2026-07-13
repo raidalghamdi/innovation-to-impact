@@ -95,7 +95,7 @@ export async function POST(
   // Best-effort; never fail the transition on a notification error.
   try {
     const { data: memberRows } = await supabase
-      .from('v_user_roles')
+      .schema('innovation').from('v_user_roles')
       .select('user_id')
       .in('role_code', ['judge', 'committee'])
       .eq('role_active', true);

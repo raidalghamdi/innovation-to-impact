@@ -723,7 +723,7 @@ export async function listUsersForRole(
 
   const { data: userRoles } = await supabase
     .schema('innovation')
-    .from('v_user_roles')
+    .schema('innovation').from('v_user_roles')
     .select('user_id')
     .eq('role_id', roleId)
     .eq('role_active', true);

@@ -103,7 +103,7 @@ export async function middleware(request: NextRequest) {
           },
         });
         const { data: roleRows } = await innovationClient
-          .from('v_user_roles')
+          .schema('innovation').from('v_user_roles')
           .select('role_code')
           .eq('user_id', user.id)
           .eq('role_active', true);
