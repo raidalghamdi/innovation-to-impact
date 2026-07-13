@@ -7,6 +7,7 @@ import { logAudit } from '@/lib/audit';
 import { notifyByRole, fanOut, getSupervisorIds } from '@/lib/notifications';
 import { openSlaTracker, closeSlaTracker } from '@/lib/sla';
 import { EV_CRITERIA, type EvScores } from '@/lib/evaluator-criteria';
+import { afterEvaluatorSubmit } from '@/lib/lifecycle-transitions';
 
 export type EvSubmitResult = { ok: boolean; error?: string };
 
@@ -65,6 +66,16 @@ export async function submitEvaluatorScore(input: {
   const supervisorIds = await getSupervisorIds(supabase);
   if (supervisorIds.length)
     await fanOut(supervisorIds, 'evaluation_completed', { ideaId: input.ideaId }, { link: `/ideas/${input.ideaId}` });
+
+  // T1: if this was the last evaluator, advance the idea to
+  // pass_awaiting_attachments / evaluation_failed. Best-effort — a transition
+  // failure must never lose the scorecard that was just saved.
+  try {
+    await afterEvaluatorSubmit(input.ideaId);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[submitEvaluatorScore] afterEvaluatorSubmit failed:', err);
+  }
 
   revalidatePath('/[locale]/evaluator', 'page');
   return { ok: true };

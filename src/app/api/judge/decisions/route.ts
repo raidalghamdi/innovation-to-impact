@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { userHasRole } from '@/lib/user-role-check';
 import { createNotification, fanOut } from '@/lib/notifications';
+import { afterCommitteeSubmit } from '@/lib/lifecycle-transitions';
 
 type Decision = 'approve' | 'reject';
 
@@ -89,6 +90,17 @@ export async function POST(req: NextRequest) {
   const { error: updErr } = await supabase.from('ideas').update(update).eq('id', idea_id);
   if (updErr) {
     return NextResponse.json({ error: updErr.message }, { status: 400 });
+  }
+
+  // T3 (R43 scoring flow): if the committee is complete, advance the idea to
+  // pending_final_ranking. Best-effort and guarded — in the current
+  // approve/reject flow the idea's status has already moved off `committee`
+  // above, so the RPC no-ops; wired for the R43 multi-member scoring path.
+  try {
+    await afterCommitteeSubmit(idea_id);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[judge/decisions] afterCommitteeSubmit failed:', err);
   }
 
   // ── Notifications (best-effort) ─────────────────────────────────────────

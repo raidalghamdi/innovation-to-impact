@@ -7,6 +7,7 @@ import { logAudit } from '@/lib/audit';
 import { notifyByRole, fanOut, getSupervisorIds } from '@/lib/notifications';
 import { openSlaTracker, closeSlaTracker } from '@/lib/sla';
 import { computeTotal, type CriteriaScores } from '@/lib/evaluation';
+import { afterEvaluatorSubmit } from '@/lib/lifecycle-transitions';
 
 export type EvaluationResult = { ok: boolean; error?: string };
 
@@ -81,6 +82,14 @@ export async function saveEvaluation(input: SaveInput): Promise<EvaluationResult
     const supervisorIds = await getSupervisorIds(supabase);
     if (supervisorIds.length)
       await fanOut(supervisorIds, 'evaluation_completed', { ideaId: input.ideaId }, { link: `/ideas/${input.ideaId}` });
+
+    // T1: last-evaluator transition. Best-effort — never lose the submission.
+    try {
+      await afterEvaluatorSubmit(input.ideaId);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[saveEvaluation] afterEvaluatorSubmit failed:', err);
+    }
   }
 
   revalidatePath(`/[locale]/evaluation`, 'page');
