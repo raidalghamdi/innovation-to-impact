@@ -166,6 +166,9 @@
     }
   },
   "invitations": {
+    "testMode": {
+      "banner": "⚠ وضع اختبار البريد مُفعّل — جميع الرسائل الصادرة تذهب إلى {recipient}"
+    },
     "send": {
       "sendNow": "أرسل الآن",
       "sendModalTitle": "إرسال القالب الآن",

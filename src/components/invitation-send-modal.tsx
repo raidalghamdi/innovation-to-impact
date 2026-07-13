@@ -29,7 +29,7 @@ export type SendTemplate = {
   id: string;
   code: string;
   kind: string;
-  role: string;
+  role: string | null;
   subject_ar: string;
   subject_en: string;
   is_broadcast?: boolean;
@@ -38,11 +38,20 @@ export type SendTemplate = {
 
 type Role = { code: string; name_ar: string | null; name_en: string | null };
 
+// Invitable roles (R42). `admin` is intentionally excluded — admin accounts are
+// provisioned separately, not via invitation. Dead roles (committee, expert,
+// mentor) are also excluded.
+const INVITABLE_ROLES: Role[] = [
+  { code: 'innovator', name_ar: 'مبتكر', name_en: 'Innovator' },
+  { code: 'evaluator', name_ar: 'مقيّم', name_en: 'Evaluator' },
+  { code: 'judge', name_ar: 'محكم', name_en: 'Judge' },
+  { code: 'supervisor', name_ar: 'مشرف', name_en: 'Supervisor' },
+];
+
 type Recipient = { email: string; name?: string };
 
 type Props = {
   template: SendTemplate;
-  roles: Role[];
   locale: 'ar' | 'en';
   onClose: () => void;
   onToast: (kind: 'ok' | 'err', msg: string) => void;
@@ -52,7 +61,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type TabKey = 'single' | 'multiple' | 'excel' | 'byRole' | 'broadcast';
 
-export function InvitationSendModal({ template, roles, locale, onClose, onToast }: Props) {
+export function InvitationSendModal({ template, locale, onClose, onToast }: Props) {
+  const roles = INVITABLE_ROLES;
   const isAr = locale === 'ar';
   const t = useTranslations('invitations.send');
 
@@ -82,7 +92,7 @@ export function InvitationSendModal({ template, roles, locale, onClose, onToast 
   const [excelName, setExcelName] = useState('');
 
   // By role / broadcast preview
-  const [selectedRole, setSelectedRole] = useState<string>(template.role);
+  const [selectedRole, setSelectedRole] = useState<string>(roles[0]?.code ?? 'innovator');
   const [rolePreview, setRolePreview] = useState<Recipient[] | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);

@@ -89,8 +89,11 @@ export type TemplateAttachment = {
 
 // ---------- Template helpers -------------------------------------------------
 
-export async function getTemplateForRole(
-  role: RoleCode,
+/**
+ * Templates are role-agnostic since R42: one active row per kind with role NULL.
+ * The recipient's role is injected at render time via {{role_ar}}/{{role_en}}.
+ */
+export async function getTemplateByKind(
   kind: TemplateKind
 ): Promise<EmailTemplate | null> {
   const supabase = createServiceRoleClient();
@@ -98,8 +101,8 @@ export async function getTemplateForRole(
     .schema('innovation')
     .from('email_templates')
     .select('*')
-    .eq('role', role)
     .eq('kind', kind)
+    .is('role', null)
     .eq('is_active', true)
     .maybeSingle();
   return (data as EmailTemplate | null) ?? null;
@@ -222,6 +225,33 @@ function inviteLink(token: string): string {
   return `${base}/invitations/${token}`;
 }
 
+function dashboardLink(): string {
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.APP_URL ??
+    'https://innovation-to-impact.vercel.app';
+  return `${base.replace(/\/$/, '')}/`;
+}
+
+/**
+ * Resolve bilingual role labels from innovation.roles. Falls back to the static
+ * Arabic map / the raw code when the role row is missing.
+ */
+async function getRoleLabels(role: string): Promise<{ ar: string; en: string }> {
+  const supabase = createServiceRoleClient();
+  const { data } = await supabase
+    .schema('innovation')
+    .from('roles')
+    .select('name_ar, name_en')
+    .eq('code', role)
+    .maybeSingle();
+  const row = data as { name_ar: string | null; name_en: string | null } | null;
+  return {
+    ar: row?.name_ar ?? roleLabelAr(role),
+    en: row?.name_en ?? role,
+  };
+}
+
 /**
  * Accept/reject URLs for a given invitation token. Both point at the public
  * invitation page; the reject variant carries an ?action=reject hint.
@@ -247,7 +277,7 @@ export async function sendInvitationEmail(
 ): Promise<{ ok: boolean; provider: string; error?: string }> {
   const kind = opts.kind ?? 'invite';
   const locale = opts.locale ?? 'ar';
-  const template = await getTemplateForRole(invitation.role, kind);
+  const template = await getTemplateByKind(kind);
   if (!template) return { ok: false, provider: 'noop', error: 'template_not_found' };
 
   const defaults = await getAdminSetting<{
@@ -262,16 +292,22 @@ export async function sendInvitationEmail(
   const links = invitationLinks(invitation.token);
   const inviteeName = invitation.target_name ?? invitation.target_email;
   const deadlineText = formatDate(invitation.deadline_at, locale);
+  const roleLabels = await getRoleLabels(invitation.role);
   const vars = {
     name: inviteeName,
+    full_name: inviteeName,
     invitee_name: inviteeName,
     sender_name: programName,
     committee_name: programName,
     event_name: programName,
     role: invitation.role,
+    role_ar: roleLabels.ar,
+    role_en: roleLabels.en,
     link: links.accept,
+    invite_link: links.accept,
     accept_link: links.accept,
     reject_link: links.reject,
+    dashboard_link: dashboardLink(),
     deadline: deadlineText,
     expires_at: deadlineText,
     program: programName,
@@ -281,25 +317,13 @@ export async function sendInvitationEmail(
     locale === 'ar' ? template.subject_ar : template.subject_en,
     vars
   );
-  const bodyText = renderTemplate(
+  // Templates are now self-contained HTML documents (R42 consolidation); render
+  // the placeholders directly rather than re-wrapping in the branded shell.
+  const html = renderTemplate(
     locale === 'ar' ? template.body_ar : template.body_en,
     vars
   );
-  const html = renderMailHtml({
-    subject,
-    body: bodyText,
-    locale,
-    logoUrl: absoluteLogoUrl(),
-    acceptUrl: links.accept,
-    rejectUrl: links.reject,
-    greetingName: inviteeName,
-    deadlineText,
-    metaItems: [
-      { label: 'الدور', value: roleLabelAr(invitation.role) },
-      { label: 'آخر موعد للرد', value: deadlineText },
-      { label: 'الجهة', value: 'الهيئة العامة للمنافسة' },
-    ],
-  });
+  const bodyText = subject;
 
   const attachmentRows = await getTemplateAttachments(template.id);
   const attachments = await downloadAttachments(attachmentRows);
