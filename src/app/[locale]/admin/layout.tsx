@@ -69,6 +69,7 @@ export default async function AdminLayout({
     'change-requests': 'طلبات التعديل',
     assignments: 'التعيينات',
     cms: 'محرر المحتوى',
+    reports: 'مركز التقارير',
   };
   const FALLBACK_LABELS_EN: Record<string, string> = {
     users: 'Users',
@@ -83,6 +84,7 @@ export default async function AdminLayout({
     'change-requests': 'Change Requests',
     assignments: 'Assignments',
     cms: 'Content Editor',
+    reports: 'Reports Center',
   };
 
   const parts = pathname

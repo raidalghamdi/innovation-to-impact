@@ -22,12 +22,16 @@ type Notif = {
   created_at: string;
 };
 
+type NotifEmptyRole = 'innovator' | 'admin' | 'supervisor' | 'evaluator' | 'judge' | 'default';
+
 export function NotificationsList({
   compact = false,
   limit,
+  emptyRole = 'default',
 }: {
   compact?: boolean;
   limit?: number;
+  emptyRole?: NotifEmptyRole;
 } = {}) {
   const t = useTranslations('notifications');
   const te = useTranslations('emptyStates');
@@ -177,8 +181,8 @@ export function NotificationsList({
       {loaded && shown.length === 0 && (
         <EmptyState
           icon={Bell}
-          title={te('notificationsTitle')}
-          description={te('notificationsBody')}
+          title={t('empty.title')}
+          description={t(`empty.subtitle.${emptyRole}`)}
         />
       )}
 
