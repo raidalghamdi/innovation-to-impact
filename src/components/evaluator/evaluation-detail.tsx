@@ -21,7 +21,6 @@ import { formatFileSize } from '@/lib/evidence-types';
 import { EvRing, EvSuccessOverlay, EvToast } from '@/components/evaluator/ev-ui';
 import { submitEvaluatorScore } from '@/app/[locale]/evaluator/actions';
 import { EV_CRITERIA, type EvScores, type EvCriterion } from '@/lib/evaluator-criteria';
-import { IdeaJourneyTimeline, type JourneyTimelineStage } from '@/components/idea-journey-timeline';
 
 type Attachment = {
   id: string;
@@ -43,13 +42,10 @@ type Props = {
   trackName: string | null;
   activityName: string | null;
   challengeName: string | null;
-  innovatorLabel: string;
   description: string | null;
   submittedAt: string | null;
   updatedAt: string | null;
   participationType: 'individual' | 'team' | null;
-  journeyStages: JourneyTimelineStage[];
-  journeyStopped: boolean;
   attachments: Attachment[];
   readOnly: boolean;
   existingScores: Partial<EvScores> | null;
@@ -87,15 +83,16 @@ export function EvaluationDetail(props: Props) {
     });
   }
 
-  // Round 29 v2 — hero holds only the four identity fields. Supervisor approval
-  // status is implicit (the idea couldn't reach the evaluator otherwise), so no
-  // badge is rendered. Submission timestamps live in their own card below.
+  // Hero holds only the four identity fields (event / track / challenge /
+  // code). No innovator field — evaluators must never see innovator identity,
+  // and the approved design excludes it. Supervisor approval status is implicit
+  // (the idea couldn't reach the evaluator otherwise). Submission timestamps
+  // live in their own card below.
   const heroFields: Array<{ icon: typeof CalendarDays; label: string; value: string }> = [
     { icon: CalendarDays, label: t('infoEvent'), value: props.activityName ?? '—' },
     { icon: RouteIcon, label: t('infoTrack'), value: props.trackName ?? '—' },
     { icon: Target, label: t('infoChallenge'), value: props.challengeName ?? '—' },
     { icon: Hash, label: t('infoCode'), value: props.code ?? '—' },
-    { icon: Users, label: t('infoInnovator'), value: props.innovatorLabel },
   ];
 
   return (
@@ -141,16 +138,6 @@ export function EvaluationDetail(props: Props) {
               ))}
             </dl>
           </section>
-
-          {/* Journey Timeline — mirrors the innovator idea detail page so
-              evaluators see the same six-stage progress. */}
-          <div className="ev-card p-6">
-            <IdeaJourneyTimeline
-              locale={locale}
-              stages={props.journeyStages}
-              stopped={props.journeyStopped}
-            />
-          </div>
 
           {/* Description */}
           <div className="ev-card p-6">

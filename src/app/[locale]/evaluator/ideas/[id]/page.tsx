@@ -1,13 +1,11 @@
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { listEvidence } from '@/lib/storage';
+import { listIdeaAttachments } from '@/lib/storage';
 import { fetchEvaluationForIdea } from '@/app/[locale]/evaluation/actions';
 import type { EvidenceWithUrl } from '@/lib/evidence-types';
 import { EvaluationDetail } from '@/components/evaluator/evaluation-detail';
 import type { EvScores } from '@/lib/evaluator-criteria';
-import { computeIdeaStage } from '@/lib/idea-journey';
-import type { JourneyTimelineStage } from '@/components/idea-journey-timeline';
 
 export default async function EvaluatorIdeaDetailPage({
   params,
@@ -36,12 +34,6 @@ export default async function EvaluatorIdeaDetailPage({
 
   const row = ideaRow as any;
   const title = (isAr ? row.title_ar : row.title_en) || row.title_en || row.title_ar || '';
-
-  // Anonymized submitter pseudonym — evaluators must never see the innovator's
-  // real name/email (PII). Mirrors innovation.anonymous_innovator_label():
-  // last 3 hex chars of the idea id, uppercased.
-  const idSuffix = String(id).replace(/-/g, '').slice(-3).toUpperCase();
-  const innovatorLabel = `${isAr ? 'مبتكر' : 'Innovator'} #${idSuffix}`;
 
   // Track name
   let trackName: string | null = null;
@@ -79,38 +71,11 @@ export default async function EvaluatorIdeaDetailPage({
       ? row.participation_type
       : null;
 
-  const attachments: EvidenceWithUrl[] = await listEvidence('idea', id);
+  const attachments: EvidenceWithUrl[] = await listIdeaAttachments(id);
 
   const existing = await fetchEvaluationForIdea(id);
   const already = existing.evaluation?.submitted_at ? existing.evaluation : null;
   const existingScores = (already?.criteria_scores ?? null) as Partial<EvScores> | null;
-
-  // Dynamic six-stage journey — mirrors the innovator idea detail page so
-  // evaluators see the same progress. Related rows advance the journey;
-  // failures degrade gracefully to empty lists (status signal alone).
-  const [{ data: asg }, { data: evals }, { data: cmte }] = await Promise.all([
-    supabase.from('assignments').select('created_at').eq('idea_id', id),
-    supabase.from('evaluations').select('submitted_at, total_score, criteria_scores').eq('idea_id', id),
-    supabase.from('committee_decisions').select('decision, decided_at').eq('idea_id', id),
-  ]);
-  const journey = computeIdeaStage(
-    {
-      status: row.status ?? 'submitted',
-      current_stage: Number(row.current_stage ?? 0),
-      submitted_at: row.submitted_at ?? null,
-      updated_at: row.updated_at ?? null,
-      created_at: row.created_at ?? null,
-    },
-    (asg as any[]) ?? [],
-    (evals as any[]) ?? [],
-    (cmte as any[]) ?? []
-  );
-  const journeyStages: JourneyTimelineStage[] = journey.stages.map((s) => ({
-    index: s.index,
-    state: s.state,
-    completedAtISO: s.completedAt ? s.completedAt.toISOString() : null,
-    label: s.label,
-  }));
 
   return (
     <EvaluationDetail
@@ -122,13 +87,10 @@ export default async function EvaluatorIdeaDetailPage({
       trackName={trackName}
       activityName={activityName}
       challengeName={challengeName}
-      innovatorLabel={innovatorLabel}
       description={row.proposed_solution ?? null}
       submittedAt={row.submitted_at ?? null}
       updatedAt={row.updated_at ?? null}
       participationType={participationType}
-      journeyStages={journeyStages}
-      journeyStopped={journey.stopped}
       attachments={attachments.map((a) => ({
         id: a.id,
         filename: a.filename,
