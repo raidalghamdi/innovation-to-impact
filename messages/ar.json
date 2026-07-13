@@ -310,7 +310,8 @@
     "supAssignments": "التعيينات",
     "supEmployeesImport": "استيراد الموظفين",
     "supInvitationTemplates": "قوالب الدعوات",
-    "supRoster": "الأدوار والدعوات"
+    "supRoster": "الأدوار والدعوات",
+    "allIdeas": "جميع الأفكار"
   },
   "common": {
     "search": "بحث",
@@ -2217,7 +2218,9 @@
   },
   "supervisor": {
     "title": "لوحة المشرف",
-    "subtitle": "فحص الأفكار وتعيين المقيّمين على المسارات"
+    "subtitle": "فحص الأفكار وتعيين المقيّمين على المسارات",
+    "allIdeasTitle": "جميع الأفكار",
+    "allIdeasSubtitle": "كل الأفكار في جميع المسارات — للمراجعة والتصفية واتخاذ القرار"
   },
   "reports": {
     "keyIndicators": "المؤشرات الرئيسية",
