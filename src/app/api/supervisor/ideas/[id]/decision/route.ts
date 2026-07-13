@@ -50,6 +50,11 @@ export async function POST(
   if (!decision || !['approve', 'reject', 'return'].includes(decision)) {
     return NextResponse.json({ error: 'invalid_decision' }, { status: 400 });
   }
+  // R42-later Item 8 — a rejection must always carry a reason. The UI disables
+  // the confirm button, but the server must not trust the client.
+  if (decision === 'reject' && !(reason && reason.trim())) {
+    return NextResponse.json({ error: 'reason_required' }, { status: 400 });
+  }
   // For 'return', require at least one section so the innovator has a concrete
   // scope of changes to make (the UI enforces this too, but the API must not
   // trust the client).

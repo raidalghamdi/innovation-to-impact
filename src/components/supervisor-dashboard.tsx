@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Download, FileText } from 'lucide-react';
+import { matchesFilter, type SupervisorFilter } from '@/lib/supervisor-idea-filters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +33,7 @@ type Idea = {
   submitter_name: string | null;
   submitter_email: string | null;
   status: string;
+  returned_to_innovator?: boolean | null;
   submitted_at: string | null;
   created_at: string | null;
   rejection_reason: string | null;
@@ -137,14 +140,17 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
     return ideas.filter((i) => ['approved', 'assigned', 'evaluation', 'rejected', 'returned'].includes(i.status));
   }, [ideas]);
 
-  // KPIs
+  // KPIs — counted with the shared filter helper so the numbers match exactly
+  // what /admin/all-ideas shows when the matching card is clicked (Item 9).
   const kpi = useMemo(() => {
-    const total = ideas.length;
-    const pending = ideas.filter((i) => SCREENING_STATUSES.has(i.status)).length;
-    const approved = ideas.filter((i) => ['approved', 'assigned', 'evaluation'].includes(i.status)).length;
-    const rejected = ideas.filter((i) => i.status === 'rejected').length;
-    const returned = ideas.filter((i) => i.status === 'returned').length;
-    return { total, pending, approved, rejected, returned };
+    const count = (f: SupervisorFilter) => ideas.filter((i) => matchesFilter(i, f)).length;
+    return {
+      total: count('all'),
+      underReview: count('under_review'),
+      approved: count('approved'),
+      returned: count('returned'),
+      rejected: count('rejected'),
+    };
   }, [ideas]);
 
   function openReview(idea: Idea) {
@@ -218,13 +224,14 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
 
   return (
     <div className="space-y-6">
-      {/* KPI strip */}
+      {/* KPI strip — each card links to the full-detail /admin/all-ideas list,
+          pre-filtered to the matching bucket (Item 9). */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <KpiCard label={isAr ? 'إجمالي' : 'Total'} value={kpi.total} />
-        <KpiCard label={isAr ? 'قيد الفحص' : 'Pending screening'} value={kpi.pending} highlight />
-        <KpiCard label={isAr ? 'مُعتمَدة' : 'Approved'} value={kpi.approved} tone="success" />
-        <KpiCard label={isAr ? 'مُعادة' : 'Returned'} value={kpi.returned} tone="warning" />
-        <KpiCard label={isAr ? 'مرفوضة' : 'Rejected'} value={kpi.rejected} tone="error" />
+        <KpiCard label={isAr ? 'إجمالي' : 'Total'} value={kpi.total} filter="all" locale={locale} />
+        <KpiCard label={isAr ? 'قيد الفحص' : 'Under review'} value={kpi.underReview} filter="under_review" locale={locale} highlight />
+        <KpiCard label={isAr ? 'معتمدة' : 'Approved'} value={kpi.approved} filter="approved" locale={locale} tone="success" />
+        <KpiCard label={isAr ? 'معادة' : 'Returned'} value={kpi.returned} filter="returned" locale={locale} tone="warning" />
+        <KpiCard label={isAr ? 'مرفوضة' : 'Rejected'} value={kpi.rejected} filter="rejected" locale={locale} tone="error" />
       </div>
 
       {/* Tabs */}
@@ -484,31 +491,59 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                         label={isAr ? 'نوع المشاركة' : 'Participation type'}
                         value={participationLabel}
                       />
+                      {isTeam && viewIdea.team_name && (
+                        <ReviewSection
+                          label={isAr ? 'اسم الفريق' : 'Team name'}
+                          value={viewIdea.team_name}
+                        />
+                      )}
                       {isTeam && members.length > 0 && (
                         <div>
                           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             {isAr ? 'بيانات أعضاء الفريق' : 'Team members'}
                           </div>
                           <ul className="mt-2 space-y-2">
-                            {members.map((m, idx) => (
-                              <li
-                                key={idx}
-                                className="flex flex-col gap-0.5 rounded-md border border-border p-2 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3"
-                              >
-                                <span className="font-medium">{m?.name || '—'}</span>
-                                {m?.email && (
-                                  <span className="text-xs text-muted-foreground" dir="ltr">
-                                    {m.email}
+                            {members.map((m, idx) => {
+                              // Item 12 — the team leader is the account owner
+                              // (submitter). Identify them by matching email so
+                              // the badge stays correct regardless of member order.
+                              const isLeader =
+                                !!viewIdea.submitter_email &&
+                                !!m?.email &&
+                                m.email.toLowerCase() === viewIdea.submitter_email.toLowerCase();
+                              return (
+                                <li
+                                  key={idx}
+                                  className="flex flex-col gap-0.5 rounded-md border border-border p-2 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                                >
+                                  <span className="flex items-center gap-2 font-medium">
+                                    {m?.name || '—'}
+                                    {isLeader && (
+                                      <Badge variant="secondary" className="text-[10px]">
+                                        {isAr ? 'قائد الفريق' : 'Team leader'}
+                                      </Badge>
+                                    )}
                                   </span>
-                                )}
-                              </li>
-                            ))}
+                                  {m?.email && (
+                                    <span className="text-xs text-muted-foreground" dir="ltr">
+                                      {m.email}
+                                    </span>
+                                  )}
+                                </li>
+                              );
+                            })}
                           </ul>
                         </div>
                       )}
                       <div>
                         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {isAr ? 'مقدّم الفكرة' : 'Submitter'}
+                          {isTeam
+                            ? isAr
+                              ? 'مقدّم الفكرة / قائد الفريق (صاحب الحساب)'
+                              : 'Submitter / Team leader (account owner)'
+                            : isAr
+                              ? 'مقدّم الفكرة'
+                              : 'Submitter'}
                         </div>
                         <div className="mt-1 text-sm">
                           <div className="font-medium">{viewIdea.submitter_name || '—'}</div>
@@ -676,6 +711,11 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                             : 'Enter a return reason (at least 10 characters).'}
                         </div>
                       )}
+                      {decision === 'reject' && reason.trim().length === 0 && (
+                        <div className="mt-1 text-xs text-red-700">
+                          {isAr ? 'سبب الرفض مطلوب' : 'Rejection reason is required'}
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="flex gap-2">
@@ -684,7 +724,8 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
                       disabled={
                         pending ||
                         (decision === 'return' &&
-                          (editableSections.size === 0 || reason.trim().length < 10))
+                          (editableSections.size === 0 || reason.trim().length < 10)) ||
+                        (decision === 'reject' && reason.trim().length === 0)
                       }
                       className={
                         decision === 'approve'
@@ -713,11 +754,15 @@ export function SupervisorDashboard({ locale, ideas, themes, evaluators, trackAs
 function KpiCard({
   label,
   value,
+  filter,
+  locale,
   highlight,
   tone,
 }: {
   label: string;
   value: number;
+  filter: SupervisorFilter;
+  locale: string;
   highlight?: boolean;
   tone?: 'success' | 'warning' | 'error';
 }) {
@@ -732,12 +777,18 @@ function KpiCard({
       ? 'text-teal-700'
       : '';
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className={`mt-1 text-2xl font-bold ${toneClass}`}>{value}</div>
-      </CardContent>
-    </Card>
+    <Link
+      href={`/${locale}/admin/all-ideas?filter=${filter}`}
+      className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
+      aria-label={`${label}: ${value}`}
+    >
+      <Card className="h-full cursor-pointer transition hover:border-teal-500 hover:shadow-md">
+        <CardContent className="p-4">
+          <div className="text-xs text-muted-foreground">{label}</div>
+          <div className={`mt-1 text-2xl font-bold ${toneClass}`}>{value}</div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 

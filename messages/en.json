@@ -310,7 +310,8 @@
     "supAssignments": "Assignments",
     "supEmployeesImport": "Employees Import",
     "supInvitationTemplates": "Invitation Templates",
-    "supRoster": "Roster & Invitations"
+    "supRoster": "Roster & Invitations",
+    "allIdeas": "All Ideas"
   },
   "common": {
     "search": "Search",
@@ -2218,7 +2219,9 @@
   },
   "supervisor": {
     "title": "Supervisor Console",
-    "subtitle": "Screen ideas and assign evaluators to tracks"
+    "subtitle": "Screen ideas and assign evaluators to tracks",
+    "allIdeasTitle": "All Ideas",
+    "allIdeasSubtitle": "Every idea across all tracks — review, filter, and decide"
   },
   "reports": {
     "keyIndicators": "KEY INDICATORS",

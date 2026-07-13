@@ -34,14 +34,26 @@ export default async function SupervisorPage({
 
   const supabase = await createClient();
 
-  // Pull ideas needing supervisor attention (draft is excluded — those are still with innovator)
-  const { data: ideasRaw } = await supabase!
+  // Pull ideas needing supervisor attention (draft is excluded — those are still with innovator).
+  // `returned_to_innovator` is added by the innovator agent (R42-later Item 6); if that migration
+  // has not landed yet we retry without the column so the dashboard still renders.
+  const IDEA_COLS_BASE =
+    'id, code, title_ar, title_en, proposed_solution, strategic_theme_id, activity_id, participation_type, team_name, team_members, original_source_metadata, submitter_id, status, submitted_at, created_at, rejection_reason, rejection_reason_ar';
+  const IDEA_STATUSES = ['submitted', 'screening', 'returned', 'approved', 'assigned', 'evaluation', 'committee', 'rejected'];
+  const ideasRich = await supabase!
     .from('ideas')
-    .select(
-      'id, code, title_ar, title_en, proposed_solution, strategic_theme_id, activity_id, participation_type, team_name, team_members, original_source_metadata, submitter_id, status, submitted_at, created_at, rejection_reason, rejection_reason_ar'
-    )
-    .in('status', ['submitted', 'screening', 'returned', 'approved', 'assigned', 'evaluation', 'rejected'])
+    .select(`${IDEA_COLS_BASE}, returned_to_innovator`)
+    .in('status', IDEA_STATUSES)
     .order('submitted_at', { ascending: false, nullsFirst: false });
+  let ideasRaw = ideasRich.data as any[] | null;
+  if (!ideasRaw) {
+    const ideasBasic = await supabase!
+      .from('ideas')
+      .select(IDEA_COLS_BASE)
+      .in('status', IDEA_STATUSES)
+      .order('submitted_at', { ascending: false, nullsFirst: false });
+    ideasRaw = ideasBasic.data as any[] | null;
+  }
 
   const ideaRows = (ideasRaw as any[]) ?? [];
 

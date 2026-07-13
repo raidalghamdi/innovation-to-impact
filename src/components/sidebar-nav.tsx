@@ -67,6 +67,7 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
       { href: '/notifications', key: 'notifications', icon: Bell },
       { href: '/ip-terms', key: 'ipTerms', icon: FileText },
       { href: '/admin/analytics', key: 'adminAnalytics', icon: BarChart3, roles: ['admin'] },
+      { href: '/admin/all-ideas', key: 'allIdeas', icon: Lightbulb, roles: ['admin'] },
       { href: '/admin', key: 'admin', icon: Cog, roles: ['admin'] },
       { href: '/admin/users', key: 'usersManagement', icon: UserCog, roles: ['admin'] },
       { href: '/admin/roles', key: 'rolesCatalog', icon: Shapes, roles: ['admin'] },
@@ -80,6 +81,7 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
     // /supervisor/* so supervisors get their own navigation into these features.
     labelKey: 'supervisorTools',
     items: [
+      { href: '/admin/all-ideas', key: 'allIdeas', icon: Lightbulb, roles: ['supervisor'] },
       { href: '/supervisor/reports', key: 'supReports', icon: FileDown, roles: ['supervisor'] },
       { href: '/supervisor/analytics', key: 'supAnalytics', icon: BarChart3, roles: ['supervisor'] },
       { href: '/supervisor/phases', key: 'supPhases', icon: CalendarClock, roles: ['supervisor'] },
