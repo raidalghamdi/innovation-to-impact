@@ -6,6 +6,7 @@ import { AllIdeasConsole } from '@/components/all-ideas-console';
 import { getCurrentUser } from '@/lib/user';
 import { userHasRole } from '@/lib/user-role-check';
 import { createClient } from '@/lib/supabase/server';
+import { getTeamLeadersBatch } from '@/lib/team-leader';
 
 /**
  * /admin/all-ideas — R42-later Item 10.
@@ -33,7 +34,7 @@ export default async function AllIdeasPage({
   const supabase = await createClient();
 
   const IDEA_COLS_BASE =
-    'id, code, title_ar, title_en, proposed_solution, strategic_theme_id, activity_id, participation_type, team_name, team_members, original_source_metadata, submitter_id, status, submitted_at, created_at, rejection_reason, rejection_reason_ar';
+    'id, code, title_ar, title_en, proposed_solution, strategic_theme_id, activity_id, participation_type, team_id, team_name, team_members, original_source_metadata, submitter_id, status, submitted_at, created_at, rejection_reason, rejection_reason_ar';
 
   // `returned_to_innovator` is owned by the innovator agent (R42-later Item 6);
   // retry without it if that migration has not landed yet.
@@ -86,12 +87,19 @@ export default async function AllIdeasPage({
       });
   }
 
+  // Canonical team-leader resolution (R42-later Item 12) via the unified
+  // v_team_leader source, keyed by idea id.
+  const leaderMap = await getTeamLeadersBatch(
+    ideaRows.map((i) => i.id).filter(Boolean) as string[]
+  );
+
   const ideas = ideaRows.map((i) => {
     const act = i.activity_id ? activityMap.get(i.activity_id) : null;
     const sub = i.submitter_id ? submitterMap.get(i.submitter_id) : null;
     const meta = i.original_source_metadata;
     const challenge =
       meta && typeof meta === 'object' && meta.challenge ? String(meta.challenge) : null;
+    const leader = leaderMap.get(i.id);
     return {
       ...i,
       returned_to_innovator: i.returned_to_innovator ?? false,
@@ -100,6 +108,7 @@ export default async function AllIdeasPage({
       challenge,
       submitter_name: sub?.name ?? null,
       submitter_email: sub?.email ?? null,
+      team_leader_name: leader?.name ?? null,
     };
   });
 

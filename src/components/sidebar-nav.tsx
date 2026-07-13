@@ -32,6 +32,10 @@ import {
   Upload,
   MailPlus,
   ClipboardList,
+  SlidersHorizontal,
+  Scale,
+  ListChecks,
+  Rocket,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -73,6 +77,11 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
       { href: '/admin/roles', key: 'rolesCatalog', icon: Shapes, roles: ['admin'] },
       { href: '/admin/audit', key: 'audit', icon: History, roles: ['admin'] },
       { href: '/admin/backup', key: 'backup', icon: Database, roles: ['admin'] },
+      { href: '/admin/settings', key: 'adminSettings', icon: SlidersHorizontal, roles: ['admin'] },
+      { href: '/admin/committee-criteria', key: 'committeeCriteria', icon: Scale, roles: ['admin'] },
+      { href: '/admin/evaluator-assignments', key: 'evalAssignments', icon: ListChecks, roles: ['admin'] },
+      { href: '/admin/final-ranking', key: 'finalRanking', icon: Trophy, roles: ['admin'] },
+      { href: '/admin/post-program', key: 'postProgram', icon: Rocket, roles: ['admin'] },
       { href: '/settings', key: 'settings', icon: Settings },
     ],
   },
@@ -91,6 +100,8 @@ const GROUPS: { labelKey: string; items: NavItem[] }[] = [
       { href: '/supervisor/employees/import', key: 'supEmployeesImport', icon: Upload, roles: ['supervisor'] },
       { href: '/supervisor/invitation-templates', key: 'supInvitationTemplates', icon: MailPlus, roles: ['supervisor'] },
       { href: '/supervisor/roster', key: 'supRoster', icon: ClipboardList, roles: ['supervisor'] },
+      { href: '/admin/evaluator-assignments', key: 'evalAssignments', icon: ListChecks, roles: ['supervisor'] },
+      { href: '/admin/committee-criteria', key: 'committeeCriteria', icon: Scale, roles: ['supervisor'] },
     ],
   },
 ];
