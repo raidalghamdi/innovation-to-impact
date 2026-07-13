@@ -191,9 +191,10 @@ export async function POST(
     const supRoleId = (supRoleRow as { id?: string } | null)?.id ?? null;
     if (supRoleId) {
       const { data: userRoles } = await supabase
-        .from('user_roles')
+        .from('v_user_roles')
         .select('user_id')
-        .eq('role_id', supRoleId);
+        .eq('role_id', supRoleId)
+        .eq('role_active', true);
       const ids = ((userRoles as { user_id: string }[] | null) ?? [])
         .map((r) => r.user_id)
         .filter(Boolean);
