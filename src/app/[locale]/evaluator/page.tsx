@@ -4,9 +4,10 @@ import { EvaluatorQueuePreview } from '@/components/evaluator/evaluator-queue-pr
 import { getCurrentUser } from '@/lib/user';
 import { getUserPoints } from '@/lib/gamification';
 import { fetchEvaluatorDashboard } from '@/lib/data';
+import { getEvaluatorTrackThemeIds } from '@/lib/evaluator-tracks';
 import { resolveLevel } from '@/lib/evaluator-levels';
 import { formatDate } from '@/lib/utils';
-import { ClipboardCheck, CalendarCheck, Timer, Star } from 'lucide-react';
+import { ClipboardCheck, CalendarCheck, Timer, Star, Layers } from 'lucide-react';
 
 // Auth-gated, per-user dashboard — never meaningfully static.
 export const dynamic = 'force-dynamic';
@@ -23,12 +24,56 @@ export default async function EvaluatorDashboardPage({
 
   const user = await getCurrentUser();
   const evaluatorId = user?.id ?? 'u2';
-  const [dashboard, points] = await Promise.all([
+  const [rawDashboard, points, tracks] = await Promise.all([
     fetchEvaluatorDashboard(evaluatorId),
     getUserPoints(evaluatorId),
+    getEvaluatorTrackThemeIds(evaluatorId),
   ]);
   const level = resolveLevel(points.points);
   const levelName = isAr ? level.current.name_ar : level.current.name_en;
+
+  // Track filtering (R43): when the evaluator has explicit track assignments,
+  // restrict every surface (queue, KPIs, preview) to those themes. When they
+  // are configured with ZERO tracks, show a "no tracks assigned" empty state.
+  // When the feature is not configured (table missing), behavior is unchanged.
+  if (tracks.configured && tracks.themeIds.length === 0) {
+    const tn = await getTranslations('evaluator');
+    return (
+      <div className="space-y-8">
+        <section className="rounded-[var(--radius-lg)] bg-[var(--ink)] p-6 text-white sm:p-8">
+          <p className="text-xs font-medium uppercase tracking-[0.08em] text-white/60">
+            {t('welcomeBack')}
+          </p>
+          <h1 className="mt-1 font-display text-2xl font-extrabold sm:text-3xl">
+            {isAr ? `أهلاً بعودتك، ${user?.fullName || user?.email || 'مقيّم'}` : `Welcome back, ${user?.fullName || user?.email || 'Evaluator'}`}
+          </h1>
+        </section>
+        <div className="ev-card flex flex-col items-center gap-3 p-10 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--paper)] text-[var(--gold-deep)]">
+            <Layers className="h-6 w-6" />
+          </span>
+          <h2 className="font-display text-lg font-bold text-[var(--ink)]">
+            {tn('noTracksAssigned.title')}
+          </h2>
+          <p className="max-w-md text-sm text-[var(--ink-soft)]">
+            {tn('noTracksAssigned.body')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const allowed =
+    tracks.configured && tracks.themeIds.length > 0 ? new Set(tracks.themeIds) : null;
+  const dashboard = allowed
+    ? (() => {
+        const queue = rawDashboard.queue.filter((q) => q.theme_id && allowed.has(q.theme_id));
+        // Recompute the assignment totals from the filtered queue so the KPI
+        // tiles agree with the tracks the evaluator can actually see.
+        const completed = queue.filter((q) => q.eval_status === 'submitted').length;
+        return { ...rawDashboard, queue, totalAssigned: queue.length, completed };
+      })()
+    : rawDashboard;
 
   // ── Evaluator KPIs (never innovator/platform metrics) ────────────────────
   const awaiting = Math.max(dashboard.totalAssigned - dashboard.completed, 0);

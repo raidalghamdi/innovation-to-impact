@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { AlertTriangle } from 'lucide-react';
 import { IdeaJourneyTimeline, type JourneyTimelineStage } from '@/components/idea-journey-timeline';
+import { getStatusLabel } from '@/lib/lifecycle-states';
 
 type TeamMember = {
   id: string;
@@ -56,22 +57,36 @@ export function IdeaHero({
   const isAr = locale === 'ar';
   const t = useTranslations('ideas');
 
-  const STOPPED_STATUSES = new Set(['returned', 'rejected', 'on_hold', 'withdrawn']);
+  const STOPPED_STATUSES = new Set([
+    'returned',
+    'rejected',
+    'on_hold',
+    'withdrawn',
+    'evaluation_failed',
+    'not_selected',
+  ]);
   const isStopped = STOPPED_STATUSES.has(status);
 
-  const statusLabel = status
-    ? isAr
-      ? statusAr[status] ?? status
-      : statusEn[status] ?? status
-    : '';
+  // Single source of truth for the status label copy (lifecycle-states.ts).
+  const statusLabel = status ? getStatusLabel(status, locale) : '';
 
-  // Status badge tone: rose = stopped, emerald = approved, gold/amber =
-  // in-progress. Uses existing framework palette tokens only (no new hex).
-  const statusBadgeClass = isStopped
-    ? 'border-rose-400/40 bg-rose-500/15 text-rose-200'
-    : status === 'approved'
-      ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200'
-      : 'border-amber-400/40 bg-amber-500/15 text-amber-200';
+  // Status badge tone against the dark hero: terminal states get their own hue
+  // (withdrawn=gray, rejected=red, evaluation_failed=orange, not_selected=amber,
+  // approved=green); in-progress stays gold/amber. Framework palette tokens only.
+  const statusBadgeClass =
+    status === 'withdrawn'
+      ? 'border-gray-400/40 bg-gray-500/15 text-gray-200'
+      : status === 'rejected'
+        ? 'border-red-400/40 bg-red-500/15 text-red-200'
+        : status === 'evaluation_failed'
+          ? 'border-orange-400/40 bg-orange-500/15 text-orange-200'
+          : status === 'not_selected'
+            ? 'border-amber-400/40 bg-amber-500/15 text-amber-200'
+            : status === 'approved'
+              ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200'
+              : isStopped
+                ? 'border-rose-400/40 bg-rose-500/15 text-rose-200'
+                : 'border-amber-400/40 bg-amber-500/15 text-amber-200';
 
   const fields: Array<{ key: string; label: string; value: string; icon: JSX.Element }> = [
     {
@@ -202,26 +217,3 @@ export function IdeaHero({
     </section>
   );
 }
-
-const statusAr: Record<string, string> = {
-  draft: 'مسودّة',
-  submitted: 'مقدَّمة',
-  screening: 'قيد الفرز',
-  returned: 'مُعادة للتعديل',
-  approved: 'مُعتمَدة',
-  assigned: 'مُسندة',
-  evaluation: 'قيد التقييم',
-  rejected: 'مرفوضة',
-  withdrawn: 'مسحوبة',
-};
-const statusEn: Record<string, string> = {
-  draft: 'Draft',
-  submitted: 'Submitted',
-  screening: 'Screening',
-  returned: 'Returned',
-  approved: 'Approved',
-  assigned: 'Assigned',
-  evaluation: 'Evaluation',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-};

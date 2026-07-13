@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/page-header';
 import { getCurrentUser } from '@/lib/user';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { PlatformSettingsClient } from '@/components/platform-settings-client';
+import { SettingsForm } from '@/components/admin/settings-form';
 
 // src/app/[locale]/admin/settings/page.tsx:1
 // Phase 10.4 — admin panel toggle for innovation.platform_settings, DB-driven
@@ -30,6 +31,7 @@ export default async function AdminSettingsPage({
   return (
     <AppShell>
       <PageHeader title={t('settingsTitle')} subtitle={t('settingsSubtitle')} />
+      <SettingsForm />
       <PlatformSettingsClient settings={data ?? []} locale={locale} />
     </AppShell>
   );

@@ -143,7 +143,11 @@
     "heroKicker": "Idea",
     "blockSubmissionMeta": "Submission details",
     "metaSubmittedAt": "Submitted at",
-    "metaUpdatedAt": "Last update"
+    "metaUpdatedAt": "Last update",
+    "noTracksAssigned": {
+      "title": "No tracks assigned yet",
+      "body": "You have not been assigned any strategic tracks yet. Please contact your supervisor."
+    }
   },
   "emailLog": {
     "title": "Email Log",
@@ -311,7 +315,12 @@
     "supEmployeesImport": "Employees Import",
     "supInvitationTemplates": "Invitation Templates",
     "supRoster": "Roster & Invitations",
-    "allIdeas": "All Ideas"
+    "allIdeas": "All Ideas",
+    "adminSettings": "System Settings",
+    "committeeCriteria": "Committee Criteria",
+    "evalAssignments": "Evaluator Assignments",
+    "finalRanking": "Final Ranking",
+    "postProgram": "Post-Program"
   },
   "common": {
     "search": "Search",
@@ -1148,7 +1157,97 @@
     "settingsSubtitle": "Runtime configuration the admin controls directly — no environment variables required.",
     "employeesImport": "Employee Import",
     "rolesCatalog": "Roles Catalog",
-    "usersManagement": "User Management"
+    "usersManagement": "User Management",
+    "settings": {
+      "title": "System Settings",
+      "topN": "Number of Approved Ideas (Top N)",
+      "passThreshold": "Evaluation Pass Threshold",
+      "save": "Save",
+      "saved": "Saved",
+      "subtitle": "Set the number of approved ideas and the evaluation pass threshold.",
+      "saving": "Saving…",
+      "saveFailed": "Could not save settings"
+    },
+    "criteria": {
+      "title": "Evaluation Criteria",
+      "committeeTitle": "Committee Criteria",
+      "code": "Code",
+      "nameAr": "Name (Arabic)",
+      "nameEn": "Name (English)",
+      "weight": "Weight",
+      "active": "Active",
+      "subtitle": "Manage the weighted, bilingual criteria the committee scores ideas against.",
+      "inactive": "Inactive",
+      "actions": "Actions",
+      "add": "Add Criterion",
+      "adding": "Adding…",
+      "added": "Criterion added",
+      "addFailed": "Could not add criterion",
+      "addMissing": "Code and both names are required",
+      "save": "Save",
+      "saved": "Criterion saved",
+      "saveFailed": "Could not save criterion",
+      "delete": "Delete",
+      "deleted": "Criterion deleted",
+      "deleteFailed": "Could not delete criterion",
+      "deleteConfirm": "Delete this criterion? This cannot be undone.",
+      "empty": "No criteria yet.",
+      "weightWarning": "Active weights total {sum}, but should total {target}."
+    },
+    "assignmentsTracks": {
+      "title": "Evaluator Track Assignments",
+      "subtitle": "Bind each evaluator to one or more tracks. Ideas are auto-distributed to every evaluator of their track.",
+      "evaluator": "Evaluator",
+      "tracks": "Tracks",
+      "empty": "No evaluators or tracks available.",
+      "saveFailed": "Could not update assignment"
+    },
+    "finalRanking": {
+      "title": "Final Ranking",
+      "subtitle": "Approve the Top-N ideas and mark the rest as not selected.",
+      "currentTopN": "Current Top N",
+      "preview": "Preview",
+      "previewing": "Previewing…",
+      "previewFailed": "Could not run preview",
+      "run": "Run Final Ranking",
+      "running": "Running…",
+      "runFailed": "Could not run final ranking",
+      "runConfirm": "Run the final ranking now? This is irreversible: approved ideas and non-selected ideas will be finalized.",
+      "runDone": "Final ranking complete: {approved} approved, {notSelected} not selected.",
+      "irreversible": "Running the final ranking is irreversible. Preview first, then run.",
+      "wouldApprove": "Would be approved",
+      "wouldNotSelect": "Would not be selected",
+      "rank": "Rank",
+      "score": "Score",
+      "none": "None"
+    },
+    "postProgram": {
+      "title": "Post-Program Stages",
+      "subtitle": "Manually advance approved ideas through pilot, measurement, and scaling.",
+      "idea": "Idea",
+      "code": "Code",
+      "stage": "Current Stage",
+      "advance": "Advance",
+      "advanceTo": "Advance to {stage}",
+      "advanced": "Advanced to {stage}",
+      "advanceFailed": "Could not advance stage",
+      "pilot": "In Pilot",
+      "measurement": "Measurement & Impact",
+      "scaling": "Scaling & Adoption",
+      "final": "Final stage",
+      "empty": "No approved or post-program ideas."
+    }
+  },
+  "lifecycle": {
+    "statuses": {
+      "passAwaitingAttachments": "Awaiting Final Attachments",
+      "pendingFinalRanking": "Pending Final Ranking",
+      "evaluationFailed": "Did Not Pass Evaluation",
+      "notSelected": "Not Selected",
+      "inPilot": "In Pilot",
+      "inMeasurement": "Measurement & Impact",
+      "inScaling": "Scaling & Adoption"
+    }
   },
   "strategy": {
     "title": "Strategy & governance",
@@ -2221,7 +2320,10 @@
     "title": "Supervisor Console",
     "subtitle": "Screen ideas and assign evaluators to tracks",
     "allIdeasTitle": "All Ideas",
-    "allIdeasSubtitle": "Every idea across all tracks — review, filter, and decide"
+    "allIdeasSubtitle": "Every idea across all tracks — review, filter, and decide",
+    "team": {
+      "teamLeader": "Team Leader"
+    }
   },
   "reports": {
     "keyIndicators": "KEY INDICATORS",
@@ -2470,5 +2572,32 @@
     "cancel": "Cancel",
     "confirmDelete": "Delete this track? Ideas assigned to it will be unassigned.",
     "errNames": "Arabic and English names are required."
+  },
+  "innovator": {
+    "finalize": {
+      "title": "Finalize and submit to committee",
+      "description": "Review your evaluation results, then upload the required supporting attachments before submitting your idea to the committee.",
+      "evaluationSummary": "Evaluation summary",
+      "averageScore": "Average score",
+      "reviewerComments": "No reviewer comments are available yet.",
+      "uploadRequired": "Required attachments",
+      "submitToCommittee": "Submit to committee"
+    },
+    "terminal": {
+      "withdrawn": "Withdrawn",
+      "rejected": "Rejected",
+      "evaluation_failed": "Did Not Pass Evaluation",
+      "approved": "Approved",
+      "not_selected": "Not Selected"
+    },
+    "postProgram": {
+      "title": "Post-program stages",
+      "pilot": "Pilot",
+      "measurement": "Measurement & Impact",
+      "scaling": "Scaling & Adoption"
+    },
+    "withdraw": "Withdraw",
+    "withdrawConfirm": "Withdraw this idea? You can no longer edit it.",
+    "teamLeaderBadge": "Team Leader"
   }
 }

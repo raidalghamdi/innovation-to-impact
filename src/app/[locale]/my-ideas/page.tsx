@@ -11,7 +11,7 @@ import { FeedbackCountBadge } from '@/components/feedback-section';
 import { getFeedbackCountsForSubmitter } from '@/lib/feedback';
 import { EmptyState } from '@/components/empty-state';
 import { WithdrawIdeaButton } from '@/components/withdraw-idea-button';
-import { Lightbulb, ChevronLeft, ChevronRight, Calendar, Clock, MessageSquareWarning } from 'lucide-react';
+import { Lightbulb, ChevronLeft, ChevronRight, Calendar, Clock, MessageSquareWarning, Send } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 // Status groups shared with the dashboard KPI cards — the "In Review" and
@@ -45,6 +45,7 @@ export default async function MyIdeasPage({
   const tc = await getTranslations('common');
   const te = await getTranslations('emptyStates');
   const tf = await getTranslations('feedback');
+  const tfin = await getTranslations('innovator.finalize');
   const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
 
   // Identify current user
@@ -153,6 +154,28 @@ export default async function MyIdeasPage({
                       <StatusBadge status={idea.status} locale={locale} />
                     </div>
                   </div>
+
+                  {/* Post-pass finalize CTA — prominent, shown when the idea
+                      passed evaluation and awaits its final attachments. */}
+                  {idea.status === 'pass_awaiting_attachments' && (
+                    <Link
+                      href={`/ideas/${idea.id}/finalize`}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-gold/40 bg-amber-50 p-4 transition hover:bg-amber-100"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-brand-teal">
+                          {tfin('title')}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {tfin('description')}
+                        </div>
+                      </div>
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-brand-gold px-3 py-1.5 text-sm font-medium text-slate-900">
+                        <Send className="h-4 w-4" />
+                        {tfin('submitToCommittee')}
+                      </span>
+                    </Link>
+                  )}
 
                   <div className="flex flex-wrap items-center justify-end gap-3">
                     {idea.status === 'returned' && (

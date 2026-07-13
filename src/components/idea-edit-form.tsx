@@ -25,6 +25,11 @@ type Section =
 type TeamMemberInput = { name: string; email: string };
 type Option = { id: string; name_ar: string | null; name_en: string | null };
 
+// A team must keep at least (submitter + 2) = 3 total. The submitter is the
+// implicit leader, so the edit form (which lists the ADDITIONAL members only)
+// must retain at least two rows. Mirrors the server-side resubmit guard.
+const MIN_ADDITIONAL_MEMBERS = 2;
+
 type Props = {
   locale: string;
   ideaId: string;
@@ -101,8 +106,17 @@ export function IdeaEditForm({
     setTeamMembers((prev) => [...prev, { name: '', email: '' }]);
   }
   function removeMember(idx: number) {
-    setTeamMembers((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)));
+    setTeamMembers((prev) =>
+      prev.length <= MIN_ADDITIONAL_MEMBERS ? prev : prev.filter((_, i) => i !== idx)
+    );
   }
+
+  // Rows the innovator has actually filled in (name or email). The min-team
+  // guard is enforced against these — empty placeholder rows do not count.
+  const filledMembers = teamMembers.filter((m) => m.name.trim() || m.email.trim());
+  const belowTeamMin =
+    participation === 'team' && filledMembers.length < MIN_ADDITIONAL_MEMBERS;
+  const atTeamMin = teamMembers.length <= MIN_ADDITIONAL_MEMBERS;
 
   // Attachment uploads (only relevant when 'attachments' is editable). Files
   // upload immediately to the evidence bucket linked to this idea; there is no
@@ -152,6 +166,17 @@ export function IdeaEditForm({
   }
 
   function save() {
+    // Client-side min-team guard: block a resubmit that would drop a team below
+    // (submitter + 2) = 3. The server enforces the same rule as defense in depth.
+    if (isEditable('team') && belowTeamMin) {
+      setFlash({
+        ok: false,
+        msg: isAr
+          ? 'يجب أن يضم الفريق قائدًا وعضوين على الأقل (3 أفراد).'
+          : 'A team must include the leader and at least two members (3 total).',
+      });
+      return;
+    }
     startTransition(async () => {
       const patch: Record<string, unknown> = {};
       if (isEditable('title')) {
@@ -417,13 +442,21 @@ export function IdeaEditForm({
                     type="button"
                     variant="outline"
                     onClick={() => removeMember(idx)}
-                    disabled={!isEditable('team') || teamMembers.length <= 1}
+                    disabled={!isEditable('team') || atTeamMin}
                     aria-label={isAr ? 'حذف العضو' : 'Remove member'}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
+              {atTeamMin && (
+                <p className="flex items-center gap-1.5 text-xs text-amber-700">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  {isAr
+                    ? 'يجب أن يضم الفريق قائدًا وعضوين على الأقل (3 أفراد).'
+                    : 'A team must include the leader and at least two members (3 total).'}
+                </p>
+              )}
               {isEditable('team') && (
                 <Button type="button" variant="outline" onClick={addMember}>
                   {isAr ? 'إضافة عضو' : 'Add member'}

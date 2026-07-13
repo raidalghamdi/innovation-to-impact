@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,11 +34,13 @@ type Idea = {
   activity_name_ar: string | null;
   activity_name_en: string | null;
   participation_type: string | null;
+  team_id: string | null;
   team_name: string | null;
   team_members: TeamMember[] | null;
   challenge: string | null;
   submitter_name: string | null;
   submitter_email: string | null;
+  team_leader_name: string | null;
   status: string;
   returned_to_innovator?: boolean | null;
   submitted_at: string | null;
@@ -81,6 +84,7 @@ function phaseLabel(idea: Idea, isAr: boolean): string {
 
 export function AllIdeasConsole({ locale, ideas, themes }: Props) {
   const isAr = locale === 'ar';
+  const tTeam = useTranslations('supervisor.team');
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -469,6 +473,10 @@ export function AllIdeasConsole({ locale, ideas, themes }: Props) {
                           )}
                         </div>
                       </div>
+                      <Field
+                        label={tTeam('teamLeader')}
+                        value={viewIdea.team_leader_name || viewIdea.submitter_name || '—'}
+                      />
                       {viewIdea.proposed_solution && (
                         <Field label={isAr ? 'وصف الفكرة' : 'Idea description'} value={viewIdea.proposed_solution} />
                       )}

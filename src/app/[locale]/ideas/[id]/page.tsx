@@ -15,6 +15,29 @@ import { listIdeaAttachments } from '@/lib/storage';
 import { formatFileSize, type EvidenceWithUrl } from '@/lib/evidence-types';
 import { computeIdeaStage } from '@/lib/idea-journey';
 import type { JourneyTimelineStage } from '@/components/idea-journey-timeline';
+import { getTeamLeader } from '@/lib/team-leader';
+import { PostProgramStages } from '@/components/post-program-stages';
+import { WithdrawIdeaButton } from '@/components/withdraw-idea-button';
+
+// Statuses at which the innovator can still withdraw their idea (pre-evaluator).
+// Mirrors the server guard in my-ideas/actions.ts.
+const WITHDRAWABLE_STATUSES = new Set([
+  'draft',
+  'submitted',
+  'screening',
+  'under_screening',
+  'needs_completion',
+  'returned',
+]);
+
+// Statuses at which the post-program 3-step indicator (Pilot → Measurement →
+// Scaling) is shown to the owner.
+const POST_PROGRAM_STATUSES = new Set([
+  'approved',
+  'in_pilot',
+  'in_measurement',
+  'in_scaling',
+]);
 
 /**
  * /ideas/[id] — Idea details page.
@@ -233,6 +256,41 @@ export default async function IdeaDetailPage({
   const isOwner = !!currentUser && submitterId === currentUser.id;
   const canEdit = isOwner && (statusStr === 'returned' || statusStr === 'draft');
   const isReturned = statusStr === 'returned';
+  const canWithdraw = isOwner && WITHDRAWABLE_STATUSES.has(statusStr);
+  const showPostProgram = isOwner && POST_PROGRAM_STATUSES.has(statusStr);
+
+  // Unified team-leader resolution (R42-later Item 7): the v_team_leader view is
+  // the single source for "قائد الفريق / Team Leader". When it resolves a leader
+  // for a team idea, that member is rendered first with the leader badge. This
+  // is innovator-side only — evaluators never see team/leader identity.
+  const teamLeader = participationType === 'team' ? await getTeamLeader(id) : null;
+  if (teamLeader && teamMembers.length > 0) {
+    const leaderEmail = teamLeader.email.trim().toLowerCase();
+    const leaderName = teamLeader.name.trim().toLowerCase();
+    teamMembers = teamMembers.map((m) => {
+      const emailMatch =
+        !!m.email && !!leaderEmail && m.email.trim().toLowerCase() === leaderEmail;
+      const nameMatch =
+        !!m.full_name && !!leaderName && m.full_name.trim().toLowerCase() === leaderName;
+      return { ...m, is_leader: m.is_leader || emailMatch || nameMatch };
+    });
+    // No member matched the view leader → treat the first as leader so the badge
+    // always renders exactly once.
+    if (!teamMembers.some((m) => m.is_leader)) {
+      teamMembers = teamMembers.map((m, i) => ({ ...m, is_leader: i === 0 }));
+    }
+    // Ensure a single leader, placed first.
+    let flagged = false;
+    teamMembers = teamMembers.map((m) => {
+      if (m.is_leader && !flagged) {
+        flagged = true;
+        return m;
+      }
+      return { ...m, is_leader: false };
+    });
+    teamMembers.sort((a, b) => (a.is_leader === b.is_leader ? 0 : a.is_leader ? -1 : 1));
+  }
+  const tLeaderBadge = await getTranslations('innovator');
 
   // Journey timeline — R42-later Item 6: derive the stage from the idea's REAL
   // status via computeIdeaStage, not the stored `current_stage` smallint. The
@@ -334,6 +392,10 @@ export default async function IdeaDetailPage({
             </CardContent>
           </Card>
 
+          {/* Post-program stages — view-only Pilot → Measurement → Scaling
+              indicator, shown to the owner once the idea is approved/in-program. */}
+          {showPostProgram && <PostProgramStages status={statusStr} locale={locale} />}
+
         </div>
 
         {/* Side rail — 1/3 */}
@@ -406,7 +468,7 @@ export default async function IdeaDetailPage({
                       </div>
                       {m.is_leader && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                          {locale === 'ar' ? 'قائد الفريق' : 'Leader'}
+                          {tLeaderBadge('teamLeaderBadge')}
                         </span>
                       )}
                     </li>
@@ -434,6 +496,14 @@ export default async function IdeaDetailPage({
               />
             </CardContent>
           </Card>
+
+          {/* Withdraw — pre-evaluator statuses only. Owner-gated; the server
+              action re-checks ownership + status. */}
+          {canWithdraw && (
+            <div className="flex justify-end">
+              <WithdrawIdeaButton ideaId={id} />
+            </div>
+          )}
         </div>
       </div>
     </AppShell>

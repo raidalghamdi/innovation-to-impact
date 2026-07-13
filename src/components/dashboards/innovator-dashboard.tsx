@@ -6,7 +6,7 @@ import { NotificationsList } from '@/components/notifications-list';
 import { fetchIdeas } from '@/lib/data';
 import { getUserPoints } from '@/lib/gamification';
 import { formatDate } from '@/lib/utils';
-import { Lightbulb, Clock, CheckCircle2, Award, PlusCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Lightbulb, Clock, CheckCircle2, Award, PlusCircle, ArrowLeft, ArrowRight, Send } from 'lucide-react';
 
 // src/components/dashboards/innovator-dashboard.tsx
 // Overview-only innovator dashboard.
@@ -15,9 +15,16 @@ import { Lightbulb, Clock, CheckCircle2, Award, PlusCircle, ArrowLeft, ArrowRigh
 // - Prominent primary CTA "قدم فكرة" (submit idea) at the top of the content area.
 export async function InnovatorDashboard({ userId, locale }: { userId: string; locale: string }) {
   const t = await getTranslations('dashboard');
+  const tf = await getTranslations('innovator.finalize');
   const isAr = locale === 'ar';
   const allIdeas = await fetchIdeas();
   const myIdeas = allIdeas.filter((i: any) => i.submitter_id === userId);
+
+  // Ideas that passed evaluation and now need the innovator to upload the final
+  // attachments before they reach the committee. Surfaced as a prominent CTA.
+  const awaitingFinalize = myIdeas.filter(
+    (i: any) => i.status === 'pass_awaiting_attachments'
+  );
 
   const inReview = myIdeas.filter((i: any) =>
     ['submitted', 'screening', 'evaluation', 'committee', 'needs_completion'].includes(i.status)
@@ -66,6 +73,33 @@ export async function InnovatorDashboard({ userId, locale }: { userId: string; l
           </Button>
         </div>
       </div>
+
+      {/* Post-pass finalize CTA — shown when one or more ideas passed evaluation
+          and await their mandatory final attachments before the committee. */}
+      {awaitingFinalize.map((idea: any) => (
+        <div
+          key={idea.id}
+          className="rounded-2xl border border-brand-gold/40 bg-gradient-to-br from-amber-50 via-card to-amber-50 p-5 sm:p-6"
+        >
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="min-w-0 space-y-1">
+              <h2 className="text-lg font-bold text-brand-teal">{tf('title')}</h2>
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-brand-gold">{idea.code}</span>
+                {' — '}
+                {isAr ? idea.title_ar : idea.title_en}
+              </p>
+              <p className="text-sm text-muted-foreground">{tf('description')}</p>
+            </div>
+            <Button asChild size="lg" variant="gold" className="w-full sm:w-auto">
+              <Link href={`/ideas/${idea.id}/finalize`}>
+                <Send className="h-5 w-5" />
+                {tf('submitToCommittee')}
+              </Link>
+            </Button>
+          </div>
+        </div>
+      ))}
 
       {/* KPI overview — no "prize position". Each card links to a filtered list. */}
       <div className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-4">

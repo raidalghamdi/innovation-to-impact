@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/user';
 import { logAudit } from '@/lib/audit';
 import { createNotification, fanOut, getSupervisorIds, type NotificationType } from '@/lib/notifications';
 import { closeSlaTracker } from '@/lib/sla';
+import { afterCommitteeSubmit } from '@/lib/lifecycle-transitions';
 import {
   assertApprovalComplete,
   assertTransition,
@@ -149,6 +150,20 @@ export async function recordDecision(input: DecideInput): Promise<DecisionResult
     })
   );
 
+  // T3: after each decision, check if the committee is complete and advance the
+  // idea to pending_final_ranking. Best-effort — the RPC no-ops unless the idea
+  // is still in `committee` and every member has decided.
+  await Promise.all(
+    input.ideaIds.map(async (ideaId) => {
+      try {
+        await afterCommitteeSubmit(ideaId);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[recordDecision] afterCommitteeSubmit failed:', err);
+      }
+    })
+  );
+
   revalidatePath(`/[locale]/committee`, 'page');
   return { ok: true, count: input.ideaIds.length };
 }
@@ -254,6 +269,14 @@ export async function bulkCommitteeDecide(input: BulkDecideInput): Promise<BulkD
       if (supervisorIds.length)
         tasks.push(fanOut(supervisorIds, 'committee_decision', payload, { link }));
       await Promise.all(tasks);
+
+      // T3: last-member committee transition. Best-effort, guarded by the RPC.
+      try {
+        await afterCommitteeSubmit(ideaId);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[bulkCommitteeDecide] afterCommitteeSubmit failed:', err);
+      }
 
       succeeded += 1;
     } catch (err) {
