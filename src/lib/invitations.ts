@@ -3,6 +3,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { listUserIdsByRole } from '@/lib/user-roles';
 
 /**
  * Non-null wrapper for the admin client. Every function in this module
@@ -490,8 +491,14 @@ export async function resolveProfileRecipients(
   let query = supabase
     .schema('innovation')
     .from('user_profiles')
-    .select('email, full_name, role');
-  if (role) query = query.eq('role', role);
+    .select('email, full_name');
+  if (role) {
+    // Resolve recipients by role from the source of truth (v_user_roles),
+    // then narrow the profile query to those user ids.
+    const ids = await listUserIdsByRole(supabase, role);
+    if (ids.length === 0) return [];
+    query = query.in('id', ids);
+  }
   const { data } = await query;
   const rows = (data as Array<{ email: string | null; full_name: string | null }> | null) ?? [];
   const seen = new Set<string>();

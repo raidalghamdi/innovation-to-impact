@@ -53,12 +53,13 @@ export default async function RosterRolePage({
     .maybeSingle();
   const roleName = isAr ? roleInfo?.name_ar ?? roleCode : roleInfo?.name_en ?? roleCode;
 
-  // Active members
+  // Active members — read from the role source of truth (v_user_roles).
   const { data: userRoles } = await admin!
     .schema('innovation')
-    .from('user_roles')
+    .from('v_user_roles')
     .select('user_id')
-    .eq('role_id', roleInfo?.id ?? '');
+    .eq('role_code', roleCode)
+    .eq('role_active', true);
   const activeUserIds = (userRoles ?? []).map((r: any) => r.user_id);
 
   // Get emails from auth.users

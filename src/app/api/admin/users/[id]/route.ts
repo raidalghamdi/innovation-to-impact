@@ -44,6 +44,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: delErr.message }, { status: 500 });
   }
 
+  // Track the primary role's code so we can mirror it into the legacy
+  // user_profiles.role column (source of truth = user_roles; the legacy column
+  // is kept in sync for backward safety, see migration 00038).
+  let primaryRoleCode: string | null = null;
+
   if (roleIds.length > 0) {
     // Ensure at most one primary: prefer the submitted primaryRoleId if it is
     // among the checked roles, else fall back to the first checked role.
@@ -58,6 +63,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (insErr) {
       return NextResponse.json({ error: insErr.message }, { status: 500 });
     }
+
+    const { data: primaryRole } = await admin
+      .from('roles')
+      .select('code')
+      .eq('id', effectivePrimary ?? '')
+      .maybeSingle();
+    primaryRoleCode = (primaryRole as { code: string } | null)?.code ?? null;
+  }
+
+  // Mirror the primary role into the legacy user_profiles.role column. Without
+  // this the legacy field drifts from user_roles — the root cause of the R45
+  // divergence. Writes only; nothing reads this column after R45.
+  if (primaryRoleCode) {
+    await admin.from('user_profiles').update({ role: primaryRoleCode }).eq('id', id);
   }
 
   await logAudit(actor.id, 'user.roles_changed', 'user', id, {

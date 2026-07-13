@@ -37,15 +37,17 @@ async function getRosterStats(): Promise<RoleStat[]> {
 
   const { data: userRoles } = await admin
     .schema('innovation')
-    .from('user_roles')
-    .select('role_id');
+    .from('v_user_roles')
+    .select('role_code, role_active');
   const { data: invitations } = await admin
     .schema('innovation')
     .from('invitations')
     .select('role, status');
 
   return roles.map((r: any) => {
-    const activeCount = (userRoles ?? []).filter((ur: any) => ur.role_id === r.id).length;
+    const activeCount = (userRoles ?? []).filter(
+      (ur: any) => ur.role_code === r.code && ur.role_active !== false
+    ).length;
     const invs = (invitations ?? []).filter((i: any) => i.role === r.code);
     return {
       code: r.code,

@@ -70,7 +70,6 @@ type Profile = {
   full_name: string | null;
   full_name_ar?: string | null;
   email: string | null;
-  role: string | null;
   department: string | null;
   created_at: string | null;
 };
@@ -208,16 +207,17 @@ async function loadAll(scope: Scope, userId?: string): Promise<AllData> {
   const pub = sb;
 
   try {
-    const [ideasR, evalsR, profilesR, themesR, activitiesR, auditR, complianceR, escR, supR] = await Promise.all([
+    const [ideasR, evalsR, profilesR, themesR, activitiesR, auditR, complianceR, escR, supR, rolesR] = await Promise.all([
       pub.from('ideas').select('status, created_at, updated_at, current_stage, submitter_id, strategic_theme_id, activity_id, category'),
       pub.from('evaluations').select('idea_id, evaluator_id, total_score, recommendation, submitted_at'),
-      pub.from('user_profiles').select('id, full_name, full_name_ar, email, role, department, created_at'),
+      pub.from('user_profiles').select('id, full_name, full_name_ar, email, department, created_at'),
       pub.from('strategic_themes').select('id, name_ar, name_en'),
       pub.from('activities').select('id, name_ar, name_en'),
       pub.from('audit_logs').select('action, entity_type, actor_id, created_at'),
       pub.from('compliance_controls').select('regulator, status'),
       sb.from('escalations').select('status, current_level, entity_type, opened_at, resolved_at, opened_by'),
       sb.from('support_messages').select('created_at, handled_at, handled_by'),
+      pub.from('v_user_roles').select('user_id, role_code, is_primary, role_active'),
     ]);
 
     let ideas = (ideasR.data as Idea[] | null) ?? [];
@@ -229,6 +229,17 @@ async function loadAll(scope: Scope, userId?: string): Promise<AllData> {
     const compliance = (complianceR.data as Compliance[] | null) ?? [];
     let escalations = (escR.data as Escalation[] | null) ?? [];
     const support = (supR.data as Support[] | null) ?? [];
+
+    // Primary role per user from the source of truth (innovation.v_user_roles),
+    // replacing the deprecated user_profiles.role for the users-by-role tally.
+    const roleRows = (rolesR.data as Array<{ user_id: string; role_code: string; is_primary: boolean; role_active: boolean }> | null) ?? [];
+    const primaryRoleByUser = new Map<string, string>();
+    for (const r of roleRows) {
+      if (r.role_active === false) continue;
+      if (r.is_primary || !primaryRoleByUser.has(r.user_id)) {
+        primaryRoleByUser.set(r.user_id, r.role_code);
+      }
+    }
 
     const profById = new Map(profiles.map((p) => [p.id, p]));
     const nameOf = (p: Profile | undefined) => p?.full_name || p?.email || (p ? p.id.slice(0, 8) : 'unknown');
@@ -357,7 +368,7 @@ async function loadAll(scope: Scope, userId?: string): Promise<AllData> {
     const interRaterAgreement = pts(irrPts);
 
     // Users -------------------------------------------------------------------
-    const usersByRole = tallySorted(deptProfiles.map((p) => p.role), 'member');
+    const usersByRole = tallySorted(deptProfiles.map((p) => primaryRoleByUser.get(p.id) ?? null), 'member');
     const usersByDepartment = tallySorted(deptProfiles.map((p) => p.department), 'unassigned');
     const userMonthlyActivity = timeSeries(deptProfiles.map((p) => p.created_at), monthKey);
     // No last_login column in schema — approximate "recency" via account age

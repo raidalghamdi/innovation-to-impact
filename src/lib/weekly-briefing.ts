@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendBilingualEmail } from '@/lib/email';
 import { logAudit } from '@/lib/audit';
+import { listUserIdsByRole } from '@/lib/user-roles';
 
 // Weekly admin activity digest (Cross-cutting F3). Extracted from the
 // /api/cron/weekly-briefing route module because Next.js route handlers may
@@ -199,16 +200,20 @@ async function runWeeklyBriefing(
 ): Promise<{ recipients: number; metrics: WeeklyBriefingMetrics }> {
   const metrics = await gatherMetrics(supabase);
 
-  const { data: admins, error: adminsErr } = await supabase
-    .from('user_profiles')
-    .select('email')
-    .eq('role', 'admin')
-    .not('email', 'is', null);
-  if (adminsErr) console.error('[weekly-briefing] admins query error:', adminsErr);
-
-  const recipients = ((admins as { email: string | null }[] | null) ?? [])
-    .map((a) => a.email)
-    .filter((e): e is string => Boolean(e));
+  // Resolve admins from the role source of truth, then look up their emails.
+  const adminIds = await listUserIdsByRole(supabase, 'admin');
+  let recipients: string[] = [];
+  if (adminIds.length > 0) {
+    const { data: admins, error: adminsErr } = await supabase
+      .from('user_profiles')
+      .select('email')
+      .in('id', adminIds)
+      .not('email', 'is', null);
+    if (adminsErr) console.error('[weekly-briefing] admins query error:', adminsErr);
+    recipients = ((admins as { email: string | null }[] | null) ?? [])
+      .map((a) => a.email)
+      .filter((e): e is string => Boolean(e));
+  }
 
   if (recipients.length > 0) {
     await sendBilingualEmail({

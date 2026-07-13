@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { logAudit } from '@/lib/audit';
 import { createNotification } from '@/lib/notifications';
+import { listUserIdsByRole } from '@/lib/user-roles';
 
 // First-class escalation objects (see migration 00014). An escalation tracks who
 // owns an overdue or blocked item *now* and climbs a tiered ladder
@@ -52,18 +53,13 @@ async function resolveClient(client?: Client): Promise<Client | null> {
 async function ownerForTier(supabase: Client, tier: number): Promise<string | null> {
   const { data } = await supabase
     .from('user_profiles')
-    .select('id, escalation_tier, role')
+    .select('id, escalation_tier')
     .lte('escalation_tier', tier)
     .order('escalation_tier', { ascending: false });
-  const rows = (data as { id: string; escalation_tier: number; role: string }[] | null) ?? [];
+  const rows = (data as { id: string; escalation_tier: number }[] | null) ?? [];
   if (!rows.length) {
-    const { data: admin } = await supabase
-      .from('user_profiles')
-      .select('id')
-      .eq('role', 'admin')
-      .limit(1)
-      .maybeSingle();
-    return (admin as { id: string } | null)?.id ?? null;
+    const adminIds = await listUserIdsByRole(supabase, 'admin');
+    return adminIds[0] ?? null;
   }
   const exact = rows.find((r) => r.escalation_tier === tier);
   return (exact ?? rows[0]).id;

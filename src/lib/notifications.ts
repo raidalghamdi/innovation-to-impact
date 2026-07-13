@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { sendTransactional } from '@/lib/email';
 import { sendNotificationMessage } from '@/lib/messaging';
 import type { Role } from '@/lib/roles';
+import { listUserIdsByRole } from '@/lib/user-roles';
 
 // Notification kinds. Bilingual copy for each lives in messages/*.json under
 // `notifications.types.<type>.{title,body}` and is resolved via next-intl.
@@ -174,22 +175,7 @@ export async function fanOut(
 export async function getSupervisorIds(client?: Client): Promise<string[]> {
   const supabase = await resolveClient(client);
   if (!supabase) return [];
-  const { data } = await supabase
-    .from('v_user_roles')
-    .select('user_id')
-    .eq('role_code', 'supervisor')
-    .eq('role_active', true);
-  let ids = ((data as { user_id: string }[] | null) ?? [])
-    .map((r) => r.user_id)
-    .filter(Boolean);
-  if (ids.length === 0) {
-    const { data: legacy } = await supabase
-      .from('user_profiles')
-      .select('id')
-      .eq('role', 'supervisor');
-    ids = ((legacy as { id: string }[] | null) ?? []).map((r) => r.id).filter(Boolean);
-  }
-  return Array.from(new Set(ids));
+  return listUserIdsByRole(supabase, 'supervisor');
 }
 
 // Events that concern the supervisor(s) overseeing screening. Every one of
@@ -225,9 +211,9 @@ export async function getNotificationRecipients(
 }
 
 /**
- * Notify every user holding a given role, resolving recipients from
- * user_profiles. Used for role-addressed events (e.g. notify all judges when an
- * evaluation is submitted).
+ * Notify every user holding a given role, resolving recipients from the role
+ * source of truth (innovation.v_user_roles). Used for role-addressed events
+ * (e.g. notify all judges when an evaluation is submitted).
  */
 export async function notifyByRole(
   role: Role,
@@ -237,7 +223,6 @@ export async function notifyByRole(
 ): Promise<void> {
   const supabase = await resolveClient(opts.client);
   if (!supabase) return;
-  const { data } = await supabase.from('user_profiles').select('id').eq('role', role);
-  const ids = ((data as { id: string }[] | null) ?? []).map((r) => r.id);
+  const ids = await listUserIdsByRole(supabase, role);
   await fanOut(ids, type, payload, { ...opts, client: supabase });
 }
