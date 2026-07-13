@@ -116,14 +116,13 @@ export default async function SupervisorPage({
     (th) => ({ id: th.id, title_ar: th.name_ar, title_en: th.name_en })
   );
 
-  // Available evaluators (users with evaluator OR judge role). Read from the
-  // role source of truth via innovation.v_user_roles — reading user_roles
-  // directly under the supervisor's RLS returns only their own rows, which is
-  // why this dropdown previously showed "لا يوجد مقيّمون".
+  // Available evaluators (users with the evaluator role ONLY). Judges are a
+  // separate role and are not assignable to strategic tracks. Read from the
+  // role source of truth via innovation.v_user_roles.
   const { data: evalRoleRows } = await supabase!
     .schema('innovation').from('v_user_roles')
     .select('user_id')
-    .in('role_code', ['evaluator', 'judge'])
+    .eq('role_code', 'evaluator')
     .eq('role_active', true);
   const evaluatorIds = Array.from(
     new Set((evalRoleRows as Array<{ user_id: string }> | null | undefined)?.map((r) => r.user_id) ?? [])
