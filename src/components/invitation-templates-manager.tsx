@@ -17,9 +17,6 @@ import {
   XCircle,
   Bell,
   Globe,
-  Unlock,
-  ListChecks,
-  Plus,
   Send,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,28 +26,21 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { InvitationSendModal } from '@/components/invitation-send-modal';
 
-// `open` / `open_options` and `is_broadcast` / `template_options` are Round-2
-// additions. They require DB changes before they are fully functional (see
-// commit notes): the innovation.email_templates.kind ENUM must gain the two
-// new values, and columns `is_broadcast boolean` + `template_options jsonb`
-// must be added. Until then the UI renders but persistence of these fields
-// will error (handled gracefully with a toast).
-type TemplateKind = 'invite' | 'accept' | 'reject' | 'reminder' | 'open' | 'open_options';
-
-type TemplateOption = { title: string; url?: string };
+// Templates are role-agnostic since R42: exactly one row per kind (role NULL).
+// The recipient's role is injected at send time via {{role_ar}}/{{role_en}}.
+type TemplateKind = 'invite' | 'accept' | 'reject' | 'reminder';
 
 type Template = {
   id: string;
   code: string;
   kind: TemplateKind;
-  role: string;
+  role: string | null;
   subject_ar: string;
   subject_en: string;
   body_ar: string;
   body_en: string;
   is_active: boolean;
   is_broadcast?: boolean;
-  template_options?: TemplateOption[] | null;
 };
 
 type Attachment = {
@@ -62,12 +52,9 @@ type Attachment = {
   size_bytes: number | null;
 };
 
-type Role = { code: string; name_ar: string | null; name_en: string | null };
-
 type Props = {
   templates: Template[];
   attachments: Attachment[];
-  roles: Role[];
   locale: 'ar' | 'en';
 };
 
@@ -76,14 +63,11 @@ const KINDS: { key: TemplateKind; ar: string; en: string; icon: any }[] = [
   { key: 'accept', ar: 'قبول', en: 'Accept', icon: CheckCircle2 },
   { key: 'reject', ar: 'رفض', en: 'Reject', icon: XCircle },
   { key: 'reminder', ar: 'تذكير', en: 'Reminder', icon: Bell },
-  { key: 'open', ar: 'مفتوح', en: 'Open', icon: Unlock },
-  { key: 'open_options', ar: 'مفتوح الخيارات', en: 'Open Options', icon: ListChecks },
 ];
 
 export function InvitationTemplatesManager({
   templates: initialTemplates,
   attachments: initialAttachments,
-  roles,
   locale,
 }: Props) {
   const router = useRouter();
@@ -92,7 +76,6 @@ export function InvitationTemplatesManager({
   const [templates, setTemplates] = useState<Template[]>(initialTemplates);
   const [attachments, setAttachments] = useState<Attachment[]>(initialAttachments);
   const [activeKind, setActiveKind] = useState<Template['kind']>('invite');
-  const [activeRole, setActiveRole] = useState<string>(roles[0]?.code ?? 'innovator');
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null);
   const [showSend, setShowSend] = useState(false);
@@ -103,8 +86,8 @@ export function InvitationTemplatesManager({
   };
 
   const currentTpl = useMemo(
-    () => templates.find((t) => t.kind === activeKind && t.role === activeRole),
-    [templates, activeKind, activeRole]
+    () => templates.find((t) => t.kind === activeKind),
+    [templates, activeKind]
   );
   const currentAttachments = useMemo(
     () => (currentTpl ? attachments.filter((a) => a.template_id === currentTpl.id) : []),
@@ -116,19 +99,16 @@ export function InvitationTemplatesManager({
   const [bodyAr, setBodyAr] = useState(currentTpl?.body_ar ?? '');
   const [bodyEn, setBodyEn] = useState(currentTpl?.body_en ?? '');
   const [isBroadcast, setIsBroadcast] = useState<boolean>(currentTpl?.is_broadcast ?? false);
-  const [options, setOptions] = useState<TemplateOption[]>(currentTpl?.template_options ?? []);
 
   // Reset editor when template selection changes
-  const switchTo = (kind: TemplateKind, role: string) => {
+  const switchTo = (kind: TemplateKind) => {
     setActiveKind(kind);
-    setActiveRole(role);
-    const next = templates.find((t) => t.kind === kind && t.role === role);
+    const next = templates.find((t) => t.kind === kind);
     setSubjectAr(next?.subject_ar ?? '');
     setSubjectEn(next?.subject_en ?? '');
     setBodyAr(next?.body_ar ?? '');
     setBodyEn(next?.body_en ?? '');
     setIsBroadcast(next?.is_broadcast ?? false);
-    setOptions(next?.template_options ?? []);
   };
 
   const save = async () => {
@@ -161,7 +141,7 @@ export function InvitationTemplatesManager({
 
   // Persist Round-2 metadata (broadcast flag + open-options list) separately
   // from the subject/body save, so a missing DB column can't block core edits.
-  const saveMeta = async (patch: { is_broadcast?: boolean; template_options?: TemplateOption[] }) => {
+  const saveMeta = async (patch: { is_broadcast?: boolean }) => {
     if (!currentTpl) return;
     setBusy('meta');
     try {
@@ -193,12 +173,6 @@ export function InvitationTemplatesManager({
     setIsBroadcast(next);
     await saveMeta({ is_broadcast: next });
   };
-
-  const addOption = () => setOptions((prev) => [...prev, { title: '', url: '' }]);
-  const updateOption = (i: number, patch: Partial<TemplateOption>) =>
-    setOptions((prev) => prev.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
-  const removeOption = (i: number) =>
-    setOptions((prev) => prev.filter((_, idx) => idx !== i));
 
   const uploadFile = async (file: File) => {
     if (!currentTpl) return;
@@ -239,8 +213,6 @@ export function InvitationTemplatesManager({
     }
   };
 
-  const roleLabel = (r: Role) => (isAr ? r.name_ar ?? r.code : r.name_en ?? r.code);
-
   return (
     <div className="mt-6 space-y-6">
       {toast && (
@@ -261,7 +233,7 @@ export function InvitationTemplatesManager({
           return (
             <button
               key={k.key}
-              onClick={() => switchTo(k.key, activeRole)}
+              onClick={() => switchTo(k.key)}
               className={`flex items-center gap-2 rounded-t-lg px-4 py-2 text-sm font-medium transition ${
                 isActive
                   ? 'bg-teal-600 text-white'
@@ -270,26 +242,6 @@ export function InvitationTemplatesManager({
             >
               <Icon className="h-4 w-4" />
               {isAr ? k.ar : k.en}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Role pills */}
-      <div className="flex flex-wrap gap-2">
-        {roles.map((r) => {
-          const isActive = activeRole === r.code;
-          return (
-            <button
-              key={r.code}
-              onClick={() => switchTo(activeKind, r.code)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                isActive
-                  ? 'border-teal-600 bg-teal-50 text-teal-700'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-              }`}
-            >
-              {roleLabel(r)}
             </button>
           );
         })}
@@ -338,7 +290,7 @@ export function InvitationTemplatesManager({
                   {isAr ? 'المتغيرات المدعومة:' : 'Supported placeholders:'}
                 </div>
                 <code className="mt-1 block font-mono text-[11px]">
-                  {'{{name}} · {{role}} · {{link}} · {{deadline}} · {{program}}'}
+                  {'{{full_name}} · {{role_ar}} · {{role_en}} · {{invite_link}} · {{expires_at}} · {{program}} · {{dashboard_link}}'}
                 </code>
               </div>
 
@@ -373,64 +325,6 @@ export function InvitationTemplatesManager({
                   />
                 </span>
               </button>
-
-              {/* Open-options editor — only for the `open_options` kind. Lets
-                  the admin define clickable options (title + optional URL)
-                  embedded in the invitation. */}
-              {activeKind === 'open_options' && (
-                <div className="space-y-2 rounded-lg border border-slate-200 p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-800">
-                      {isAr ? 'الخيارات القابلة للنقر' : 'Clickable options'}
-                    </span>
-                    <Button type="button" size="sm" variant="outline" onClick={addOption} className="gap-1">
-                      <Plus className="h-3.5 w-3.5" />
-                      {isAr ? 'إضافة خيار' : 'Add option'}
-                    </Button>
-                  </div>
-                  {options.length === 0 ? (
-                    <p className="text-xs text-slate-400">
-                      {isAr ? 'لا توجد خيارات بعد.' : 'No options yet.'}
-                    </p>
-                  ) : (
-                    options.map((opt, i) => (
-                      <div key={i} className="flex flex-col gap-2 sm:flex-row">
-                        <Input
-                          placeholder={isAr ? 'العنوان' : 'Title'}
-                          value={opt.title}
-                          onChange={(e) => updateOption(i, { title: e.target.value })}
-                        />
-                        <Input
-                          placeholder={isAr ? 'الرابط (اختياري)' : 'URL (optional)'}
-                          value={opt.url ?? ''}
-                          onChange={(e) => updateOption(i, { url: e.target.value })}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeOption(i)}
-                          className="rounded p-2 text-rose-600 hover:bg-rose-50"
-                          aria-label={isAr ? 'حذف' : 'Remove'}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={busy === 'meta'}
-                      onClick={() => saveMeta({ template_options: options })}
-                      className="gap-2"
-                    >
-                      {busy === 'meta' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      {isAr ? 'حفظ الخيارات' : 'Save options'}
-                    </Button>
-                  </div>
-                </div>
-              )}
 
               <div className="flex justify-end">
                 <Button onClick={save} disabled={busy === 'save'} className="gap-2">
@@ -512,14 +406,13 @@ export function InvitationTemplatesManager({
         </div>
       ) : (
         <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-          {isAr ? 'لا يوجد قالب لهذا الدور.' : 'No template for this role.'}
+          {isAr ? 'لا يوجد قالب.' : 'No template available.'}
         </div>
       )}
 
       {showSend && currentTpl && (
         <InvitationSendModal
           template={currentTpl}
-          roles={roles}
           locale={locale}
           onClose={() => setShowSend(false)}
           onToast={showToast}

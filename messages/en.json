@@ -166,6 +166,9 @@
     }
   },
   "invitations": {
+    "testMode": {
+      "banner": "⚠ Email test mode enabled — all outbound email is redirected to {recipient}"
+    },
     "send": {
       "sendNow": "Send now",
       "sendModalTitle": "Send template now",

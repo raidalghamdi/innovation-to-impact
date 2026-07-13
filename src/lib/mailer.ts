@@ -260,9 +260,27 @@ export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
 
   const toOriginal = toDisplay(input.to);
 
-  // TEST-ONLY: reroute mail addressed to a matching recipient (see email-redirect.ts).
-  const redirected = applyTestRedirect(input.to, input.subject);
-  input = { ...input, to: redirected.to, subject: redirected.subject };
+  // TEST MODE (R42): when EMAIL_TEST_MODE=true, redirect EVERY outbound email to
+  // EMAIL_TEST_RECIPIENT and prepend a visible banner to the subject + HTML body
+  // so the tester always sees the intended recipient. Takes precedence over the
+  // legacy pattern-based applyTestRedirect.
+  const testMode = process.env.EMAIL_TEST_MODE === 'true';
+  const testRecipient = process.env.EMAIL_TEST_RECIPIENT;
+  if (testMode && testRecipient) {
+    const banner = `<div style="background:#FFF3CD;border:2px solid #FFC107;padding:12px;margin-bottom:16px;font-family:Arial,sans-serif;color:#856404"><strong>⚠ EMAIL TEST MODE</strong><br>Original recipient: <code>${escapeHtml(
+      toOriginal
+    )}</code><br>All outbound email is being redirected to this test address.</div>`;
+    input = {
+      ...input,
+      to: Array.isArray(input.to) ? [testRecipient] : testRecipient,
+      subject: `[TEST → ${toOriginal}] ${input.subject}`,
+      html: input.html ? banner + input.html : banner,
+    };
+  } else {
+    // TEST-ONLY: reroute mail addressed to a matching recipient (see email-redirect.ts).
+    const redirected = applyTestRedirect(input.to, input.subject);
+    input = { ...input, to: redirected.to, subject: redirected.subject };
+  }
 
   const toFinal = toDisplay(input.to);
   const redirectApplied = toFinal !== toOriginal;
