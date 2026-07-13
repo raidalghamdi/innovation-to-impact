@@ -4,11 +4,11 @@
 // RLS denial, or unconfigured Supabase the affected dataset degrades to empty so
 // a report still renders (each chart shows its own empty state).
 //
-// Schemas: business tables (ideas, evaluations, committee_decisions,
-// user_profiles, audit_logs, compliance_controls, strategic_themes, activities)
-// live in `public`; escalations, support_messages and report_titles live in
-// `innovation` (the client's default schema). We switch with `.schema('public')`
-// where needed.
+// Schemas: ALL business tables (ideas, evaluations, committee_decisions,
+// user_profiles, audit_logs, compliance_controls, strategic_themes, activities,
+// escalations, support_messages, report_titles) live in `innovation`, which is
+// the Supabase client's default schema per src/lib/supabase/server.ts. So we
+// do NOT switch schema at all — the bare `sb.from(...)` calls hit `innovation`.
 //
 // Supervisor scope: filtered to the supervisor's own department. `ideas` are
 // scoped by the submitter's department (resolved in memory), users/audit/etc by
@@ -204,7 +204,8 @@ async function loadAll(scope: Scope, userId?: string): Promise<AllData> {
   const empty = buildEmpty();
   const sb = await createClient();
   if (!sb) return empty;
-  const pub = sb.schema('public');
+  // All tables read here live in `innovation` — use the default client schema.
+  const pub = sb;
 
   try {
     const [ideasR, evalsR, profilesR, themesR, activitiesR, auditR, complianceR, escR, supR] = await Promise.all([
