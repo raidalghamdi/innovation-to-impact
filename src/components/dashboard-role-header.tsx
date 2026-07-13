@@ -83,8 +83,13 @@ export function DashboardRoleHeader({
         <div className="flex items-center gap-2">
           {/* Only rendered when the user actually holds 2+ roles. The user
               menu lives in the AppShell header now (persistent app nav), so it
-              is intentionally not duplicated here. */}
-          <RoleSwitcher roles={roles} activeRole={activeRole} />
+              is intentionally not duplicated here.
+              R42-later Item 3: the extraneous role dropdown is suppressed on
+              the innovator dashboard — innovators do not use it. Other roles
+              keep their switcher. */}
+          {activeRole !== 'innovator' && (
+            <RoleSwitcher roles={roles} activeRole={activeRole} />
+          )}
         </div>
       </div>
     </div>

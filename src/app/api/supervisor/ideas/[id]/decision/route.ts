@@ -12,9 +12,14 @@ type Decision = 'approve' | 'reject' | 'return';
  * Body: { decision: 'approve' | 'reject' | 'return', reason?: string, reason_ar?: string }
  *
  * Screening gate — only supervisor (or admin) may transition idea status.
- * Approve  → status='approved'  (idea moves to evaluator queue)
+ * Approve  → status='evaluation'  (idea moves to the evaluator queue — this is
+ *            the "under_evaluation / قيد التقييم" step. R42-later Item 6: it must
+ *            NOT land on 'approved', which is reserved for final committee
+ *            approval; the innovator was previously seeing "معتمدة" too early.)
  * Reject   → status='rejected'  (terminal)
- * Return   → status='returned'  (back to innovator for edits)
+ * Return   → status='returned' + returned_to_innovator=true (back to innovator
+ *            for edits; the flag drives the "معادة" surfaces without adding a
+ *            separate enum value).
  */
 export async function POST(
   req: NextRequest,
@@ -66,8 +71,11 @@ export async function POST(
     return NextResponse.json({ error: 'no_sections_selected' }, { status: 400 });
   }
 
+  // R42-later Item 6: 'approve' sends the idea into technical evaluation
+  // (status='evaluation' == "under_evaluation / قيد التقييم"), NOT the terminal
+  // 'approved' state. 'approved' is reserved for final committee approval.
   const statusMap: Record<Decision, string> = {
-    approve: 'approved',
+    approve: 'evaluation',
     reject: 'rejected',
     return: 'returned',
   };
@@ -81,8 +89,9 @@ export async function POST(
   };
   if (decision === 'approve') {
     update.approved_at = new Date().toISOString();
-    // Clear any prior partial-edit gate on approval.
+    // Clear any prior partial-edit gate + returned flag on approval.
     update.editable_sections = null;
+    update.returned_to_innovator = false;
   }
   if (decision !== 'approve') {
     update.rejection_reason = reason;
@@ -90,6 +99,13 @@ export async function POST(
   }
   if (decision === 'return') {
     update.editable_sections = cleanedSections;
+    // R42-later Item 6: mark the idea as returned to the innovator. Status stays
+    // 'returned' for backward-compat with existing innovator surfaces; the flag
+    // is what the supervisor "معادة" card filters on.
+    update.returned_to_innovator = true;
+  }
+  if (decision === 'reject') {
+    update.returned_to_innovator = false;
   }
 
   const { error } = await supabase.from('ideas').update(update).eq('id', id);

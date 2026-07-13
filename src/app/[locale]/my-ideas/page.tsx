@@ -2,7 +2,6 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/server';
 import { fetchIdeas } from '@/lib/data';
@@ -12,7 +11,7 @@ import { FeedbackCountBadge } from '@/components/feedback-section';
 import { getFeedbackCountsForSubmitter } from '@/lib/feedback';
 import { EmptyState } from '@/components/empty-state';
 import { WithdrawIdeaButton } from '@/components/withdraw-idea-button';
-import { Lightbulb, Plus, ChevronLeft, ChevronRight, Calendar, Clock, MessageSquareWarning } from 'lucide-react';
+import { Lightbulb, ChevronLeft, ChevronRight, Calendar, Clock, MessageSquareWarning } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 // Status groups shared with the dashboard KPI cards — the "In Review" and
@@ -87,17 +86,13 @@ export default async function MyIdeasPage({
 
   return (
     <AppShell>
+      {/* R42-later Item 2: the "قائمة الأفكار / New Idea" header button was
+          removed per the user's request ("بند قائمة الأفكار تحذف"). Submitting a
+          new idea is still reachable from the dashboard CTA and the empty-state
+          CTA below — nothing else on this page changes. */}
       <PageHeader
         title={t('myIdeasTitle')}
         subtitle={t('myIdeasSubtitle')}
-        action={
-          <Link href="/ideas/new">
-            <Button variant="gold">
-              <Plus className="h-4 w-4" />
-              {t('new')}
-            </Button>
-          </Link>
-        }
       />
 
       {/* Status filter chips — preselected when arriving from a dashboard KPI. */}

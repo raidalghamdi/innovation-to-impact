@@ -13,7 +13,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/user';
 import { listIdeaAttachments } from '@/lib/storage';
 import { formatFileSize, type EvidenceWithUrl } from '@/lib/evidence-types';
-import { STAGE_LABELS, type StageState } from '@/lib/idea-journey';
+import { computeIdeaStage } from '@/lib/idea-journey';
 import type { JourneyTimelineStage } from '@/components/idea-journey-timeline';
 
 /**
@@ -234,24 +234,26 @@ export default async function IdeaDetailPage({
   const canEdit = isOwner && (statusStr === 'returned' || statusStr === 'draft');
   const isReturned = statusStr === 'returned';
 
-  // Journey timeline — driven by the authoritative `current_stage` smallint.
-  // A stage is completed only once the idea has moved PAST it; the stage the
-  // idea currently sits on is highlighted (red when the idea is stopped, else
-  // gold); stages not yet reached stay neutral. This prevents «الاعتماد» and
-  // the post-program stages from ever showing complete before the idea reaches
-  // them.
-  const STOPPED_STATUSES = new Set(['returned', 'rejected', 'on_hold', 'withdrawn']);
-  const isStoppedStatus = STOPPED_STATUSES.has(statusStr);
-  // Draft/unsubmitted ideas sit at the first stage rather than before it.
-  const activeStage = currentStage < 1 ? 1 : currentStage;
-  const journeyStages: JourneyTimelineStage[] = STAGE_LABELS.map((label, i) => {
-    const oneBased = i + 1;
-    let state: StageState;
-    if (oneBased < activeStage) state = 'completed';
-    else if (oneBased === activeStage) state = isStoppedStatus ? 'stopped' : 'current';
-    else state = 'upcoming';
-    return { index: i, state, completedAtISO: null, label };
+  // Journey timeline — R42-later Item 6: derive the stage from the idea's REAL
+  // status via computeIdeaStage, not the stored `current_stage` smallint. The
+  // supervisor decision route advances `status` (e.g. approve → 'evaluation')
+  // without touching `current_stage`, so keying off the smallint left the
+  // timeline stuck behind the workflow. Status-based rules keep the two in sync:
+  // approved → committee/pilot, 'evaluation' → technical evaluation, 'returned'
+  // → screening, 'withdrawn'/'rejected' → stopped.
+  const journey = computeIdeaStage({
+    status: statusStr,
+    current_stage: currentStage,
+    submitted_at: submittedAt,
+    updated_at: updatedAt,
+    created_at: createdAt,
   });
+  const journeyStages: JourneyTimelineStage[] = journey.stages.map((s) => ({
+    index: s.index,
+    state: s.state,
+    completedAtISO: s.completedAt ? s.completedAt.toISOString() : null,
+    label: s.label,
+  }));
 
   return (
     <AppShell>

@@ -6,7 +6,7 @@ const STATUS_LABELS: Record<string, { ar: string; en: string; tone: string }> = 
   submitted: { ar: 'مُقدّمة', en: 'Submitted', tone: 'blue' },
   screening: { ar: 'فرز', en: 'Screening', tone: 'blue' },
   needs_completion: { ar: 'تحتاج استكمال', en: 'Needs completion', tone: 'amber' },
-  evaluation: { ar: 'تقييم', en: 'Evaluation', tone: 'blue' },
+  evaluation: { ar: 'قيد التقييم', en: 'Under evaluation', tone: 'blue' },
   committee: { ar: 'لجنة', en: 'Committee', tone: 'purple' },
   approved: { ar: 'معتمدة', en: 'Approved', tone: 'green' },
   rejected: { ar: 'مرفوضة', en: 'Rejected', tone: 'red' },

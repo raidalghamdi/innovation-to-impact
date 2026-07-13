@@ -128,7 +128,7 @@ export default async function IdeaSubmittedPage({
         {/* CTAs */}
         <div className="flex flex-col gap-3 md:flex-row md:justify-center">
           <Button asChild size="lg">
-            <Link href="/my-ideas">
+            <Link href={`/ideas/${id}`}>
               {t('trackCta')}
               <ArrowRight className="h-4 w-4 rtl:rotate-180" />
             </Link>
