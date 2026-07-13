@@ -1,27 +1,16 @@
 import { createClient } from '@/lib/supabase/server';
+import { hasRole } from '@/lib/user-roles';
 
 /**
- * Checks whether the given user_id has the given role code in innovation.user_roles.
- * Uses the roles-join view so we match by role.code, not the raw uuid.
+ * Checks whether the given user_id actively holds the given role code.
+ * Reads the single source of truth via innovation.v_user_roles (the only role
+ * read path) — this is also RLS-safe for callers checking another user.
  * Returns false for missing user, missing role, or DB errors.
  */
 export async function userHasRole(userId: string, code: string): Promise<boolean> {
   const supabase = await createClient();
   if (!supabase) return false;
-  const { data, error } = await supabase
-    .from('user_roles')
-    .select('role_id, roles!inner(code)')
-    .eq('user_id', userId);
-  if (error || !data) return false;
-  // Supabase types the joined row as an array (roles: {code}[]) even though
-  // roles!inner returns a single object. Normalize by taking the first item.
-  const rows = data as unknown as Array<{ roles: { code: string } | { code: string }[] | null }>;
-  return rows.some((r) => {
-    const rel = r.roles;
-    if (!rel) return false;
-    if (Array.isArray(rel)) return rel.some((rr) => rr?.code === code);
-    return rel.code === code;
-  });
+  return hasRole(supabase, userId, code);
 }
 
 export async function isCurrentUserSupervisor(userId: string): Promise<boolean> {

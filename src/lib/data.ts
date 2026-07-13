@@ -1023,11 +1023,11 @@ function approvalRate(ideas: demo.Idea[]): number {
 }
 
 export async function fetchExecutiveSummary(scope: Scope): Promise<ExecutiveSummary> {
-  const [allIdeas, allThemes, benefits, users] = await Promise.all([
+  const [allIdeas, allThemes, benefits, evaluators] = await Promise.all([
     fetchIdeas(),
     fetchThemes(),
     fetchBenefits(),
-    fetchUsers(),
+    getUsersByRole('evaluator'),
   ]);
 
   // Scope narrowing: a non-admin only sees ideas/themes for their allowed
@@ -1054,7 +1054,7 @@ export async function fetchExecutiveSummary(scope: Scope): Promise<ExecutiveSumm
   };
   const activePilots = (set: demo.Idea[]) =>
     set.filter((i) => Number(i.current_stage ?? 0) >= 6 && i.status !== 'closed').length;
-  const evaluatorsActive = users.filter((u) => u.role === 'evaluator').length;
+  const evaluatorsActive = evaluators.length;
 
   const kpis: ExecKpi[] = [
     {

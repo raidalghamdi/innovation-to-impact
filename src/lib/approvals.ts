@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { logAudit } from '@/lib/audit';
 import { fanOut } from '@/lib/notifications';
+import { getUserRoles, listUserIdsByRole } from '@/lib/user-roles';
 
 // Multi-step approval chains (see migration 00014). A chain is an ordered list of
 // steps; each step needs `min_approvers` approvals from users holding
@@ -105,8 +106,7 @@ async function notifyStepApprovers(
   entityType: string,
   entityId: string
 ): Promise<void> {
-  const { data } = await supabase.from('user_profiles').select('id').eq('role', step.required_role);
-  const ids = ((data as { id: string }[] | null) ?? []).map((r) => r.id);
+  const ids = await listUserIdsByRole(supabase, step.required_role);
   if (!ids.length) return;
   await fanOut(
     ids,
@@ -289,13 +289,10 @@ export async function getPendingApprovals(
   const supabase = await resolveClient(opts.client);
   if (!supabase) return [];
   try {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('id', userId)
-      .maybeSingle();
-    const role = (profile as { role?: string } | null)?.role;
-    if (!role) return [];
+    // Role source of truth (v_user_roles). A user may hold several roles, so a
+    // step waits on them if its required_role is any of their active roles.
+    const roles = await getUserRoles(supabase, userId);
+    if (!roles.length) return [];
 
     const { data: instRows } = await supabase
       .from('approval_instances')
@@ -310,7 +307,7 @@ export async function getPendingApprovals(
       const steps = await stepsForChain(supabase, instance.chain_id);
       const approvals = await approvalsByStep(supabase, instance.id);
       const current = pendingStep(steps, approvals);
-      if (!current || current.required_role !== role) continue;
+      if (!current || !roles.includes(current.required_role)) continue;
 
       const { data: mine } = await supabase
         .from('approval_step_decisions')
