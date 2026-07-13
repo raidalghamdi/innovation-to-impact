@@ -1,19 +1,21 @@
-// Evaluator → strategic-track (theme) assignment lookup (R43). Reads
-// innovation.evaluator_track_assignments to learn which tracks a given
-// evaluator may review. The table is optional: when it has not shipped yet the
-// query errors and we report `configured: false` so existing evaluators keep
-// their prior (unfiltered) behavior and are never locked out.
+// Evaluator → strategic-track (theme) assignment lookup (R45.6).
 //
-// Column names are tolerated defensively — the track column may be exposed as
-// theme_id / track_id / strategic_theme_id and the evaluator column as
-// evaluator_id / user_id — so this helper survives minor schema drift.
-// Follows the defensive style of src/lib/admin-settings.ts.
+// Source of truth is innovation.track_assignments — the same table the
+// supervisor writes to from /supervisor "تعيين المسارات". A parallel table
+// (evaluator_track_assignments) existed but was never populated; reading from
+// it was the reason evaluators saw "لا توجد محاور مُسندة" while the supervisor
+// clearly saw the assignment on their side.
+//
+// Row shape (innovation.track_assignments):
+//   id, theme_id, evaluator_id, assigned_by, assigned_at, status, notes
+// We consider a row "active" when status = 'active'.
+//
+// `configured: false` is returned only when Supabase is unavailable or the
+// query throws unexpectedly — never as a silent fallback that would leak
+// unrelated ideas to the evaluator.
 import { createClient } from '@/lib/supabase/server';
 
 export type EvaluatorTrackResult = { configured: boolean; themeIds: string[] };
-
-const TRACK_COLUMNS = ['theme_id', 'track_id', 'strategic_theme_id'] as const;
-const EVALUATOR_COLUMNS = ['evaluator_id', 'user_id'] as const;
 
 export async function getEvaluatorTrackThemeIds(
   evaluatorId: string
@@ -24,33 +26,23 @@ export async function getEvaluatorTrackThemeIds(
   if (!supabase) return { configured: false, themeIds: [] };
 
   try {
-    // Try each candidate evaluator column until one resolves without error.
-    // A missing table surfaces as an error on every attempt → not configured.
-    let rows: Record<string, unknown>[] | null = null;
-    for (const col of EVALUATOR_COLUMNS) {
-      const { data, error } = await supabase
-        .from('evaluator_track_assignments')
-        .select('*')
-        .eq(col, evaluatorId);
-      if (!error) {
-        rows = (data as Record<string, unknown>[]) ?? [];
-        break;
-      }
+    const { data, error } = await supabase
+      .schema('innovation')
+      .from('track_assignments')
+      .select('theme_id')
+      .eq('evaluator_id', evaluatorId)
+      .eq('status', 'active');
+
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('[getEvaluatorTrackThemeIds] query error:', error);
+      return { configured: false, themeIds: [] };
     }
 
-    if (rows === null) return { configured: false, themeIds: [] };
-
-    // Table exists → configured, even when the evaluator has zero rows.
     const seen = new Set<string>();
-    for (const row of rows) {
-      for (const col of TRACK_COLUMNS) {
-        const value = row[col];
-        if (typeof value === 'string' && value.length > 0) {
-          seen.add(value);
-        }
-      }
+    for (const row of (data as Array<{ theme_id: string | null }> | null) ?? []) {
+      if (row.theme_id) seen.add(row.theme_id);
     }
-
     return { configured: true, themeIds: Array.from(seen) };
   } catch (err) {
     // eslint-disable-next-line no-console
