@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { BarChart3, Loader2, Pencil, Save, X } from 'lucide-react';
+import { BarChart3, CheckCircle2, Gavel, Loader2, Pencil, Save, Star, X } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { KPICard } from '@/components/kpi-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +24,10 @@ type TitleMap = Record<string, ReportTitle>;
 const EDITABLE_KEYS = [
   'reports_center_hero',
   'reports_center_charts_section',
+  'kpi_total_ideas',
+  'kpi_approved',
+  'kpi_avg_score',
+  'kpi_committee_decisions',
   'chart_a_ideas_by_status',
   'chart_b_submissions_timeline',
   'chart_c_approval_funnel',
@@ -327,6 +332,36 @@ export function ReportsCenterCharts({
   const scoreHasData = scoreData.some((b) => b.count > 0);
   const stageHasData = stageData.some((s) => s.avg_days > 0);
 
+  // --- KPI strip (numeric headline metrics + sparklines) --------------------
+  const kpis = useMemo(() => {
+    const totalIdeas = data.ideasByStatus.reduce((sum, s) => sum + s.count, 0);
+    const approved = data.approvalFunnel.find((f) => f.key === 'approved')?.count ?? 0;
+
+    let weighted = 0;
+    let evalCount = 0;
+    for (const b of data.scoreDistribution) {
+      weighted += b.bucket * b.count;
+      evalCount += b.count;
+    }
+    const avgScore = evalCount > 0 ? Number((weighted / evalCount).toFixed(1)) : 0;
+
+    const committeeTotal = data.committeeTrend.reduce((sum, c) => sum + c.approve + c.reject, 0);
+
+    // Cumulative submissions form a rising sparkline; committee series feed theirs.
+    let running = 0;
+    const totalSeries = data.submissionsTimeline.map((p) => {
+      running += p.count;
+      return running;
+    });
+    const approvedSeries = data.committeeTrend.map((c) => c.approve);
+    const scoreSeries = data.scoreDistribution.map((b) => b.count);
+    const committeeSeries = data.committeeTrend.map((c) => c.approve + c.reject);
+
+    return { totalIdeas, approved, avgScore, committeeTotal, totalSeries, approvedSeries, scoreSeries, committeeSeries };
+  }, [data]);
+
+  const kpiLabel = (key: string) => pickTitle(titles[key], locale).title;
+
   return (
     <div className="space-y-6">
       {/* Hero */}
@@ -342,10 +377,17 @@ export function ReportsCenterCharts({
             </div>
           </div>
           {isAdmin && (
-            <Button variant="gold" onClick={() => setEditing(true)} className="shrink-0">
-              <Pencil className="h-4 w-4" />
-              {isAr ? 'تحرير العناوين' : 'Edit Titles'}
-            </Button>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button variant="gold" onClick={() => setEditing(true)}>
+                <Pencil className="h-4 w-4" />
+                {isAr ? 'تحرير العناوين' : 'Edit Titles'}
+              </Button>
+              <Button asChild variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10">
+                <a href={`/${locale}/admin/reports/titles`}>
+                  {isAr ? 'صفحة العناوين' : 'Titles page'}
+                </a>
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -354,6 +396,43 @@ export function ReportsCenterCharts({
       <div>
         <h3 className="text-lg font-semibold text-brand-teal">{section.title}</h3>
         {section.subtitle && <p className="text-sm text-muted-foreground">{section.subtitle}</p>}
+      </div>
+
+      {/* KPI strip */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KPICard
+          label={kpiLabel('kpi_total_ideas')}
+          value={kpis.totalIdeas}
+          icon={BarChart3}
+          accent="teal"
+          series={kpis.totalSeries}
+          sparklineVariant="area"
+          locale={locale}
+        />
+        <KPICard
+          label={kpiLabel('kpi_approved')}
+          value={kpis.approved}
+          icon={CheckCircle2}
+          accent="teal"
+          series={kpis.approvedSeries}
+          locale={locale}
+        />
+        <KPICard
+          label={kpiLabel('kpi_avg_score')}
+          value={String(kpis.avgScore)}
+          icon={Star}
+          accent="gold"
+          series={kpis.scoreSeries}
+          locale={locale}
+        />
+        <KPICard
+          label={kpiLabel('kpi_committee_decisions')}
+          value={kpis.committeeTotal}
+          icon={Gavel}
+          accent="teal"
+          series={kpis.committeeSeries}
+          locale={locale}
+        />
       </div>
 
       {/* Chart grid */}
