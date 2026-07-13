@@ -106,7 +106,7 @@ export function NotificationBell({ userId, role }: { userId: string | null; role
           <ul className="max-h-96 divide-y divide-border overflow-y-auto">
             {items.length === 0 && (
               <li className="px-4 py-6 text-center text-sm text-muted-foreground">
-                {t('empty')}
+                {t('empty.title')}
               </li>
             )}
             {items.map((n) => {

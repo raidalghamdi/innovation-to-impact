@@ -170,7 +170,14 @@ export function AssignmentsManager({
                         <p className="font-medium text-foreground">{pickFromRow(r, 'idea_title', locale) || '—'}</p>
                         <p className="font-mono text-xs text-muted-foreground" dir="ltr">{r.idea_code ?? r.idea_id}</p>
                       </td>
-                      <td className="p-3 text-muted-foreground" dir="ltr">{r.evaluator_email || r.evaluator_name || r.evaluator_id}</td>
+                      <td className="p-3 text-muted-foreground" dir="ltr">
+                        <a
+                          href={`/${locale}/admin/users/${r.evaluator_id}`}
+                          className="text-brand-teal hover:underline"
+                        >
+                          {r.evaluator_email || r.evaluator_name || r.evaluator_id}
+                        </a>
+                      </td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.assigned_at?.slice(0, 10) ?? '—'}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.due_at?.slice(0, 10) ?? '—'}</td>
                       <td className="p-3">

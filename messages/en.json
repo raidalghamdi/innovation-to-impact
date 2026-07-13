@@ -804,9 +804,9 @@
       "benefits": "Expected benefits"
     },
     "notif": {
-      "pending": "You have {count} ideas awaiting evaluation",
-      "nextDue": "Next due in {days} days ({date})",
-      "overdue": "You have ideas overdue by {days} days",
+      "pending": "You have {count, plural, one {# idea} other {# ideas}} awaiting evaluation",
+      "nextDue": "Next due in {days, plural, one {# day} other {# days}} ({date})",
+      "overdue": "You have ideas overdue by {days, plural, one {# day} other {# days}}",
       "overdueBadge": "{count} overdue",
       "allDone": "All assigned evaluations complete. Great work!",
       "autosaved": "Evaluation autosaved"
@@ -1327,7 +1327,17 @@
     "title": "Notifications",
     "subtitle": "Your alerts and updates",
     "viewAll": "View all",
-    "empty": "No notifications yet.",
+    "empty": {
+      "title": "No notifications yet",
+      "subtitle": {
+        "innovator": "We'll notify you when your idea's status changes.",
+        "admin": "We'll notify you when there are events requiring admin action.",
+        "supervisor": "We'll notify you when new ideas or requests need your decision.",
+        "evaluator": "We'll notify you when a new idea is assigned for evaluation.",
+        "judge": "We'll notify you when a committee decision is required.",
+        "default": "We'll notify you when there are updates."
+      }
+    },
     "markRead": "Mark as read",
     "markAllRead": "Mark all as read",
     "dismiss": "Dismiss",
@@ -1880,7 +1890,7 @@
     "nudge": "Consider refining your idea or joining an existing one to strengthen its impact.",
     "relatedTitle": "Related ideas",
     "relatedEmpty": "No related ideas found.",
-    "duplicatesTitle": "{n} similar ideas may already exist"
+    "duplicatesTitle": "{n, plural, one {# similar idea may already exist} other {# similar ideas may already exist}}"
   },
   "ideaSubmitted": {
     "headline": "Your idea has been submitted!",

@@ -37,6 +37,7 @@ const ADMIN_SECTION_LABELS: Record<string, { ar: string; en: string }> = {
   assignments: { ar: 'التعيينات', en: 'Assignments' },
   cms: { ar: 'محرر المحتوى', en: 'Content Editor' },
   phases: { ar: 'جدول المراحل', en: 'Phase Schedule' },
+  reports: { ar: 'مركز التقارير', en: 'Reports Center' },
 };
 
 export function AppShell({ children }: { children: React.ReactNode }) {
