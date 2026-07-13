@@ -12,7 +12,6 @@ export type EscalationEntity =
   | 'idea'
   | 'evaluation'
   | 'committee_decision'
-  | 'change_request'
   | 'sla';
 
 export type EscalationStatus = 'open' | 'acknowledged' | 'resolved' | 'cancelled';

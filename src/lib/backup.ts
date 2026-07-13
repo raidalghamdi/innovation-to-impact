@@ -62,7 +62,6 @@ export const BACKUP_TABLES: readonly string[] = [
   'approval_step_decisions',
   'escalations',
   'escalation_events',
-  'change_requests',
 
   // ── Support / messaging ─────────────────────────────────────────────────
   'support_messages',

@@ -63,7 +63,12 @@ export function StatsBlock({ stats, locale }: { stats: Stats; locale: string }) 
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label={t('statIdeas')} value={formatNumber(scaled.total)} icon={Lightbulb} />
+        <KPICard
+          label={t('statIdeas')}
+          value={formatNumber(scaled.total)}
+          icon={Lightbulb}
+          sparklineVariant="area"
+        />
         <KPICard label={t('statPipeline')} value={formatNumber(scaled.inPipeline)} icon={GitBranch} />
         <KPICard label={t('statPilots')} value={formatNumber(scaled.inPilot)} icon={FlaskConical} />
         <KPICard

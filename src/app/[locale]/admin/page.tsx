@@ -15,7 +15,6 @@ import {
   FileBarChart,
   ShieldCheck,
   Split as SplitIcon,
-  ClipboardEdit,
   ClipboardList,
   FileText,
   FileDown,
@@ -166,14 +165,6 @@ const ADMIN_CARDS: AdminCard[] = [
     descAr: 'توزيع المُقيِّمين على الأفكار وإدارة أعباء العمل.',
     descEn: 'Assign evaluators to ideas and balance workloads.',
     icon: SplitIcon,
-  },
-  {
-    href: '/admin/change-requests',
-    labelAr: 'طلبات التعديل',
-    labelEn: 'Change Requests',
-    descAr: 'مراجعة طلبات تعديل الأفكار بعد الإرسال.',
-    descEn: 'Review post-submission idea change requests.',
-    icon: ClipboardEdit,
   },
   {
     href: '/admin/cms',
