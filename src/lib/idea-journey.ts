@@ -181,6 +181,18 @@ export function computeIdeaStage(
     // Rule G — committee reviewing.
     completedUpTo = 3;
     current = 4;
+  } else if (status === 'pass_awaiting_attachments') {
+    // Rule E' — the RPC has already flipped status to pass_awaiting_attachments
+    // (evaluators’ scorecards all in, average ≥ threshold). Evaluation is done;
+    // the idea is waiting on final attachments before committee review. Show
+    // stages 1–3 as completed and stage 4 (committee) as the current stage.
+    completedUpTo = 3;
+    current = 4;
+  } else if (status === 'evaluation_failed') {
+    // Rule F' — evaluation completed and the average was below threshold.
+    // Stage 3 is stopped; earlier stages stay completed.
+    completedUpTo = 2;
+    stopped = 3;
   } else if (passed) {
     // Rule E — evaluator passed the idea; awaiting committee.
     completedUpTo = 3;
