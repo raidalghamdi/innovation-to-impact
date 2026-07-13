@@ -62,7 +62,13 @@ function smartTitle(text: string, locale: string): string {
 
 type TeamMember = { email: string; name: string };
 
-const MIN_TEAM_MEMBERS = 3;
+// R42-later Item 4/7: `teamMembers` holds only the ADDITIONAL members — the
+// account owner (submitter) is always the team leader and is counted
+// implicitly. Minimum team size is 3 = leader + 2 additional members, so the
+// additional-member minimum is 2. Max total is 5 (leader + 4 additional was
+// the prior cap; we keep 5 additional rows available but the effective team is
+// leader + up to 5).
+const MIN_TEAM_MEMBERS = 2;
 const MAX_TEAM_MEMBERS = 5;
 
 // Character limits per field.
@@ -195,7 +201,9 @@ export function IdeaForm({
   }
 
   // Switching to team participation pre-fills empty rows up to the minimum so
-  // the author sees the expected 3-member baseline immediately.
+  // the author sees the expected baseline (leader + 2 members) immediately.
+  // Switching back to individual clears the roster entirely (R42-later Item 4:
+  // "team → individual deletes all team members automatically").
   function selectParticipation(opt: 'individual' | 'team') {
     setParticipation(opt);
     if (opt === 'team') {
@@ -205,6 +213,9 @@ export function IdeaForm({
         while (next.length < MIN_TEAM_MEMBERS) next.push({ email: '', name: '' });
         return next;
       });
+    } else {
+      setTeamMembers([{ email: '', name: '' }]);
+      setTeamName('');
     }
   }
 
@@ -326,6 +337,10 @@ export function IdeaForm({
       status: 'submitted',
       current_stage: 1,
       submitter_id: userData.user.id,
+      // R42-later Item 7: the team leader is ALWAYS the account owner
+      // (submitter). Persisted explicitly so every dashboard can read the
+      // leader from one canonical column instead of guessing team_members[0].
+      team_leader_id: isTeam ? userData.user.id : null,
       team_name: isTeam ? teamName.trim() : null,
       team_members: isTeam
         ? validTeamMembers.map((m) => ({ name: m.name.trim(), email: m.email.trim() }))
@@ -579,6 +594,11 @@ export function IdeaForm({
                       dir={isAr ? 'rtl' : 'ltr'}
                     />
                   </div>
+                  {/* R42-later Item 7: the account owner is always the team
+                      leader and is counted toward the 3-member minimum. */}
+                  <p className="rounded-lg bg-brand-teal-light/40 px-3 py-2 text-xs font-medium text-brand-teal">
+                    {tf('teamLeaderNote')}
+                  </p>
                   <div className="flex items-center justify-between gap-2">
                     <Label>
                       {tf('teamMembersLabel')} <span className="text-red-500">*</span>
@@ -815,7 +835,7 @@ export function IdeaForm({
                     <Link
                       href="/ip-terms"
                       target="_blank"
-                      className="font-medium text-brand-teal underline-offset-2 hover:underline"
+                      className="font-medium text-brand-teal underline underline-offset-2 hover:no-underline"
                     >
                       {t('ownershipAckLink')}
                     </Link>
@@ -835,7 +855,7 @@ export function IdeaForm({
                       href="/terms"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium text-brand-teal underline-offset-2 hover:underline"
+                      className="font-medium text-brand-teal underline underline-offset-2 hover:no-underline"
                     >
                       {tf('termsLink')}
                     </Link>

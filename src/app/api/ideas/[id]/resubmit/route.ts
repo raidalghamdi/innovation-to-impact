@@ -38,7 +38,7 @@ export async function POST(
   // Fetch the idea to verify ownership + status + editable_sections gate.
   const { data: idea, error: fetchErr } = await supabase
     .from('ideas')
-    .select('id, code, submitter_id, status, editable_sections, strategic_theme_id, original_source_metadata')
+    .select('id, code, submitter_id, status, editable_sections, strategic_theme_id, original_source_metadata, participation_type, team_members')
     .eq('id', id)
     .maybeSingle();
   if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 400 });
@@ -52,6 +52,8 @@ export async function POST(
     editable_sections: string[] | null;
     strategic_theme_id: string | null;
     original_source_metadata: Record<string, unknown> | null;
+    participation_type: string | null;
+    team_members: Array<Record<string, unknown>> | null;
   };
 
   if (row.submitter_id !== user.id && user.role !== 'admin') {
@@ -123,6 +125,29 @@ export async function POST(
     return NextResponse.json({ error: 'no_editable_fields' }, { status: 400 });
   }
 
+  // R42-later Item 4: enforce the minimum team size on resubmission (defense in
+  // depth — the form also enforces it). A team idea needs the leader + at least
+  // 2 additional members in the JSONB array (leader is not stored in the array,
+  // so the array must have >= 2 entries). Use the patched values when present,
+  // otherwise fall back to the current row.
+  const effectiveType =
+    'participation_type' in patch
+      ? (patch.participation_type as string | null)
+      : row.participation_type;
+  if (effectiveType === 'team') {
+    const effectiveMembers = Array.isArray(patch.team_members)
+      ? (patch.team_members as unknown[])
+      : Array.isArray(row.team_members)
+        ? row.team_members
+        : [];
+    if (effectiveMembers.length < 2) {
+      return NextResponse.json(
+        { error: 'team_min_members', min: 3 },
+        { status: 400 }
+      );
+    }
+  }
+
   const now = new Date().toISOString();
   const update = {
     ...patch,
@@ -133,6 +158,11 @@ export async function POST(
     // Clear supervisor's prior rejection notes so the next return starts clean.
     rejection_reason: null,
     rejection_reason_ar: null,
+    // R42-later Item 6: back in the screening queue — no longer returned.
+    returned_to_innovator: false,
+    // R42-later Item 7: keep team_leader_id in sync — leader is the submitter
+    // for team ideas, null for individual.
+    team_leader_id: effectiveType === 'team' ? row.submitter_id : null,
   };
 
   const { error: upErr } = await supabase.from('ideas').update(update).eq('id', id);
