@@ -1148,7 +1148,34 @@
     "settingsSubtitle": "إعدادات تشغيلية يتحكم بها المسؤول مباشرة دون الحاجة لمتغيرات بيئة.",
     "employeesImport": "استيراد الموظفين",
     "rolesCatalog": "كتالوج الأدوار",
-    "usersManagement": "إدارة المستخدمين"
+    "usersManagement": "إدارة المستخدمين",
+    "settings": {
+      "title": "إعدادات النظام",
+      "topN": "عدد الأفكار المعتمدة (Top N)",
+      "passThreshold": "عتبة نجاح التقييم",
+      "save": "حفظ",
+      "saved": "تم الحفظ"
+    },
+    "criteria": {
+      "title": "معايير التقييم",
+      "committeeTitle": "معايير اللجنة",
+      "code": "الرمز",
+      "nameAr": "الاسم (عربي)",
+      "nameEn": "الاسم (إنجليزي)",
+      "weight": "الوزن",
+      "active": "نشط"
+    }
+  },
+  "lifecycle": {
+    "statuses": {
+      "passAwaitingAttachments": "بانتظار المرفقات النهائية",
+      "pendingFinalRanking": "بانتظار الفرز النهائي",
+      "evaluationFailed": "لم تتجاوز التقييم",
+      "notSelected": "لم تُعتمد",
+      "inPilot": "التنفيذ التجريبي",
+      "inMeasurement": "القياس والأثر",
+      "inScaling": "التوسّع والاعتماد"
+    }
   },
   "strategy": {
     "title": "الاستراتيجية والحوكمة",

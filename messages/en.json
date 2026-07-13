@@ -1148,7 +1148,34 @@
     "settingsSubtitle": "Runtime configuration the admin controls directly — no environment variables required.",
     "employeesImport": "Employee Import",
     "rolesCatalog": "Roles Catalog",
-    "usersManagement": "User Management"
+    "usersManagement": "User Management",
+    "settings": {
+      "title": "System Settings",
+      "topN": "Number of Approved Ideas (Top N)",
+      "passThreshold": "Evaluation Pass Threshold",
+      "save": "Save",
+      "saved": "Saved"
+    },
+    "criteria": {
+      "title": "Evaluation Criteria",
+      "committeeTitle": "Committee Criteria",
+      "code": "Code",
+      "nameAr": "Name (Arabic)",
+      "nameEn": "Name (English)",
+      "weight": "Weight",
+      "active": "Active"
+    }
+  },
+  "lifecycle": {
+    "statuses": {
+      "passAwaitingAttachments": "Awaiting Final Attachments",
+      "pendingFinalRanking": "Pending Final Ranking",
+      "evaluationFailed": "Did Not Pass Evaluation",
+      "notSelected": "Not Selected",
+      "inPilot": "In Pilot",
+      "inMeasurement": "Measurement & Impact",
+      "inScaling": "Scaling & Adoption"
+    }
   },
   "strategy": {
     "title": "Strategy & governance",
