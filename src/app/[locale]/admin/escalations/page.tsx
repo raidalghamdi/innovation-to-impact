@@ -21,7 +21,6 @@ const ENTITY_VALUES: EscalationEntity[] = [
   'idea',
   'evaluation',
   'committee_decision',
-  'change_request',
   'sla',
 ];
 

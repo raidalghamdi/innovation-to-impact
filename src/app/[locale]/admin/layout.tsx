@@ -52,7 +52,6 @@ export default async function AdminLayout({
     analytics: 'analyticsTitle',
     backup: 'backupTitle',
     escalations: 'escalationsTitle',
-    'change-requests': 'changeRequestsTitle',
     assignments: 'assignmentsTitle',
     cms: 'cmsTitle',
   };
@@ -66,7 +65,6 @@ export default async function AdminLayout({
     analytics: 'التحليلات',
     backup: 'النسخ الاحتياطي',
     escalations: 'التصعيدات',
-    'change-requests': 'طلبات التعديل',
     assignments: 'التعيينات',
     cms: 'محرر المحتوى',
     reports: 'مركز التقارير',
@@ -81,7 +79,6 @@ export default async function AdminLayout({
     analytics: 'Analytics',
     backup: 'Backup',
     escalations: 'Escalations',
-    'change-requests': 'Change Requests',
     assignments: 'Assignments',
     cms: 'Content Editor',
     reports: 'Reports Center',

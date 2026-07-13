@@ -18,7 +18,6 @@ import { Sparkles, X } from 'lucide-react';
 const AI_ASSISTED_PREFIXES = [
   '/admin/analytics',
   '/committee',
-  '/admin/change-requests',
 ];
 
 const DISMISS_KEY = 'i2i.hitlBanner.dismissed';

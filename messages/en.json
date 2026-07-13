@@ -1998,32 +1998,6 @@
       "fk_mismatch": "referenced record not found"
     }
   },
-  "changeRequests": {
-    "title": "Change requests",
-    "subtitle": "Review and apply proposed edits across the platform.",
-    "rejectedPill": "Rejected ({n})",
-    "transitionError": "That move isn't allowed from the current status.",
-    "columnEmpty": "Nothing here",
-    "detailTitle": "Change request",
-    "close": "Close",
-    "fieldPath": "Field",
-    "currentValue": "Current",
-    "proposedValue": "Proposed",
-    "reason": "Reason",
-    "approve": "Approve",
-    "reject": "Reject",
-    "status": {
-      "requested": "Requested",
-      "in_review": "In review",
-      "approved": "Approved",
-      "applied": "Applied"
-    },
-    "age": {
-      "days": "{n}d ago",
-      "hours": "{n}h ago",
-      "minutes": "{n}m ago"
-    }
-  },
   "escalations": {
     "title": "Escalations",
     "subtitle": "Overdue or blocked items and who owns them now.",
@@ -2059,7 +2033,6 @@
       "idea": "Idea",
       "evaluation": "Evaluation",
       "committee_decision": "Committee decision",
-      "change_request": "Change request",
       "sla": "SLA"
     },
     "age": {
@@ -2101,7 +2074,6 @@
       "idea": "Idea",
       "evaluation": "Evaluation",
       "committee_decision": "Committee decision",
-      "change_request": "Change request",
       "sla": "SLA"
     }
   },

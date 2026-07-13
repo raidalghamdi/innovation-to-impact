@@ -37,6 +37,7 @@ type KPICardProps = {
   current?: number;
   previous?: number;
   series?: number[];
+  sparklineVariant?: 'line' | 'area';
   testId?: string;
 };
 
@@ -78,6 +79,7 @@ export function KPICard(props: KPICardProps) {
     current,
     previous,
     series,
+    sparklineVariant = 'line',
     testId,
   } = props;
 
@@ -153,6 +155,7 @@ export function KPICard(props: KPICardProps) {
       {series && series.length > 1 && (
         <Sparkline
           values={series}
+          variant={sparklineVariant}
           className="mt-3"
           color={accent === 'gold' ? '#FFC553' : '#20808D'}
         />

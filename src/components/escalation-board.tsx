@@ -41,8 +41,6 @@ function entityHref(entityType: string, entityId: string): string | null {
       return `/evaluator`;
     case 'committee_decision':
       return `/committee`;
-    case 'change_request':
-      return `/admin/change-requests`;
     default:
       return null;
   }

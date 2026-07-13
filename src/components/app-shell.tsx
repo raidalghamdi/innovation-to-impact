@@ -33,7 +33,6 @@ const ADMIN_SECTION_LABELS: Record<string, { ar: string; en: string }> = {
   analytics: { ar: 'التحليلات', en: 'Analytics' },
   backup: { ar: 'النسخ الاحتياطي', en: 'Backup' },
   escalations: { ar: 'التصعيدات', en: 'Escalations' },
-  'change-requests': { ar: 'طلبات التعديل', en: 'Change Requests' },
   assignments: { ar: 'التعيينات', en: 'Assignments' },
   cms: { ar: 'محرر المحتوى', en: 'Content Editor' },
   phases: { ar: 'جدول المراحل', en: 'Phase Schedule' },

@@ -1998,32 +1998,6 @@
       "fk_mismatch": "السجل المشار إليه غير موجود"
     }
   },
-  "changeRequests": {
-    "title": "طلبات التغيير",
-    "subtitle": "راجع التعديلات المقترحة وطبّقها عبر المنصة.",
-    "rejectedPill": "مرفوضة ({n})",
-    "transitionError": "هذا الانتقال غير مسموح من الحالة الراهنة.",
-    "columnEmpty": "لا شيء هنا",
-    "detailTitle": "طلب تغيير",
-    "close": "إغلاق",
-    "fieldPath": "الحقل",
-    "currentValue": "الحالي",
-    "proposedValue": "المقترح",
-    "reason": "السبب",
-    "approve": "اعتماد",
-    "reject": "رفض",
-    "status": {
-      "requested": "مطلوب",
-      "in_review": "قيد المراجعة",
-      "approved": "معتمد",
-      "applied": "مُطبَّق"
-    },
-    "age": {
-      "days": "قبل {n, plural, zero {لحظات} one {يوم واحد} two {يومين} few {# أيام} many {# يوماً} other {# يوم}}",
-      "hours": "قبل {n, plural, zero {لحظات} one {ساعة واحدة} two {ساعتين} few {# ساعات} many {# ساعة} other {# ساعة}}",
-      "minutes": "قبل {n, plural, zero {لحظات} one {دقيقة واحدة} two {دقيقتين} few {# دقائق} many {# دقيقة} other {# دقيقة}}"
-    }
-  },
   "escalations": {
     "title": "التصعيدات",
     "subtitle": "العناصر المتأخرة أو المتعثرة ومن يملكها الآن.",
@@ -2059,7 +2033,6 @@
       "idea": "فكرة",
       "evaluation": "تقييم",
       "committee_decision": "قرار اللجنة",
-      "change_request": "طلب تغيير",
       "sla": "اتفاقية مستوى الخدمة"
     },
     "age": {
@@ -2101,7 +2074,6 @@
       "idea": "فكرة",
       "evaluation": "تقييم",
       "committee_decision": "قرار اللجنة",
-      "change_request": "طلب تغيير",
       "sla": "اتفاقية مستوى الخدمة"
     }
   },

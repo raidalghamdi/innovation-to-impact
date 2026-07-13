@@ -15,7 +15,6 @@ import {
   FileBarChart,
   ShieldCheck,
   Split as SplitIcon,
-  ClipboardEdit,
   ClipboardList,
   FileText,
   FileDown,
@@ -166,14 +165,6 @@ const ADMIN_CARDS: AdminCard[] = [
     descAr: 'خريطة أعباء المُقيِّمين وجدول التعيينات مع الفلترة، وإعادة الإسناد، والحذف الجماعي.',
     descEn: 'Evaluator workload heatmap and assignments table with filters, reassignment, and bulk delete.',
     icon: SplitIcon,
-  },
-  {
-    href: '/admin/change-requests',
-    labelAr: 'طلبات التعديل',
-    labelEn: 'Change Requests',
-    descAr: 'لوحة كانبان لطلبات التعديل (مطلوب، مراجعة، معتمد، مُطبَّق) تعرض الحقل والقيمة المقترحة والسبب.',
-    descEn: 'Kanban board of change requests (requested, in review, approved, applied) showing field, proposed value, and reason.',
-    icon: ClipboardEdit,
   },
   {
     href: '/admin/cms',
