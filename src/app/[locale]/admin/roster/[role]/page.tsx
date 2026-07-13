@@ -59,7 +59,7 @@ export default async function RosterRolePage({
   // Active members — read from the role source of truth (v_user_roles).
   const { data: userRoles } = await admin!
     .schema('innovation')
-    .from('v_user_roles')
+    .schema('innovation').from('v_user_roles')
     .select('user_id')
     .eq('role_code', roleCode)
     .eq('role_active', true);

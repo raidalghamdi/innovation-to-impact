@@ -121,7 +121,7 @@ export default async function SupervisorPage({
   // directly under the supervisor's RLS returns only their own rows, which is
   // why this dropdown previously showed "لا يوجد مقيّمون".
   const { data: evalRoleRows } = await supabase!
-    .from('v_user_roles')
+    .schema('innovation').from('v_user_roles')
     .select('user_id')
     .in('role_code', ['evaluator', 'judge'])
     .eq('role_active', true);

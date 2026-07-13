@@ -217,7 +217,7 @@ async function loadAll(scope: Scope, userId?: string): Promise<AllData> {
       pub.from('compliance_controls').select('regulator, status'),
       sb.from('escalations').select('status, current_level, entity_type, opened_at, resolved_at, opened_by'),
       sb.from('support_messages').select('created_at, handled_at, handled_by'),
-      pub.from('v_user_roles').select('user_id, role_code, is_primary, role_active'),
+      pub.schema('innovation').from('v_user_roles').select('user_id, role_code, is_primary, role_active'),
     ]);
 
     let ideas = (ideasR.data as Idea[] | null) ?? [];

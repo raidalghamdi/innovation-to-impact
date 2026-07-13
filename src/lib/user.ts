@@ -33,7 +33,7 @@ export async function getCurrentUser(): Promise<CurrentUser> {
   let derivedRole: unknown = undefined;
   try {
     const { data: roleRows } = await supabase
-      .from('v_user_roles')
+      .schema('innovation').from('v_user_roles')
       .select('role_code, role_active')
       .eq('user_id', user.id);
     const codes = new Set(

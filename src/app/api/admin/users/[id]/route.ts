@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // Replace strategy: delete all existing rows for this user, then insert the
   // submitted set. Simpler and safer than diffing, and this table is small
   // per-user (at most 5 roles).
-  const { error: delErr } = await admin.from('user_roles').delete().eq('user_id', id);
+  const { error: delErr } = await admin.schema('innovation').from('user_roles').delete().eq('user_id', id);
   if (delErr) {
     return NextResponse.json({ error: delErr.message }, { status: 500 });
   }
@@ -59,7 +59,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       is_primary: roleId === effectivePrimary,
       assigned_by: actor.id,
     }));
-    const { error: insErr } = await admin.from('user_roles').insert(inserts);
+    const { error: insErr } = await admin.schema('innovation').from('user_roles').insert(inserts);
     if (insErr) {
       return NextResponse.json({ error: insErr.message }, { status: 500 });
     }

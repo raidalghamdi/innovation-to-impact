@@ -15,7 +15,7 @@ async function resolveEmptyRole(userId: string): Promise<NotifEmptyRole> {
   if (!supabase) return 'default';
   try {
     const { data } = await supabase
-      .from('v_user_roles')
+      .schema('innovation').from('v_user_roles')
       .select('role_code, role_active')
       .eq('user_id', userId);
     const codes = new Set(

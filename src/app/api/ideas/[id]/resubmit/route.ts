@@ -191,7 +191,7 @@ export async function POST(
     const supRoleId = (supRoleRow as { id?: string } | null)?.id ?? null;
     if (supRoleId) {
       const { data: userRoles } = await supabase
-        .from('v_user_roles')
+        .schema('innovation').from('v_user_roles')
         .select('user_id')
         .eq('role_id', supRoleId)
         .eq('role_active', true);
